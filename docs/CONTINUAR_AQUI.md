@@ -54,3 +54,14 @@ Después de cada avance importante:
 - Subir cambios a GitHub.
 
 No modificar CLICK TV Streaming ni CLICK TV GO.
+
+## GitHub Actions - etapa de pruebas
+- Workflow: .github/workflows/clicktv-build-test.yml
+- Flutter: 3.24.5
+- Java: 21
+- Compilacion inicial: APK debug para diagnostico.
+- No es una actualizacion instalable sobre la APK release existente.
+- No se utilizan claves privadas ni secretos de firma.
+- Pendiente: comprobar ejecucion real y corregir errores.
+- Pendiente: adaptar release.yml y badges.yml.
+- Pendiente: configurar firma release con el certificado original.
