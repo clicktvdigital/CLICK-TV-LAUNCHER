@@ -68,7 +68,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.leanbitlab.ltvL"
+        applicationId "com.clicktv.launcher"
         compileSdk 35
         minSdk 21
         targetSdk 35
@@ -134,9 +134,9 @@ android {
             output.versionCodeOverride = variant.versionCode
             def abi = output.getFilter(com.android.build.OutputFile.ABI)
             if (abi != null) {
-                outputFileName = "LTvLauncher-${abi}-${variant.buildType.name}.apk"
+                outputFileName = "CLICK-TV-LAUNCHER-${abi}-${variant.buildType.name}.apk"
             } else {
-                outputFileName = "LTvLauncher-universal-${variant.buildType.name}.apk"
+                outputFileName = "CLICK-TV-LAUNCHER-universal-${variant.buildType.name}.apk"
             }
         }
     }

@@ -74,7 +74,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
 
               // Title & Version
               const Text(
-                "LTvLauncher",
+                "CLICK TV LAUNCHER",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -91,7 +91,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                "Developed by LeanBitLab",
+                "Desarrollado por CLICK TV DIGITAL",
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -123,7 +123,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Community & Links",
+                  "CLICK TV DIGITAL y enlaces",
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 11,
@@ -142,7 +142,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
                 accentColor: accentColor,
                 autofocus: true,
                 onPressed: () {
-                  FLauncherChannel().openUrl("https://leanbitlab.github.io/LeanBitLab/");
+                  FLauncherChannel().openUrl("https://github.com/clicktvdigital");
                 },
               ),
               const SizedBox(height: 6),
@@ -154,7 +154,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
                 label: "GitHub Repository",
                 accentColor: accentColor,
                 onPressed: () {
-                  FLauncherChannel().openUrl("https://github.com/leanbitlab-org/LtvLauncher");
+                  FLauncherChannel().openUrl("https://github.com/clicktvdigital/CLICK-TV-LAUNCHER");
                 },
               ),
               const SizedBox(height: 6),
@@ -163,10 +163,10 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               _AboutButton(
                 icon: Icons.send_rounded,
                 iconColor: const Color(0xFF2CA5E0),
-                label: "Telegram (@LeanBitLab)",
+                label: "Proyecto original: LeanBitLab",
                 accentColor: accentColor,
                 onPressed: () {
-                  FLauncherChannel().openUrl("https://t.me/LeanBitLab");
+                  FLauncherChannel().openUrl("https://github.com/leanbitlab-org/LtvLauncher");
                 },
               ),
               const SizedBox(height: 6),

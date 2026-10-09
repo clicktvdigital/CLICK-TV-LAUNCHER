@@ -1,3 +1,33 @@
+# CLICK TV LAUNCHER
+
+**Desarrollado y personalizado por CLICK TV DIGITAL**
+
+Launcher para Android TV y TV Box, basado en el proyecto
+[LTvLauncher](https://github.com/leanbitlab-org/LtvLauncher).
+
+## Identidad
+- Aplicación: CLICK TV LAUNCHER
+- Identificador Android: `com.clicktv.launcher`
+- Desarrollador de esta personalización: CLICK TV DIGITAL
+- Repositorio: https://github.com/clicktvdigital/CLICK-TV-LAUNCHER
+
+## Estado
+Personalización en desarrollo. APK todavía no compilada ni validada
+para actualizar la instalación existente.
+
+## Continuidad del proyecto
+Consultar [docs/CONTINUAR_AQUI.md](docs/CONTINUAR_AQUI.md)
+antes de continuar el desarrollo.
+
+## Licencia y atribuciones
+Este proyecto deriva de LTvLauncher y FLauncher.
+Se conservan los derechos, atribuciones y condiciones de
+la licencia GNU GPLv3, disponible en [LICENSE](LICENSE).
+
+---
+
+## Documentación del proyecto original
+
 # LTvLauncher
 
 <picture>
