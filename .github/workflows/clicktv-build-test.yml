@@ -71,7 +71,7 @@ jobs:
           test -x "$apksigner"
           test -x "$aapt"
           "$apksigner" verify --verbose --print-certs "$apk"
-          actual=$("$apksigner" verify --print-certs "$apk" | sed -n "s/^Signer #1 certificate SHA-256 digest: //p")
+          actual=$("$apksigner" verify --print-certs "$apk" | sed -n "s/^.*certificate SHA-256 digest: //p")
           expected=$(keytool -exportcert -keystore android/my-release-key.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" | openssl dgst -sha256 | sed "s/.*= //")
           test -n "$actual"
           if [ "$actual" != "$expected" ]; then
