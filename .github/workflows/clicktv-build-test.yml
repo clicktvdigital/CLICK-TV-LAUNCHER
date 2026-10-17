@@ -1,0 +1,93 @@
+name: CLICK TV LAUNCHER - Validar APK firmada
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-tv-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Instalar SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3 libsqlite3-dev
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+
+      - name: Instalar dependencias y generar codigo
+        run: |
+          flutter pub get
+          flutter pub run build_runner build --delete-conflicting-outputs
+          flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
+
+      - name: Compilar y validar firma de produccion
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_FILE: ../my-release-key.jks
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "ERROR: falta secreto de firma: ${name}"
+              exit 1
+            fi
+          done
+          printf "%s" "$KEYSTORE_BASE64" | base64 --decode > android/my-release-key.jks
+          chmod 600 android/my-release-key.jks
+          test -s android/my-release-key.jks
+          flutter build apk --release --target-platform=android-arm,android-arm64
+
+          echo "APK generadas:"
+          find build/app/outputs -type f -name "*.apk" -print
+          apk=$(find build/app/outputs -type f -name "*universal*release.apk" -print -quit)
+          if [ -z "$apk" ]; then
+            echo "ERROR: no se encontro una APK universal de Release"
+            exit 1
+          fi
+
+          sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}
+          test -n "$sdk"
+          apksigner=$(find "$sdk/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)
+          aapt=$(find "$sdk/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)
+          test -x "$apksigner"
+          test -x "$aapt"
+          "$apksigner" verify --verbose --print-certs "$apk"
+          actual=$("$apksigner" verify --print-certs "$apk" | sed -n "s/^Signer #1 certificate SHA-256 digest: //p")
+          expected=$(keytool -exportcert -keystore android/my-release-key.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" | openssl dgst -sha256 | sed "s/.*= //")
+          test -n "$actual"
+          if [ "$actual" != "$expected" ]; then
+            echo "ERROR: la firma de la APK NO coincide con el certificado oficial"
+            exit 1
+          fi
+          badging=$("$aapt" dump badging "$apk")
+          printf "%s\n" "$badging" | grep -F "package: name='com.clicktvdigital.launcher'"
+          cp "$apk" build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
+          sha256sum build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
+          echo "OK: APK universal firmada con nuestro certificado, package verificado"
+
+      - name: Entregar APK de prueba sin publicarla
+        uses: actions/upload-artifact@v4
+        with:
+          name: CLICK-TV-LAUNCHER-PRUEBA-FIRMADA
+          path: build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
+          if-no-files-found: error
+          retention-days: 7
