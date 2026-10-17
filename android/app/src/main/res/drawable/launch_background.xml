@@ -2,6 +2,6 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@android:color/black" />
     <item
-        android:drawable="@mipmap/ic_launcher"
-        android:gravity="center" />
+        android:drawable="@drawable/click_tv_splash"
+        android:gravity="fill" />
 </layer-list>
