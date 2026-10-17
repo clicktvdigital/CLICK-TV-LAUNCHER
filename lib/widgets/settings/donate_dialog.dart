@@ -30,10 +30,10 @@ class DonateDialog extends StatefulWidget {
 }
 
 class _DonateDialogState extends State<DonateDialog> {
-  int _selectedOption = 0; // 0: Open Collective, 1: GitHub Sponsors
+  int _selectedOption = 0; // 0: PayPhone, 1: PayPal
 
-  static const String _openCollectiveUrl = "https://opencollective.com/leanbitlab-org";
-  static const String _githubSponsorsUrl = "https://github.com/sponsors/LeanBitLab";
+  static const String _payPhoneUrl = "https://ppls.me/izAAuu8fptGHF6uZBV9L4Q";
+  static const String _payPalUrl = "https://www.paypal.com/ncp/payment/NKS3NQA6Q2Q5N";
 
   Color _hexToColor(String hex) {
     return Color(int.parse('FF$hex', radix: 16));
@@ -44,8 +44,8 @@ class _DonateDialogState extends State<DonateDialog> {
     final settingsService = context.watch<SettingsService>();
     final accentColor = _hexToColor(settingsService.accentColorHex);
 
-    final currentUrl = _selectedOption == 0 ? _openCollectiveUrl : _githubSponsorsUrl;
-    final currentPlatform = _selectedOption == 0 ? "Open Collective" : "GitHub Sponsors";
+    final currentUrl = _selectedOption == 0 ? _payPhoneUrl : _payPalUrl;
+    final currentPlatform = _selectedOption == 0 ? "PayPhone" : "PayPal";
     final currentBrandColor = _selectedOption == 0 ? const Color(0xFF1F6FEB) : const Color(0xFFEA4AAA);
 
     return Dialog(
@@ -76,7 +76,7 @@ class _DonateDialogState extends State<DonateDialog> {
                   Icon(Icons.favorite, color: Color(0xFFE91E63), size: 24),
                   SizedBox(width: 8),
                   Text(
-                    "Support LTvLauncher",
+                    "Apoya CLICK TV LAUNCHER",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -87,7 +87,7 @@ class _DonateDialogState extends State<DonateDialog> {
               ),
               const SizedBox(height: 6),
               const Text(
-                "Scan with your phone camera to donate:",
+                "Escanea con tu celular para donar:",
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -101,7 +101,7 @@ class _DonateDialogState extends State<DonateDialog> {
                 children: [
                   Expanded(
                     child: _PlatformTabButton(
-                      label: "Open Collective",
+                      label: "PayPhone",
                       icon: Icons.volunteer_activism,
                       isSelected: _selectedOption == 0,
                       accentColor: accentColor,
@@ -112,7 +112,7 @@ class _DonateDialogState extends State<DonateDialog> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _PlatformTabButton(
-                      label: "GitHub Sponsors",
+                      label: "PayPal",
                       icon: Icons.favorite_border,
                       isSelected: _selectedOption == 1,
                       accentColor: accentColor,
@@ -188,14 +188,14 @@ class _DonateDialogState extends State<DonateDialog> {
                 children: [
                   _DialogActionButton(
                     icon: Icons.open_in_browser,
-                    label: "Open in Browser",
+                    label: "Abrir enlace",
                     accentColor: accentColor,
                     onPressed: () => FLauncherChannel().openUrl(currentUrl),
                   ),
                   const SizedBox(width: 12),
                   _DialogActionButton(
                     icon: Icons.close,
-                    label: "Close",
+                    label: "Cerrar",
                     accentColor: accentColor,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
