@@ -1,15 +1,34 @@
-# CONTINUAR AQUI - CLICK TV LAUNCHER
+# CONTINUAR AQUI — CLICK TV LAUNCHER
 
-<!-- DONATIVOS_CLICKTV_2026_10_17 -->
-## Integración de donativos Android TV (2026-10-17)
-- Identidad principal: CLICK TV LAUNCHER by CLICK TV DIGITAL.
-- Logos: Banco Pichincha, Guayaquil, Produbanco, Pacífico, Deuna!, PayPhone, PayPal, Binance, GitHub Sponsors y Patreon.
-- Datos de recepción: Pichincha 2205375908; Guayaquil 0013647475; Produbanco 12009308674; Pacífico 1062494589; Deuna! 7701517809.
-- Titular mostrado: Richard Ontaneda. Contacto: clicktvdigital@gmail.com.
-- QR informativo para cuentas bancarias y Deuna!; no ejecuta pagos ni constituye QR oficial.
-- PayPhone y PayPal: verificar destino de enlace previo a distribuir.
-- Binance, GitHub Sponsors y Patreon: enlaces de cobro pendientes.
-- Avisos legales GPL/copyright de terceros conservados en source.
-- Cambios: donate_dialog.dart, pubspec.yaml y diez logotipos en assets/donaciones/logos/.
-- Sin APK publicada ni certificados alterados con este paso.
-- SIGUIENTE: ejecutar la prueba firmada de GitHub Actions, comprobar APK/firma, limpiar nombres LTvLauncher del empaquetado/README/release.yml y publicar Release estable para Downloader.
+## Estado de esta rama
+
+- Rama de trabajo: `chore/click-tv-launcher-audit`.
+- Identidad visible: CLICK TV LAUNCHER by CLICK TV DIGITAL.
+- `applicationId`: `com.clicktv.launcher`.
+- `minSdk`: 21 (Android 5.0); `targetSdk`/`compileSdk`: 35.
+- `versionCode`: 8113, superior a 8111.
+- ABI release: `armeabi-v7a` y `arm64-v8a`, con APK universal y divididos.
+- Splash oficial conservado en 1920×1080, relación 16:9 y sin recortes.
+- Logo pequeño y banner grande alineados con el recurso oficial CLICK TV DIGITAL.
+- Español seleccionado como idioma inicial; se mantienen los demás idiomas.
+- Navegación con control remoto mediante atajos D-pad, OK/Enter, Atrás y acciones de foco.
+- Donaciones: se conservan los diez métodos existentes. Binance, GitHub Sponsors y Patreon siguen pendientes y no tienen enlaces inventados ni activación de pagos.
+- Licencia GPL v3, avisos y atribuciones originales conservados.
+
+## Verificaciones realizadas
+
+- Auditoría de configuración, manifest, recursos, localización, donaciones, navegación y workflows: realizada en esta rama.
+- Inspección de dimensiones: splash 1920×1080; logo 512×512; banner 640×360.
+- Pruebas automatizadas y compilación local: intentadas; no ejecutables en este entorno porque `flutter` no está instalado (`exit 127`).
+- Validación de firma: definida en GitHub Actions; requiere los secretos oficiales y no se ejecuta aquí sin ellos.
+- No se instaló ninguna APK en un televisor, no se actualizó una aplicación instalada y no se eliminaron datos.
+
+## Siguiente paso seguro
+
+1. Ejecutar `flutter pub get`, `flutter gen-l10n` y `flutter test`.
+2. Ejecutar la acción manual `CLICK TV LAUNCHER - Validar APK firmada` con los cuatro secretos de firma.
+3. Revisar `apksigner`, package `com.clicktv.launcher`, `versionCode`, ABI y SHA-256 del certificado oficial.
+4. Probar el APK firmado en equipos Android 5.0+, Android TV y Google TV de 32/64 bits.
+5. Solo después de verificar el certificado y contar con autorización explícita, considerar actualizar una instalación existente.
+
+No hacer push, publicar releases, instalar en televisores ni borrar datos desde esta rama sin autorización.

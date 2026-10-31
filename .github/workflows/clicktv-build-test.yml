@@ -34,6 +34,7 @@ jobs:
           flutter pub get
           flutter pub run build_runner build --delete-conflicting-outputs
           flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
+          flutter gen-l10n
 
       - name: Compilar y validar firma de produccion
         env:
@@ -71,15 +72,19 @@ jobs:
           test -x "$apksigner"
           test -x "$aapt"
           "$apksigner" verify --verbose --print-certs "$apk"
-          actual=$("$apksigner" verify --print-certs "$apk" | sed -n "s/^.*certificate SHA-256 digest: //p")
-          expected=$(keytool -exportcert -keystore android/my-release-key.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" | openssl dgst -sha256 | sed "s/.*= //")
+          actual=$("$apksigner" verify --print-certs "$apk" | sed -n "s/^.*certificate SHA-256 digest: //p" | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          expected=$(keytool -exportcert -keystore android/my-release-key.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" | openssl dgst -sha256 | sed "s/.*= //" | tr -d ':' | tr '[:upper:]' '[:lower:]')
           test -n "$actual"
           if [ "$actual" != "$expected" ]; then
             echo "ERROR: la firma de la APK NO coincide con el certificado oficial"
             exit 1
           fi
           badging=$("$aapt" dump badging "$apk")
-          printf "%s\n" "$badging" | grep -F "package: name='com.clicktvdigital.launcher'"
+          printf "%s\n" "$badging" | grep -F "package: name='com.clicktv.launcher'"
+          version_code=$(printf "%s\n" "$badging" | sed -n "s/.*versionCode='\([0-9][0-9]*\)'.*/\1/p")
+          test -n "$version_code"
+          test "$version_code" = 8113
+          printf "OK: versionCode=%s\n" "$version_code"
           cp "$apk" build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
           sha256sum build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
           echo "OK: APK universal firmada con nuestro certificado, package verificado"

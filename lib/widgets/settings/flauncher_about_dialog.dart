@@ -108,7 +108,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
-                  "A fast, private, and customizable open-source launcher designed for Android TV, Google TV, and Fire TV. 100% ad-free and tracker-free.",
+                  "CLICK TV LAUNCHER by CLICK TV DIGITAL: lanzador libre, privado y personalizable para Android TV y Google TV. Sin anuncios ni rastreadores.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white70,
@@ -123,7 +123,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Community & Links",
+                  "Comunidad y enlaces",
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 11,
@@ -138,7 +138,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               _AboutButton(
                 icon: Icons.language,
                 iconColor: const Color(0xFF7C4DFF),
-                label: "Website",
+                label: "Sitio web",
                 accentColor: accentColor,
                 autofocus: true,
                 onPressed: () {
@@ -151,7 +151,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               _AboutButton(
                 icon: Icons.code,
                 iconColor: Colors.white70,
-                label: "GitHub Repository",
+                label: "Repositorio de GitHub",
                 accentColor: accentColor,
                 onPressed: () {
                   FLauncherChannel().openUrl("https://github.com/leanbitlab-org/LtvLauncher");

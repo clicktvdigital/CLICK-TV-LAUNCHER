@@ -75,7 +75,7 @@ class FLauncherApp extends StatelessWidget
         GlobalWidgetsLocalizations.delegate
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      title: 'FLauncher',
+      title: 'CLICK TV LAUNCHER',
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,

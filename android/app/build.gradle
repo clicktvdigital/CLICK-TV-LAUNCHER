@@ -43,7 +43,7 @@ if (localPropertiesFile.exists()) {
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
+    flutterVersionCode = '8113'
 }
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
@@ -51,13 +51,24 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-def secretProperties = new Properties()
-secretProperties.setProperty("signing_keystore_password", "${System.getenv('FLAUNCHER_KEYSTORE_PASSWORD')}")
-secretProperties.setProperty("signing_key_password", "${System.getenv('FLAUNCHER_SIGNING_KEY_PASSWORD')}")
-secretProperties.setProperty("signing_key_alias", "${System.getenv('FLAUNCHER_SIGNING_KEY_ALIAS')}")
-
 def keystoreFilePath = System.getenv("KEYSTORE_FILE") ?: localProperties['storeFile']
-def hasKeystore = keystoreFilePath != null && file(keystoreFilePath).exists()
+def keystoreFile = keystoreFilePath ? file(keystoreFilePath) : null
+def storePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProperties['storePassword']
+def keyAlias = System.getenv("KEY_ALIAS") ?: localProperties['keyAlias']
+def keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties['keyPassword']
+def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+
+if (isReleaseTask) {
+    def missingSigningValues = []
+    if (!keystoreFilePath) missingSigningValues << 'KEYSTORE_FILE'
+    if (!keystoreFile || !keystoreFile.isFile()) missingSigningValues << 'keystore file'
+    if (!storePassword) missingSigningValues << 'KEYSTORE_PASSWORD'
+    if (!keyAlias) missingSigningValues << 'KEY_ALIAS'
+    if (!keyPassword) missingSigningValues << 'KEY_PASSWORD'
+    if (!missingSigningValues.isEmpty()) {
+        throw new GradleException("Release signing configuration is incomplete: ${missingSigningValues.join(', ')}")
+    }
+}
 
 android {
     dependenciesInfo {
@@ -68,7 +79,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.clicktvdigital.launcher"
+        applicationId "com.clicktv.launcher"
         compileSdk 35
         minSdk 21
         targetSdk 35
@@ -82,12 +93,10 @@ android {
     signingConfigs {
         debug {}
         release {
-            if (hasKeystore) {
-                storeFile file(keystoreFilePath)
-                storePassword System.getenv("KEYSTORE_PASSWORD") ?: localProperties['storePassword']
-                keyAlias System.getenv("KEY_ALIAS") ?: localProperties['keyAlias']
-                keyPassword System.getenv("KEY_PASSWORD") ?: localProperties['keyPassword']
-            }
+            storeFile keystoreFile
+            storePassword storePassword
+            keyAlias keyAlias
+            keyPassword keyPassword
         }
     }
 
@@ -103,9 +112,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (hasKeystore) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
             ndk {
                 abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
@@ -134,9 +141,9 @@ android {
             output.versionCodeOverride = variant.versionCode
             def abi = output.getFilter(com.android.build.OutputFile.ABI)
             if (abi != null) {
-                outputFileName = "LTvLauncher-${abi}-${variant.buildType.name}.apk"
+                outputFileName = "CLICK-TV-LAUNCHER-${abi}-${variant.buildType.name}.apk"
             } else {
-                outputFileName = "LTvLauncher-universal-${variant.buildType.name}.apk"
+                outputFileName = "CLICK-TV-LAUNCHER-universal-${variant.buildType.name}.apk"
             }
         }
     }
