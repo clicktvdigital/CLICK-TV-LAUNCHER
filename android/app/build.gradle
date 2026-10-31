@@ -94,9 +94,9 @@ android {
         debug {}
         release {
             storeFile keystoreFile
-            storePassword storePassword
-            keyAlias keyAlias
-            keyPassword keyPassword
+            storePassword = storePassword
+            keyAlias = keyAlias
+            keyPassword = keyPassword
         }
     }
 

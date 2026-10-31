@@ -59,7 +59,7 @@ jobs:
 
           echo "APK generadas:"
           find build/app/outputs -type f -name "*.apk" -print
-          apk=$(find build/app/outputs -type f -name "*universal*release.apk" -print -quit)
+          apk=$(find build/app/outputs -type f -name "CLICK-TV-LAUNCHER-universal-release.apk" -print -quit)
           if [ -z "$apk" ]; then
             echo "ERROR: no se encontro una APK universal de Release"
             exit 1
