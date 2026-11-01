@@ -1,0 +1,110 @@
+name: CLICK TV LAUNCHER - Android TV Debug APK
+
+on:
+  push:
+    branches:
+      - test/click-tv-launcher-paralelo
+
+permissions:
+  contents: read
+
+jobs:
+  android-tv-debug:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3 libsqlite3-dev
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias y generar codigo
+        run: |
+          set -euo pipefail
+          flutter pub get
+          flutter pub run build_runner build --delete-conflicting-outputs
+          flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
+          flutter gen-l10n
+
+      - name: Analizar Dart y Flutter
+        id: analyze
+        continue-on-error: true
+        run: flutter analyze
+
+      - name: Ejecutar pruebas Flutter
+        id: test
+        continue-on-error: true
+        run: flutter test
+
+      - name: Compilar APK DEBUG para Android TV
+        id: build
+        run: |
+          set -euo pipefail
+          flutter build apk --debug --target-platform=android-arm,android-arm64
+
+          apk=$(find build/app/outputs/flutter-apk -maxdepth 1 -type f -name "*debug.apk" -print -quit 2>/dev/null)
+          if [ -z "$apk" ]; then
+            apk=$(find build/app/outputs/apk/debug -maxdepth 1 -type f -name "*debug.apk" -print -quit 2>/dev/null)
+          fi
+          if [ -z "$apk" ]; then
+            echo "ERROR: no se encontró la APK universal DEBUG"
+            find build/app/outputs -type f -name '*.apk' -print
+            exit 1
+          fi
+
+          sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}
+          test -n "$sdk"
+          aapt=$(find "$sdk/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)
+          test -x "$aapt"
+          badging=$("$aapt" dump badging "$apk")
+          printf '%s\n' "$badging"
+          printf '%s\n' "$badging" | grep -F "package: name='com.clicktv.launcher.test.debug'"
+          printf '%s\n' "$badging" | grep -F "sdkVersion:'21'"
+
+          unzip -l "$apk" | grep -F 'lib/armeabi-v7a/'
+          unzip -l "$apk" | grep -F 'lib/arm64-v8a/'
+
+          mkdir -p build/android-tv-debug
+          cp "$apk" build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+          test -s build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+          sha256sum build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+
+      - name: Publicar resultado del APK DEBUG
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG
+          path: build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Fallar si análisis o pruebas fallaron
+        if: always()
+        run: |
+          if [ "${{ steps.analyze.outcome }}" != "success" ]; then
+            echo "ERROR: flutter analyze falló"
+            exit 1
+          fi
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "ERROR: flutter test falló"
+            exit 1
+          fi

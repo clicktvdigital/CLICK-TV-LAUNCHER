@@ -127,7 +127,7 @@
         </service>
 
         <receiver
-            android:name="me.efesser.flauncher.WeatherReceiver"
+            android:name="com.leanbitlab.ltvL.WeatherReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER" />

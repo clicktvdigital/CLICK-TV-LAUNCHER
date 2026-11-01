@@ -18,8 +18,6 @@
 
 package com.leanbitlab.ltvL;
 
-import me.efesser.flauncher.WeatherReceiver;
-
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -621,15 +619,16 @@ public class MainActivity extends FlutterActivity {
     }
 
     private boolean tryStartActivity(Intent intent) {
-        boolean success = true;
+        if (intent == null || intent.resolveActivity(getPackageManager()) == null) {
+            return false;
+        }
 
         try {
             startActivity(intent);
+            return true;
         } catch (Exception ignored) {
-            success = false;
+            return false;
         }
-
-        return success;
     }
 
     private byte[] drawableToByteArray(Drawable drawable) {

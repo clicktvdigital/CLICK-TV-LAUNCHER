@@ -28,9 +28,9 @@ class WeatherForecastItem {
     return WeatherForecastItem(
       minTemp: WeatherData.parseTemperature(json['minTemp']),
       maxTemp: WeatherData.parseTemperature(json['maxTemp']),
-      conditionCode: (json['conditionCode'] as num?)?.toInt(),
-      humidity: (json['humidity'] as num?)?.toInt(),
-      precipProbability: (json['precipProbability'] as num?)?.toInt(),
+      conditionCode: WeatherData.parseInt(json['conditionCode']),
+      humidity: WeatherData.parseInt(json['humidity']),
+      precipProbability: WeatherData.parseInt(json['precipProbability']),
     );
   }
 }
@@ -101,6 +101,18 @@ class WeatherData {
     return n.round();
   }
 
+  static int? parseInt(dynamic val) {
+    if (val is num) return val.toInt();
+    if (val is String) return num.tryParse(val.trim())?.toInt();
+    return null;
+  }
+
+  static double? parseDouble(dynamic val) {
+    if (val is num) return val.toDouble();
+    if (val is String) return double.tryParse(val.trim());
+    return null;
+  }
+
   factory WeatherData.fromJson(Map<String, dynamic> json) {
     final List<dynamic>? rawForecasts = json['forecasts'] as List<dynamic>?;
     final List<WeatherForecastItem> forecasts = rawForecasts != null
@@ -121,7 +133,7 @@ class WeatherData {
     final now = DateTime.now();
 
     // Priorizar las condiciones actuales antes de revisar dias futuros.
-    final currentCode = (json["currentConditionCode"] as num?)?.toInt();
+    final currentCode = parseInt(json["currentConditionCode"]);
     if (currentCode != null &&
         (rainCodes.contains(currentCode) ||
          snowCodes.contains(currentCode) ||
@@ -195,10 +207,10 @@ class WeatherData {
       timestamp: (json['timestamp'] as num?)?.toInt(),
       location: json['location'] as String?,
       currentTemp: parseTemperature(json['currentTemp']),
-      currentConditionCode: (json['currentConditionCode'] as num?)?.toInt(),
+      currentConditionCode: parseInt(json['currentConditionCode']),
       currentCondition: json['currentCondition'] as String?,
-      currentHumidity: (json['currentHumidity'] as num?)?.toInt(),
-      windSpeed: (json['windSpeed'] as num?)?.toDouble(),
+      currentHumidity: parseInt(json['currentHumidity']),
+      windSpeed: parseDouble(json['windSpeed']),
       todayMaxTemp: parseTemperature(json['todayMaxTemp']),
       todayMinTemp: parseTemperature(json['todayMinTemp']),
       forecasts: forecasts,
