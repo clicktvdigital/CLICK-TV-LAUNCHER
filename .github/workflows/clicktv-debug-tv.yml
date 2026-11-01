@@ -57,8 +57,29 @@ jobs:
         continue-on-error: true
         run: flutter test
 
+      - name: Restaurar firma DEBUG paralela
+        env:
+          PARALLEL_DEBUG_KEYSTORE_BASE64: ${{ secrets.PARALLEL_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          : "${PARALLEL_DEBUG_KEYSTORE_BASE64:?Falta el secreto PARALLEL_DEBUG_KEYSTORE_BASE64}"
+          key_path="$RUNNER_TEMP/click-tv-parallel-debug.keystore"
+          umask 077
+          if ! printf '%s' "$PARALLEL_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$key_path"; then
+            echo "ERROR: PARALLEL_DEBUG_KEYSTORE_BASE64 no es Base64 válido"
+            exit 1
+          fi
+          chmod 600 "$key_path"
+          test -s "$key_path"
+          printf 'PARALLEL_DEBUG_KEYSTORE_FILE=%s\n' "$key_path" >> "$GITHUB_ENV"
+
       - name: Compilar APK DEBUG para Android TV
         id: build
+        env:
+          PARALLEL_DEBUG_KEYSTORE_FILE: ${{ runner.temp }}/click-tv-parallel-debug.keystore
+          PARALLEL_DEBUG_KEYSTORE_PASSWORD: ${{ secrets.PARALLEL_DEBUG_KEYSTORE_PASSWORD }}
+          PARALLEL_DEBUG_KEY_ALIAS: ${{ secrets.PARALLEL_DEBUG_KEY_ALIAS }}
+          PARALLEL_DEBUG_KEY_PASSWORD: ${{ secrets.PARALLEL_DEBUG_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           flutter build apk --debug --target-platform=android-arm,android-arm64
@@ -79,7 +100,7 @@ jobs:
           test -x "$aapt"
           badging=$("$aapt" dump badging "$apk")
           printf '%s\n' "$badging"
-          printf '%s\n' "$badging" | grep -F "package: name='com.clicktv.launcher.test.debug'"
+          printf '%s\n' "$badging" | grep -F "package: name='com.clicktv.launcher.test.parallel.debug'"
           printf '%s\n' "$badging" | grep -F "sdkVersion:'21'"
 
           unzip -l "$apk" | grep -F 'lib/armeabi-v7a/'
@@ -109,4 +130,14 @@ jobs:
           if [ "${{ steps.test.outcome }}" != "success" ]; then
             echo "ERROR: flutter test falló"
             exit 1
+          fi
+
+      - name: Limpiar firma DEBUG temporal
+        if: always()
+        run: |
+          set -euo pipefail
+          key_path="$RUNNER_TEMP/click-tv-parallel-debug.keystore"
+          if [ -e "$key_path" ]; then
+            chmod u+w "$key_path" || true
+            rm -f -- "$key_path"
           fi
