@@ -79,7 +79,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.clicktv.launcher"
+        applicationId "com.clicktv.launcher.test"
         compileSdk 35
         minSdk 21
         targetSdk 35
