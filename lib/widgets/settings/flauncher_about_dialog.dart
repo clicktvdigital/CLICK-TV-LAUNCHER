@@ -34,6 +34,25 @@ class LTvLauncherAboutDialog extends StatelessWidget {
     return Color(int.parse('FF$hex', radix: 16));
   }
 
+  Future<void> _openOfficialLink(BuildContext context, String label, String url) async {
+    final opened = await FLauncherChannel().openUrl(url);
+    if (!opened && context.mounted) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text("No se pudo abrir el enlace"),
+          content: Text("No hay una aplicación compatible para abrir $label."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text("Cerrar"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsService = context.watch<SettingsService>();
@@ -119,11 +138,67 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // Social Links Section
+              // Official Links Section
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Comunidad y enlaces",
+                  "Enlaces oficiales",
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              _AboutButton(
+                icon: Icons.language,
+                iconColor: Colors.white70,
+                label: "Página oficial de CLICK TV",
+                subtitle: "https://click-tv-streaming.vercel.app",
+                autofocus: true,
+                accentColor: accentColor,
+                onPressed: () => _openOfficialLink(
+                  context,
+                  "la página oficial de CLICK TV",
+                  "https://click-tv-streaming.vercel.app",
+                ),
+              ),
+              const SizedBox(height: 6),
+              _AboutButton(
+                icon: Icons.live_tv,
+                iconColor: Colors.white70,
+                label: "Telegram · Televisión en vivo",
+                subtitle: "https://t.me/televisionenvivo",
+                accentColor: accentColor,
+                onPressed: () => _openOfficialLink(
+                  context,
+                  "Telegram · Televisión en vivo",
+                  "https://t.me/televisionenvivo",
+                ),
+              ),
+              const SizedBox(height: 6),
+              _AboutButton(
+                icon: Icons.stream,
+                iconColor: Colors.white70,
+                label: "Telegram · Stream ID",
+                subtitle: "https://t.me/streamid",
+                accentColor: accentColor,
+                onPressed: () => _openOfficialLink(
+                  context,
+                  "Telegram · Stream ID",
+                  "https://t.me/streamid",
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Community Links Section
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Comunidad",
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 11,
@@ -139,7 +214,6 @@ class LTvLauncherAboutDialog extends StatelessWidget {
                 icon: Icons.code,
                 iconColor: Colors.white70,
                 label: "Repositorio de GitHub",
-                autofocus: true,
                 accentColor: accentColor,
                 onPressed: () {
                   FLauncherChannel().openUrl("https://github.com/clicktvdigital/CLICK-TV-LAUNCHER");
@@ -167,6 +241,7 @@ class _AboutButton extends StatefulWidget {
   final IconData icon;
   final Color iconColor;
   final String label;
+  final String? subtitle;
   final Color accentColor;
   final VoidCallback onPressed;
   final bool autofocus;
@@ -175,6 +250,7 @@ class _AboutButton extends StatefulWidget {
     required this.icon,
     required this.iconColor,
     required this.label,
+    this.subtitle,
     required this.accentColor,
     required this.onPressed,
     this.autofocus = false,
@@ -196,7 +272,20 @@ class _AboutButtonState extends State<_AboutButton> {
       },
       child: Focus(
         autofocus: widget.autofocus,
-        onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+        onFocusChange: (hasFocus) {
+          setState(() => _focused = hasFocus);
+          if (hasFocus) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                Scrollable.ensureVisible(
+                  context,
+                  duration: const Duration(milliseconds: 150),
+                  alignment: 0.25,
+                );
+              }
+            });
+          }
+        },
         child: GestureDetector(
           onTap: widget.onPressed,
           child: Container(
@@ -214,12 +303,32 @@ class _AboutButtonState extends State<_AboutButton> {
               children: [
                 Icon(widget.icon, size: 16, color: _focused ? Colors.white : widget.iconColor),
                 const SizedBox(width: 8),
-                Text(
-                  widget.label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: _focused ? FontWeight.bold : FontWeight.w500,
+                Flexible(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: _focused ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
+                      if (widget.subtitle != null)
+                        Text(
+                          widget.subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 10,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
