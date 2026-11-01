@@ -25,6 +25,7 @@ import 'package:provider/provider.dart';
 import 'package:flauncher/l10n/app_localizations.dart';
 
 import '../../models/category.dart';
+import '../category_title.dart';
 
 // Section name presets for TV remote-friendly selection
 // First 2 are special auto-populating categories
