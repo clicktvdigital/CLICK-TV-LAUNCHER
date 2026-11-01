@@ -481,7 +481,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fahrenheit => 'فهرنهايت (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'قم بتثبيت تطبيق Breezy Weather وتفعيل \'مشاركة البيانات المحلية\' في إعداداته لعرض الطقس وتحذيرات الأمطار.';
+  String get breezyWeatherSetupHint => "قم بتثبيت تطبيق Alerta EC وتفعيل 'مشاركة البيانات المحلية' في إعداداته لعرض الطقس وتحذيرات الأمطار.";
+
+  @override
+  String get alertaEcWeatherDataHint => "افتح Alerta EC وفعّل مشاركة بيانات الطقس مع CLICK TV LAUNCHER من الإعدادات.";
 
   @override
   String get displayAndScreensaver => 'الشاشة وشاشة التوقف';

@@ -137,7 +137,7 @@ class ContinueWatchingRow extends StatelessWidget {
                           handleUpNavigationToSettings: isFirstSection,
                           isFirstInRow: index == 0,
                           isLastInRow: index == programs.length - 1,
-                          autofocus: index == 0,
+                          autofocus: isFirstSection && index == 0,
                         ),
                       ),
                     );

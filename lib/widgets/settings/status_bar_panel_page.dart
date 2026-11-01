@@ -135,7 +135,9 @@ class StatusBarPanelPage extends StatelessWidget {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    localizations.breezyWeatherSetupHint,
+                                    weatherService.isBreezyInstalled
+                                        ? localizations.alertaEcWeatherDataHint
+                                        : localizations.breezyWeatherSetupHint,
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
                                   ),
                                 ),

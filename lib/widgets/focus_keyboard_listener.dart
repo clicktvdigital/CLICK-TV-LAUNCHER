@@ -60,6 +60,13 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   KeyEventResult _handleKey(BuildContext context, KeyEvent keyEvent) {
     if (keyEvent is KeyRepeatEvent) {
       final key = keyEvent.logicalKey;
+
+      // Once long press fires, ignore repeats until the key is released.
+      // Otherwise a repeat may start a new short press accidentally.
+      if (_longPressFired && AppCardKeys.longPressableKeys.contains(key)) {
+        return KeyEventResult.handled;
+      }
+
       if (key == LogicalKeyboardKey.arrowLeft ||
           key == LogicalKeyboardKey.arrowRight ||
           key == LogicalKeyboardKey.arrowUp ||

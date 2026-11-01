@@ -481,7 +481,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fahrenheit => '华氏度 (°F)';
 
   @override
-  String get breezyWeatherSetupHint => '安装 Breezy Weather 并在其设置中开启“本地数据共享”/“Gadgetbridge”以显示天气和降雨预警。';
+  String get breezyWeatherSetupHint => "安装 Alerta EC 并在其设置中开启“本地数据共享”/“Gadgetbridge”以显示天气和降雨预警。";
+
+  @override
+  String get alertaEcWeatherDataHint => "打开 Alerta EC，并在设置中启用向 CLICK TV LAUNCHER 共享天气数据。";
 
   @override
   String get displayAndScreensaver => '显示与屏幕保护程序';

@@ -1034,8 +1034,11 @@ abstract class AppLocalizations {
   /// No description provided for @breezyWeatherSetupHint.
   ///
   /// In en, this message translates to:
-  /// **'Install Breezy Weather and enable \'Local data sharing\' / \'Gadgetbridge\' in its settings to see weather and rain warnings.'**
+  /// **'Install Alerta EC and enable \'Local data sharing\' / \'Gadgetbridge\' in its settings to see weather and rain warnings.'**
   String get breezyWeatherSetupHint;
+
+  /// Mensaje para Alerta EC instalada sin datos meteorologicos.
+  String get alertaEcWeatherDataHint;
 
   /// No description provided for @displayAndScreensaver.
   ///

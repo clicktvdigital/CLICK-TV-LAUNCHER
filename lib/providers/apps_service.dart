@@ -310,6 +310,10 @@ class AppsService extends ChangeNotifier {
     Future<List<LauncherSpacer>> spacersFuture = _database.getLauncherSpacers();
     List<Map<dynamic, dynamic>> appsFromSystem =
         await _fLauncherChannel.getApplications();
+
+    // Even if Android returns no apps, continue loading the saved catalog.
+    // Temporary discovery failures must not hide existing categories.
+
     Iterable<MapEntry<String, (Map, AppsCompanion)>> appEntries =
         appsFromSystem.map((appFromSystem) => new MapEntry(
             appFromSystem['packageName'],
@@ -321,13 +325,8 @@ class AppsService extends ChangeNotifier {
     final Set<String> knownPackageNames =
         appsFromDatabaseBefore.map((a) => a.packageName).toSet();
 
-    final List<String> uninstalledPackageNames = knownPackageNames
-        .where((pkg) => !appsFromSystemByPackageName.containsKey(pkg))
-        .toList();
-    if (uninstalledPackageNames.isNotEmpty) {
-      await _database.deleteApps(uninstalledPackageNames);
-    }
-
+    // A partial Android app query must not erase saved app settings.
+    // Actual package removal is handled by PACKAGE_REMOVED events.
     await _database.transaction(() async {
       await _database.persistApps(
           appsFromSystemByPackageName.values.map((record) => record.$2));
@@ -350,10 +349,18 @@ class AppsService extends ChangeNotifier {
     _categoriesById = Map.fromEntries(
         categories.map((category) => MapEntry(category.id, category)));
     _invalidateCategoryCache();
-    _applications = Map.fromEntries(appsFromDatabase
-        .where((application) =>
-            appsFromSystemByPackageName.containsKey(application.packageName))
-        .map((application) => MapEntry(application.packageName, application)));
+    final previousApplications = _applications;
+    _applications = Map.fromEntries(appsFromDatabase.map((application) {
+      // Retain runtime metadata when an installed app is temporarily
+      // absent from the latest Android discovery result.
+      final previous = previousApplications[application.packageName];
+      if (!appsFromSystemByPackageName.containsKey(application.packageName) &&
+          previous != null) {
+        application.sideloaded = previous.sideloaded;
+        application.action = previous.action;
+      }
+      return MapEntry(application.packageName, application);
+    }));
 
     _launcherSections.clear();
     _launcherSections.addAll(categories);

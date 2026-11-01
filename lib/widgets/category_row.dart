@@ -63,7 +63,7 @@ class CategoryRow extends StatelessWidget
                   index: index,
                   category: category,
                   application: applications[index],
-                  autofocus: index == 0,
+                  autofocus: isFirstSection && index == 0,
                   handleUpNavigationToSettings: isFirstSection,
                   isFirstInRow: index == 0,
                   isLastInRow: index == applications.length - 1,

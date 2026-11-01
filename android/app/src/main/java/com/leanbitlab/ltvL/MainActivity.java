@@ -18,6 +18,8 @@
 
 package com.leanbitlab.ltvL;
 
+import me.efesser.flauncher.WeatherReceiver;
+
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -428,6 +430,7 @@ public class MainActivity extends FlutterActivity {
         Map<String, Serializable> map = new java.util.HashMap<>();
         PackageManager packageManager = getPackageManager();
         Intent intent = packageManager.getLeanbackLaunchIntentForPackage(packageName);
+        boolean sideloaded = intent == null;
 
         if (intent == null) {
             intent = packageManager.getLaunchIntentForPackage(packageName);
@@ -437,7 +440,7 @@ public class MainActivity extends FlutterActivity {
             ActivityInfo activityInfo = intent.resolveActivityInfo(getPackageManager(), 0);
 
             if (activityInfo != null) {
-                map = buildAppMap(activityInfo, false, null);
+                map = buildAppMap(activityInfo, sideloaded, null);
             }
         }
 
@@ -1497,7 +1500,7 @@ public class MainActivity extends FlutterActivity {
 
     private boolean isBreezyWeatherInstalled() {
         try {
-            getPackageManager().getPackageInfo("org.breezyweather", 0);
+            getPackageManager().getPackageInfo("com.clicktvdigital.alertaec", 0);
             return true;
         } catch (PackageManager.NameNotFoundException e) {
             return false;
@@ -1506,7 +1509,10 @@ public class MainActivity extends FlutterActivity {
 
     private boolean openBreezyWeather() {
         try {
-            Intent launchIntent = getPackageManager().getLaunchIntentForPackage("org.breezyweather");
+            Intent launchIntent = getPackageManager().getLeanbackLaunchIntentForPackage("com.clicktvdigital.alertaec");
+            if (launchIntent == null) {
+                launchIntent = getPackageManager().getLaunchIntentForPackage("com.clicktvdigital.alertaec");
+            }
             if (launchIntent != null) {
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(launchIntent);

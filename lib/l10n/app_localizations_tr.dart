@@ -481,7 +481,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fahrenheit => 'Fahrenheit (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'Hava durumu ve yağmur uyarılarını görmek için Breezy Weather\'ı yükleyin ve ayarlarından \'Yerel veri paylaşımı\' / \'Gadgetbridge\' özelliğini etkinleştirin.';
+  String get breezyWeatherSetupHint => "Hava durumu ve yağmur uyarılarını görmek için Alerta EC'ı yükleyin ve ayarlarından 'Yerel veri paylaşımı' / 'Gadgetbridge' özelliğini etkinleştirin.";
+
+  @override
+  String get alertaEcWeatherDataHint => "Alerta EC uygulamasını açın ve ayarlardan CLICK TV LAUNCHER ile hava durumu verisi paylaşımını etkinleştirin.";
 
   @override
   String get displayAndScreensaver => 'Ekran ve Ekran Koruyucu';

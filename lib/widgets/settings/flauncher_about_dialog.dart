@@ -74,7 +74,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
 
               // Title & Version
               const Text(
-                "LTvLauncher",
+                "CLICK TV LAUNCHER",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -91,7 +91,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                "Developed by LeanBitLab",
+                "Personalizado por CLICK TV DIGITAL",
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -108,7 +108,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
-                  "CLICK TV LAUNCHER by CLICK TV DIGITAL: lanzador libre, privado y personalizable para Android TV y Google TV. Sin anuncios ni rastreadores.",
+                  "CLICK TV LAUNCHER by CLICK TV DIGITAL: lanzador libre, privado y personalizable para Android TV y Google TV. Sin anuncios ni rastreadores. Basado en FLauncher, bajo licencia GPLv3.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white70,
@@ -134,60 +134,24 @@ class LTvLauncherAboutDialog extends StatelessWidget {
               ),
               const SizedBox(height: 8),
 
-              // Official Website
-              _AboutButton(
-                icon: Icons.language,
-                iconColor: const Color(0xFF7C4DFF),
-                label: "Sitio web",
-                accentColor: accentColor,
-                autofocus: true,
-                onPressed: () {
-                  FLauncherChannel().openUrl("https://leanbitlab.github.io/LeanBitLab/");
-                },
-              ),
-              const SizedBox(height: 6),
-
               // Source Code / GitHub
               _AboutButton(
                 icon: Icons.code,
                 iconColor: Colors.white70,
                 label: "Repositorio de GitHub",
+                autofocus: true,
                 accentColor: accentColor,
                 onPressed: () {
-                  FLauncherChannel().openUrl("https://github.com/leanbitlab-org/LtvLauncher");
+                  FLauncherChannel().openUrl("https://github.com/clicktvdigital/CLICK-TV-LAUNCHER");
                 },
               ),
               const SizedBox(height: 6),
-
-              // Telegram Channel
-              _AboutButton(
-                icon: Icons.send_rounded,
-                iconColor: const Color(0xFF2CA5E0),
-                label: "Telegram (@LeanBitLab)",
-                accentColor: accentColor,
-                onPressed: () {
-                  FLauncherChannel().openUrl("https://t.me/LeanBitLab");
-                },
-              ),
-              const SizedBox(height: 6),
-
-              // Reddit Community
-              _AboutButton(
-                icon: Icons.forum_rounded,
-                iconColor: const Color(0xFFFF4500),
-                label: "Reddit (r/LeanBitLab_)",
-                accentColor: accentColor,
-                onPressed: () {
-                  FLauncherChannel().openUrl("https://www.reddit.com/r/LeanBitLab_/");
-                },
-              ),
-              const SizedBox(height: 10),
 
               // Close Action
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text(
-                  "Close",
+                  "Cerrar",
                   style: TextStyle(color: Colors.white54, fontSize: 13),
                 ),
               ),

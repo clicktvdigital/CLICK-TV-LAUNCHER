@@ -23,7 +23,7 @@
         android:required="false" />
     <uses-feature
         android:name="android.software.leanback"
-        android:required="true" />
+        android:required="false" />
     <uses-feature
         android:name="android.hardware.wifi"
         android:required="false" />
@@ -42,10 +42,10 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="org.breezyweather.READ_PROVIDER" />
+    <uses-permission android:name="com.clicktvdigital.alertaec.READ_PROVIDER" />
 
     <queries>
-        <package android:name="org.breezyweather" />
+        <package android:name="com.clicktvdigital.alertaec" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
         </intent>
@@ -127,7 +127,7 @@
         </service>
 
         <receiver
-            android:name=".WeatherReceiver"
+            android:name="me.efesser.flauncher.WeatherReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER" />

@@ -481,7 +481,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fahrenheit => '華氏 (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'Breezy Weather をインストールし、設定で「ローカルデータ共有」/「Gadgetbridge」を有効にすると、天気と雨の警告が表示されます。';
+  String get breezyWeatherSetupHint => "Alerta EC をインストールし、設定で「ローカルデータ共有」/「Gadgetbridge」を有効にすると、天気と雨の警告が表示されます。";
+
+  @override
+  String get alertaEcWeatherDataHint => "Alerta ECを開き、設定でCLICK TV LAUNCHERへの天気データ共有を有効にしてください。";
 
   @override
   String get displayAndScreensaver => 'ディスプレイとスクリーンセーバー';

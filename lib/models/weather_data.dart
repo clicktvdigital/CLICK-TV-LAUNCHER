@@ -5,6 +5,7 @@ enum WeatherWarningType {
   none,
   rain,
   snow,
+  hail,
   storm,
 }
 
@@ -74,7 +75,8 @@ class WeatherData {
   });
 
   static const rainCodes = {500, 501, 502, 503, 504, 511, 520, 521, 522, 531};
-  static const snowCodes = {600, 601, 602, 611, 612, 615, 616, 620, 621, 622};
+  static const snowCodes = {600, 601, 602, 612, 615, 616, 620, 621, 622};
+  static const hailCodes = {611};
   static const stormCodes = {200, 201, 202, 210, 211, 212, 221, 230, 231, 232};
 
   factory WeatherData.fromJsonString(String jsonString) {
@@ -118,24 +120,53 @@ class WeatherData {
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final now = DateTime.now();
 
-    for (int i = 0; i < forecasts.length && i < 7; i++) {
+    // Priorizar las condiciones actuales antes de revisar dias futuros.
+    final currentCode = (json["currentConditionCode"] as num?)?.toInt();
+    if (currentCode != null &&
+        (rainCodes.contains(currentCode) ||
+         snowCodes.contains(currentCode) ||
+         hailCodes.contains(currentCode) ||
+         stormCodes.contains(currentCode))) {
+      hasWarning = true;
+      warningDayIndex = 0;
+      warningConditionCode = currentCode;
+      // La probabilidad diaria no equivale a lluvia en este instante.
+      warningPrecipProbability = null;
+
+      if (rainCodes.contains(currentCode)) {
+        warningType = WeatherWarningType.rain;
+        warningText = "Rain today";
+      } else if (snowCodes.contains(currentCode)) {
+        warningType = WeatherWarningType.snow;
+        warningText = "Snow today";
+      } else if (hailCodes.contains(currentCode)) {
+        warningType = WeatherWarningType.hail;
+        warningText = "Hail today";
+      } else {
+        warningType = WeatherWarningType.storm;
+        warningText = "Storm today";
+      }
+
+    }
+
+    // Si hay una condicion adversa hoy, no sustituirla por otra futura.
+    for (int i = 0; !hasWarning && i < forecasts.length && i < 7; i++) {
       final f = forecasts[i];
       final code = f.conditionCode;
       if (code == null) continue;
 
-      if (rainCodes.contains(code) || snowCodes.contains(code) || stormCodes.contains(code)) {
+      if (rainCodes.contains(code) || snowCodes.contains(code) || hailCodes.contains(code) || stormCodes.contains(code)) {
         hasWarning = true;
         warningConditionCode = code;
         warningPrecipProbability = f.precipProbability;
-        warningDayIndex = i;
+        // Gadgetbridge forecasts starts tomorrow, not today.
+        warningDayIndex = i + 1;
 
         String dayText;
         if (i == 0) {
-          dayText = "today";
-        } else if (i == 1) {
           dayText = "tomorrow";
         } else {
-          final targetDate = now.add(Duration(days: i));
+          final targetDate = now.add(Duration(days: i + 1));
           dayText = "on ${dayNames[targetDate.weekday - 1]}";
         }
 
@@ -149,6 +180,9 @@ class WeatherData {
         } else if (snowCodes.contains(code)) {
           warningType = WeatherWarningType.snow;
           warningText = "${precipString}Snow $dayText";
+        } else if (hailCodes.contains(code)) {
+          warningType = WeatherWarningType.hail;
+          warningText = "${precipString}Hail $dayText";
         } else {
           warningType = WeatherWarningType.storm;
           warningText = "${precipString}Storm $dayText";
@@ -186,6 +220,7 @@ class WeatherData {
     if (code == 803 || code == 804) return Icons.cloud_outlined;
     if (rainCodes.contains(code)) return Icons.grain_outlined;
     if (snowCodes.contains(code)) return Icons.ac_unit_outlined;
+    if (hailCodes.contains(code)) return Icons.grain_outlined;
     if (stormCodes.contains(code)) return Icons.flash_on_outlined;
     if (code == 741 || code == 701 || code == 711 || code == 721 || code == 751) {
       return Icons.waves_outlined;

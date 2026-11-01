@@ -481,7 +481,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fahrenheit => 'Fahrenheit (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'Install Breezy Weather and enable \'Local data sharing\' / \'Gadgetbridge\' in its settings to see weather and rain warnings.';
+  String get breezyWeatherSetupHint => "Install Alerta EC and enable 'Local data sharing' / 'Gadgetbridge' in its settings to see weather and rain warnings.";
+
+  @override
+  String get alertaEcWeatherDataHint => "Open Alerta EC and enable weather data sharing with CLICK TV LAUNCHER in its settings.";
 
   @override
   String get displayAndScreensaver => 'Display & Screensaver';

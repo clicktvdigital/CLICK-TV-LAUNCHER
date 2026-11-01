@@ -77,33 +77,35 @@ class _FLauncherState extends State<FLauncher> {
                 child: Consumer<AppsService>(
                   builder: (context, appsService, _) {
                     if (appsService.initialized) {
-                      return Selector<WatchNextService, bool>(
-                        selector: (_, watchNext) => watchNext.programs.isNotEmpty,
-                        builder: (context, hasContinuingPrograms, _) =>
-                            Selector<SettingsService, ({bool show, int order})>(
-                              selector: (_, settings) => (
-                                show: settings.showContinueWatching,
-                                order: settings.continueWatchingOrder,
-                              ),
-                              builder: (context, cwSettings, _) =>
-                                  SingleChildScrollView(
-                                    physics: const ClampingScrollPhysics(),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        _sections(
-                                            appsService.launcherSections,
-                                            continueWatchingActive:
-                                                cwSettings.show &&
-                                                hasContinuingPrograms,
-                                            continueWatchingOrder:
-                                                cwSettings.order),
-                                      ],
-                                    ),
-                                  ),
+                      return Consumer2<WatchNextService, SettingsService>(
+                        builder: (context, watchNext, settings, _) {
+                          final hiddenProgramIds = settings.hiddenWatchNextProgramIds;
+                          final hiddenPackages = settings.hiddenWatchNextPackages;
+
+                          // Only reserve a section when at least one card can appear.
+                          final hasVisiblePrograms = watchNext.hasPermission &&
+                              watchNext.programs.any((program) =>
+                                  !hiddenProgramIds.contains(program.id.toString()) &&
+                                  !hiddenPackages.contains(program.packageName) &&
+                                  !appsService.applications.any((app) =>
+                                      app.packageName == program.packageName && app.hidden));
+
+                          return SingleChildScrollView(
+                            physics: const ClampingScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _sections(
+                                  appsService.launcherSections,
+                                  continueWatchingActive:
+                                      settings.showContinueWatching && hasVisiblePrograms,
+                                  continueWatchingOrder: settings.continueWatchingOrder,
+                                ),
+                              ],
                             ),
-                    );
+                          );
+                        },
+                      );
                     }
                     else {
                       return _emptyState(context);
@@ -147,9 +149,12 @@ class _FLauncherState extends State<FLauncher> {
       Category category = section as Category;
       Widget categoryWidget;
 
-      // Pass isFirstSection only to the first category found
+      // Only a category with applications can claim initial focus.
+      // Empty categories must not block the next available app.
       bool isFirstSection = !firstCategoryFound;
-      if (isFirstSection) firstCategoryFound = true;
+      if (isFirstSection && category.applications.isNotEmpty) {
+        firstCategoryFound = true;
+      }
 
       switch (category.type) {
         case CategoryType.row:
