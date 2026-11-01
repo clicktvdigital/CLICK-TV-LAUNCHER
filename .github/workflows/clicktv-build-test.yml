@@ -80,7 +80,7 @@ jobs:
             exit 1
           fi
           badging=$("$aapt" dump badging "$apk")
-          printf "%s\n" "$badging" | grep -F "package: name='com.clicktv.launcher'"
+          printf "%s\n" "$badging" | grep -F "package: name='com.clicktv.launcher.test'"
           version_code=$(printf "%s\n" "$badging" | sed -n "s/.*versionCode='\([0-9][0-9]*\)'.*/\1/p")
           test -n "$version_code"
           test "$version_code" = 8113
