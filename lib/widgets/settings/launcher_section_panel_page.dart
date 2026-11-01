@@ -367,8 +367,8 @@ class _CategorySettingsState extends State<_CategorySettings>
       _columnsCount = _category!.columnsCount;
       _rowHeight = _category!.rowHeight;
     } else {
-      // Default to "Favorites" when creating a new section
-      _name = 'Favorites';
+      // Keep manual creation useful without creating Favorites on startup.
+      _name = '';
     }
 
     _nameController = TextEditingController(text: _name);
@@ -435,7 +435,7 @@ class _CategorySettingsState extends State<_CategorySettings>
               isDense: true,
               isExpanded: true,
               value: sectionNamePresets.contains(_name) ? _name : 'Custom...',
-              hint: Text(_name.isEmpty ? 'Select a name' : _name, style: Theme.of(context).textTheme.bodySmall),
+              hint: Text(_name.isEmpty ? localizations.name : _displaySectionName(localizations, _name), style: Theme.of(context).textTheme.bodySmall),
               onChanged: (value) {
                 setState(() {
                   if (value == 'Custom...') {
@@ -450,7 +450,7 @@ class _CategorySettingsState extends State<_CategorySettings>
               },
               items: sectionNamePresets.map((name) => DropdownMenuItem(
                 value: name,
-                child: Text(name, style: Theme.of(context).textTheme.bodySmall),
+                child: Text(_displaySectionName(localizations, name), style: Theme.of(context).textTheme.bodySmall),
               )).toList(),
             )
           )
@@ -637,10 +637,25 @@ class _CategorySettingsState extends State<_CategorySettings>
     state.setFlags(_name.isNotEmpty, dirty);
   }
 
+  String _displaySectionName(AppLocalizations localizations, String name) {
+    if (name == 'Custom...') return localizations.name;
+    return localizedCategoryTitle(localizations, name);
+  }
+
   Future<void> _save() async
   {
     final AppsService service = context.read();
     if (_creating) {
+      final existingAutomatic = service.hiddenAutomaticCategories.where(
+        (category) => category.name == _name,
+      );
+      if (existingAutomatic.length == 1) {
+        await service.restoreAutomaticCategory(existingAutomatic.single);
+        final _SettingsState state = context.read();
+        state.setLauncherSection(existingAutomatic.single);
+        return;
+      }
+
       int categoryId = await service.addCategory(_name, sort: _categorySort, type: _categoryType,
           columnsCount: _columnsCount, rowHeight: _rowHeight
       );

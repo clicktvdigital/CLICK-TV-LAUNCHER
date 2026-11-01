@@ -31,6 +31,7 @@ import 'package:pool/pool.dart';
 
 import '../models/app.dart';
 import '../models/category.dart';
+import 'automatic_sections.dart';
 
 class AppsService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
@@ -44,6 +45,7 @@ class AppsService extends ChangeNotifier {
   Map<String, Uint8List> _bannerCache = Map();
 
   Map<int, Category> _categoriesById = Map();
+  final Set<int> _hiddenAutomaticCategoryIds = <int>{};
   Map<String, Category>? _categoriesByNameCache;
   Category? _fallbackCategoryCache;
 
@@ -88,6 +90,12 @@ class AppsService extends ChangeNotifier {
       .map((category) => category.unmodifiable())
       .toList(growable: false);
 
+  List<Category> get hiddenAutomaticCategories => _hiddenAutomaticCategoryIds
+      .map((id) => _categoriesById[id])
+      .whereType<Category>()
+      .map((category) => category.unmodifiable())
+      .toList(growable: false);
+
   AppsService(this._fLauncherChannel, this._database) {
     _init();
   }
@@ -98,6 +106,7 @@ class AppsService extends ChangeNotifier {
       await _initDefaultCategories();
     } else {
       await _ensureTvAppsSectionOrder();
+      await _hideUnmodifiedAutomaticSections();
     }
 
     _fLauncherChannel.addAppsChangedListener((event) async {
@@ -238,11 +247,8 @@ class AppsService extends ChangeNotifier {
   Future<void> _initDefaultCategories() {
     final tvApplications = _applications.values
         .where((application) => application.sideloaded == false);
-    final nonTvApplications = _applications.values
-        .where((application) => application.sideloaded == true);
-
     return _database.transaction(() async {
-      int tvCategoryId = await addCategory("TV Apps",
+      int tvCategoryId = await addCategory(defaultHomeCategoryName,
           type: CategoryType.grid, shouldNotifyListeners: false);
       if (tvApplications.isNotEmpty) {
         Category tvAppsCategory = _categoriesById[tvCategoryId]!;
@@ -250,17 +256,6 @@ class AppsService extends ChangeNotifier {
             shouldNotifyListeners: false);
       }
 
-      int nonTvCategoryId = await addCategory(
-        "Non-TV Apps",
-        shouldNotifyListeners: false,
-      );
-      if (nonTvApplications.isNotEmpty) {
-        Category nonTvAppsCategory = _categoriesById[nonTvCategoryId]!;
-        await addAllToCategory(nonTvApplications, nonTvAppsCategory,
-            shouldNotifyListeners: false);
-      }
-
-      await addCategory("Favorites", shouldNotifyListeners: false);
     });
   }
 
@@ -298,6 +293,57 @@ class AppsService extends ChangeNotifier {
     }
 
     await prefs.setBool(migrationKey, true);
+  }
+
+  Future<void> _hideUnmodifiedAutomaticSections() async {
+    final categories = _categoriesById.values.toList();
+    final tvApps = categories.where((category) => category.name == 'TV Apps');
+    final nonTvApps = categories.where((category) => category.name == 'Non-TV Apps');
+    final favorites = categories.where((category) => category.name == 'Favorites');
+    if (tvApps.length != 1 || nonTvApps.length != 1 || favorites.length != 1) {
+      return;
+    }
+
+    final tvCategory = tvApps.single;
+    final nonTvCategory = nonTvApps.single;
+    final favoritesCategory = favorites.single;
+    final tvPackages = _applications.values
+        .where((app) => !app.sideloaded)
+        .map((app) => app.packageName)
+        .toSet();
+    final nonTvPackages = _applications.values
+        .where((app) => app.sideloaded)
+        .map((app) => app.packageName)
+        .toSet();
+
+    // This is deliberately strict. If order, layout, name, or membership has
+    // changed, assume the user customized the sections and show everything.
+    final matchesAutomaticLayout =
+        isUnmodifiedAutomaticCategory(tvCategory, name: 'TV Apps', order: 0, expectedPackages: tvPackages) &&
+        isUnmodifiedAutomaticCategory(nonTvCategory, name: 'Non-TV Apps', order: 1, expectedPackages: nonTvPackages) &&
+        isUnmodifiedAutomaticCategory(favoritesCategory, name: 'Favorites', order: 2, expectedPackages: <String>{});
+    if (!matchesAutomaticLayout) {
+      return;
+    }
+
+    _hiddenAutomaticCategoryIds
+      ..add(nonTvCategory.id)
+      ..add(favoritesCategory.id);
+    _launcherSections.removeWhere(
+        (section) => _hiddenAutomaticCategoryIds.contains(section.id));
+  }
+
+  Future<void> restoreAutomaticCategory(Category category) async {
+    final storedCategory = _categoriesById[category.id];
+    if (storedCategory == null || !_hiddenAutomaticCategoryIds.remove(category.id)) {
+      return;
+    }
+
+    storedCategory.order = _launcherSections.length;
+    _launcherSections.add(storedCategory);
+    _launcherSections.sort((a, b) => a.order.compareTo(b.order));
+    await persistSectionsOrder();
+    notifyListeners();
   }
 
   Future<void> refreshState() => _refreshState(shouldNotifyListeners: true);
@@ -366,6 +412,8 @@ class AppsService extends ChangeNotifier {
     _launcherSections.addAll(categories);
     _launcherSections.addAll(spacers);
     _launcherSections.sort((ls0, ls1) => ls0.order.compareTo(ls1.order));
+    _launcherSections.removeWhere(
+        (section) => _hiddenAutomaticCategoryIds.contains(section.id));
 
     Map<String, List<AppCategory>> appsCategoriesByPackage = {};
     if (appsCategories.isNotEmpty) {
@@ -517,7 +565,11 @@ class AppsService extends ChangeNotifier {
     }
 
     final targetName = isSideloaded ? "non-tv apps" : "tv apps";
-    return _categoriesByNameCache![targetName] ?? _fallbackCategoryCache;
+    final target = _categoriesByNameCache![targetName];
+    if (isSideloaded && target == null) {
+      return null;
+    }
+    return target ?? _fallbackCategoryCache;
   }
 
   Future<Uint8List> getAppBanner(String packageName) async {

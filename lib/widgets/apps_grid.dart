@@ -27,6 +27,8 @@ import '../models/app.dart';
 import '../models/category.dart';
 import '../providers/settings_service.dart';
 import 'category_container_common.dart';
+import 'category_title.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 
 class AppsGrid extends StatelessWidget
 {
@@ -93,7 +95,7 @@ class AppsGrid extends StatelessWidget
                 padding: const EdgeInsets.only(left: 16, bottom: 8),
                 child: Row(
                   children: [
-                    Text(category.name,
+                    Text(localizedCategoryTitle(AppLocalizations.of(context)!, category.name),
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge!

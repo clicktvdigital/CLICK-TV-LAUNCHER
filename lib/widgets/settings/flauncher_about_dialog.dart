@@ -67,7 +67,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
                   "assets/icon.png",
                   height: 56,
                   width: 56,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 10),

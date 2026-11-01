@@ -215,7 +215,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get titleStatusBarSettingsPage => 'Elija la información a mostrar en la barra de estado';
 
   @override
-  String get tvApplications => 'Aplicaciones del televisor';
+  String get tvApplications => 'Aplicaciones de TV';
 
   @override
   String get type => 'Tipo';

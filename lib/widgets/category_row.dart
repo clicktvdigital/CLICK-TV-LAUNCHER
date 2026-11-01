@@ -19,8 +19,10 @@
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
 import 'package:flauncher/widgets/category_container_common.dart';
+import 'package:flauncher/widgets/category_title.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flauncher/l10n/app_localizations.dart';
 
 import '../models/app.dart';
 import '../models/category.dart';
@@ -90,7 +92,7 @@ class CategoryRow extends StatelessWidget
                 padding: const EdgeInsets.only(left: 16, bottom: 8),
                 child: Row(
                   children: [
-                    Text(category.name,
+                    Text(localizedCategoryTitle(AppLocalizations.of(context)!, category.name),
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge!

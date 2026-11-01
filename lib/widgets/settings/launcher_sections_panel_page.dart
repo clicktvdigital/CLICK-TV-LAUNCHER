@@ -27,6 +27,7 @@ import 'package:provider/provider.dart';
 import 'package:flauncher/l10n/app_localizations.dart';
 
 import '../../models/category.dart';
+import '../category_title.dart';
 
 class LauncherSectionsPanelPage extends StatefulWidget {
   static const String routeName = "launcher_sections_panel";
@@ -150,7 +151,7 @@ class _LauncherSectionsPanelPageState extends State<LauncherSectionsPanelPage> {
     if (section is ContinueWatchingSection) {
       title = localizations.continueWatching;
     } else if (section is Category) {
-      title = section.name;
+      title = localizedCategoryTitle(localizations, section.name);
 
       if (title == localizations.spacer) {
         title = localizations.disambiguateCategoryTitle(title);
