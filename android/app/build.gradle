@@ -51,20 +51,20 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-def keystoreFilePath = System.getenv("KEYSTORE_FILE") ?: localProperties['storeFile']
-def keystoreFile = keystoreFilePath ? file(keystoreFilePath) : null
-def storePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProperties['storePassword']
-def keyAlias = System.getenv("KEY_ALIAS") ?: localProperties['keyAlias']
-def keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties['keyPassword']
+def releaseKeystoreFilePath = System.getenv("KEYSTORE_FILE") ?: localProperties['storeFile']
+def releaseKeystoreFile = releaseKeystoreFilePath ? file(releaseKeystoreFilePath) : null
+def releaseStorePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProperties['storePassword']
+def releaseKeyAlias = System.getenv("KEY_ALIAS") ?: localProperties['keyAlias']
+def releaseKeyPassword = System.getenv("KEY_PASSWORD") ?: localProperties['keyPassword']
 def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
 
 if (isReleaseTask) {
     def missingSigningValues = []
-    if (!keystoreFilePath) missingSigningValues << 'KEYSTORE_FILE'
-    if (!keystoreFile || !keystoreFile.isFile()) missingSigningValues << 'keystore file'
-    if (!storePassword) missingSigningValues << 'KEYSTORE_PASSWORD'
-    if (!keyAlias) missingSigningValues << 'KEY_ALIAS'
-    if (!keyPassword) missingSigningValues << 'KEY_PASSWORD'
+    if (!releaseKeystoreFilePath) missingSigningValues << 'KEYSTORE_FILE'
+    if (!releaseKeystoreFile || !releaseKeystoreFile.isFile()) missingSigningValues << 'keystore file'
+    if (!releaseStorePassword) missingSigningValues << 'KEYSTORE_PASSWORD'
+    if (!releaseKeyAlias) missingSigningValues << 'KEY_ALIAS'
+    if (!releaseKeyPassword) missingSigningValues << 'KEY_PASSWORD'
     if (!missingSigningValues.isEmpty()) {
         throw new GradleException("Release signing configuration is incomplete: ${missingSigningValues.join(', ')}")
     }
@@ -92,13 +92,13 @@ android {
 
     signingConfigs {
         debug {}
-        release {
-            storeFile keystoreFile
-            storePassword = storePassword
-            keyAlias = keyAlias
-            keyPassword = keyPassword
-        }
+        release {}
     }
+
+    signingConfigs.release.storeFile = releaseKeystoreFile
+    signingConfigs.release.storePassword = releaseStorePassword
+    signingConfigs.release.keyAlias = releaseKeyAlias
+    signingConfigs.release.keyPassword = releaseKeyPassword
 
     buildTypes {
         debug {
