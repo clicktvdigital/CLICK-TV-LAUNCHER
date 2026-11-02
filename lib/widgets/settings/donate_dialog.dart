@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flauncher/flauncher_channel.dart';
@@ -120,205 +122,388 @@ class _DonateDialogState extends State<DonateDialog> {
         'Titular: $_titular\nCorreo: $_correo';
   }
 
+  void _mantenerVisible(BuildContext context, bool tieneFoco) {
+    if (!tieneFoco) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: .35,
+          duration: Duration.zero,
+        );
+      }
+    });
+  }
+
+  Widget _botonMetodo(
+    BuildContext context,
+    int indice, {
+    required bool compacto,
+  }) {
+    final opcion = _metodos[indice];
+    final activa = indice == _seleccion;
+    return Focus(
+      onFocusChange: (tieneFoco) => _mantenerVisible(context, tieneFoco),
+      child: SizedBox(
+        width: compacto ? double.infinity : 155,
+        child: OutlinedButton(
+          autofocus: indice == 0,
+          onPressed: () => setState(() => _seleccion = indice),
+          style: OutlinedButton.styleFrom(
+            padding: compacto
+                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 6)
+                : const EdgeInsets.fromLTRB(6, 9, 6, 6),
+            backgroundColor: activa
+                ? opcion.color.withOpacity(.18)
+                : const Color(0xFF1D2939),
+            side: BorderSide(
+              color: activa ? opcion.color : Colors.white30,
+              width: activa ? 2 : 1,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: compacto
+              ? Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 34,
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Image.asset(
+                        'assets/donaciones/logos/${opcion.logo}.jpg',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.account_balance, color: Colors.black),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        opcion.titulo,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 54,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Image.asset(
+                        'assets/donaciones/logos/${opcion.logo}.jpg',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Text(
+                          opcion.titulo,
+                          style: const TextStyle(color: Colors.black, fontSize: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      opcion.titulo,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detalleMetodo(
+    _MetodoDonativo metodo, {
+    required double maxQrSize,
+  }) {
+    final datosQr = _datosQr(metodo);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final anchoQr = constraints.maxWidth.isFinite
+            ? constraints.maxWidth - 36
+            : maxQrSize;
+        final altoQr = constraints.maxHeight.isFinite
+            ? constraints.maxHeight * .46
+            : maxQrSize;
+        final qrSize = math.max(1, math.min(maxQrSize, math.min(anchoQr, altoQr)));
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF182337),
+            border: Border.all(color: metodo.color.withOpacity(.8)),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(right: 4),
+            child: Column(
+              children: [
+                Text(
+                  metodo.titulo,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (metodo.tipo == _TipoDonativo.banco) ...[
+                  const Text('Cuenta de ahorros', style: TextStyle(color: Colors.white70)),
+                  SelectableText(
+                    metodo.numero,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+                if (metodo.tipo == _TipoDonativo.deuna) ...[
+                  const Text('Número Deuna!', style: TextStyle(color: Colors.white70)),
+                  SelectableText(
+                    metodo.numero,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+                if (metodo.tipo == _TipoDonativo.banco ||
+                    metodo.tipo == _TipoDonativo.deuna) ...[
+                  const SizedBox(height: 5),
+                  const Text(
+                    'Titular: $_titular',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+                const SizedBox(height: 6),
+                const SelectableText(
+                  'Contacto: $_correo',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, fontSize: 15),
+                ),
+                const SizedBox(height: 13),
+                if (datosQr.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: QrImageView(
+                      data: datosQr,
+                      version: QrVersions.auto,
+                      size: qrSize,
+                      padding: EdgeInsets.zero,
+                      backgroundColor: Colors.white,
+                      eyeStyle: const QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
+                        color: Colors.black,
+                      ),
+                      dataModuleStyle: const QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    metodo.tipo == _TipoDonativo.enlace
+                        ? 'Escanea desde tu celular para abrir el enlace de pago.'
+                        : 'QR informativo: escanea para consultar los datos y '
+                            'realiza la transferencia manualmente en tu banco o Deuna.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  if (metodo.tipo == _TipoDonativo.enlace) ...[
+                    const SizedBox(height: 10),
+                    SelectableText(
+                      metodo.enlace,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => FLauncherChannel().openUrl(metodo.enlace),
+                      icon: const Icon(Icons.open_in_browser),
+                      label: const Text('Abrir enlace de pago'),
+                    ),
+                  ],
+                ] else ...[
+                  const Icon(Icons.info_outline, color: Colors.amber, size: 32),
+                  const SizedBox(height: 9),
+                  const Text(
+                    'Enlace de donación pendiente de confirmar. '
+                        'No hay QR de pago disponible para este método.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final metodo = _metodos[_seleccion];
-    final datosQr = _datosQr(metodo);
     final pantalla = MediaQuery.of(context).size;
     final ancho = pantalla.width > 900 ? 900.0 : pantalla.width * 0.96;
-    final qrSize = pantalla.height > 650 ? 235.0 : 200.0;
+    final altoDialogo = math.min(pantalla.height * .92, pantalla.height - 24);
+    final esHorizontalTV = pantalla.width >= 900 && altoDialogo >= 500;
 
     return Dialog(
       backgroundColor: const Color(0xFF0D1422),
       insetPadding: const EdgeInsets.all(12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: ancho, maxHeight: pantalla.height * .92),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Row(
+        constraints: BoxConstraints(maxWidth: ancho, maxHeight: altoDialogo),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: esHorizontalTV
+              ? FocusTraversalGroup(
+                  child: SizedBox(
+                    height: altoDialogo - 32,
+                    child: Column(
+                      children: [
+                        _encabezado(),
+                        const SizedBox(height: 14),
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(
+                                width: 220,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF121D2E),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ListView.separated(
+                                    padding: EdgeInsets.zero,
+                                    itemCount: _metodos.length,
+                                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                                    itemBuilder: (context, indice) =>
+                                        _botonMetodo(context, indice, compacto: true),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: _detalleMetodo(
+                                        metodo,
+                                        maxQrSize: math.min(235, altoDialogo * .36),
+                                      ),
+                                    ),
+                                    _botonCerrar(context),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _encabezado(),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 9,
+                        runSpacing: 9,
+                        children: List.generate(
+                          _metodos.length,
+                          (indice) => _botonMetodo(context, indice, compacto: false),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _detalleMetodo(metodo, maxQrSize: 210),
+                      const SizedBox(height: 10),
+                      _avisoSeguridad(),
+                      _botonCerrar(context),
+                    ],
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _encabezado() {
+    return const Column(
+      children: [
+        Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.favorite, color: Color(0xFFF23573), size: 27),
                   SizedBox(width: 10),
                   Flexible(
-                    child: Text('APOYA CLICK TV LAUNCHER',
+                    child: Text(
+                      'APOYA CLICK TV LAUNCHER',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 22,
-                        fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 5),
-              const Text('by CLICK TV DIGITAL · Aportes voluntarios',
+              SizedBox(height: 5),
+              Text(
+                'by CLICK TV DIGITAL · Aportes voluntarios',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 14)),
-              const SizedBox(height: 18),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 9,
-                runSpacing: 9,
-                children: List.generate(_metodos.length, (indice) {
-                  final opcion = _metodos[indice];
-                  final activa = indice == _seleccion;
-                  return SizedBox(
-                    width: 155,
-                    child: OutlinedButton(
-                      autofocus: indice == 0,
-                      onPressed: () => setState(() => _seleccion = indice),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.fromLTRB(6, 9, 6, 6),
-                        backgroundColor: activa
-                          ? opcion.color.withOpacity(.18)
-                          : const Color(0xFF1D2939),
-                        side: BorderSide(color: activa ? opcion.color : Colors.white30,
-                          width: activa ? 2 : 1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            height: 54,
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(7),
-                            ),
-                            child: Image.asset(
-                              'assets/donaciones/logos/${opcion.logo}.jpg',
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Text(opcion.titulo,
-                                    style: const TextStyle(color: Colors.black,
-                                      fontSize: 12)),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(opcion.titulo,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white, fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF182337),
-                  border: Border.all(color: metodo.color.withOpacity(.8)),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  children: [
-                    Text(metodo.titulo,
-                      style: const TextStyle(color: Colors.white,
-                        fontSize: 22, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
-                    if (metodo.tipo == _TipoDonativo.banco) ...[
-                      const Text('Cuenta de ahorros',
-                        style: TextStyle(color: Colors.white70)),
-                      SelectableText(metodo.numero,
-                        style: const TextStyle(color: Colors.white,
-                          fontSize: 24, fontWeight: FontWeight.bold)),
-                    ],
-                    if (metodo.tipo == _TipoDonativo.deuna) ...[
-                      const Text('Número Deuna!',
-                        style: TextStyle(color: Colors.white70)),
-                      SelectableText(metodo.numero,
-                        style: const TextStyle(color: Colors.white,
-                          fontSize: 24, fontWeight: FontWeight.bold)),
-                    ],
-                    if (metodo.tipo == _TipoDonativo.banco ||
-                        metodo.tipo == _TipoDonativo.deuna) ...[
-                      const SizedBox(height: 5),
-                      const Text('Titular: $_titular',
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
-                    ],
-                    const SizedBox(height: 6),
-                    const SelectableText('Contacto: $_correo',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 15)),
-                    const SizedBox(height: 13),
-                    if (datosQr.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: QrImageView(
-                          data: datosQr,
-                          version: QrVersions.auto,
-                          size: qrSize,
-                          padding: EdgeInsets.zero,
-                          backgroundColor: Colors.white,
-                          eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.square, color: Colors.black),
-                          dataModuleStyle: const QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.square,
-                            color: Colors.black),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        metodo.tipo == _TipoDonativo.enlace
-                          ? 'Escanea desde tu celular para abrir el enlace de pago.'
-                          : 'QR informativo: escanea para consultar los datos y '
-                            'realiza la transferencia manualmente en tu banco o Deuna.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white70, fontSize: 13)),
-                      if (metodo.tipo == _TipoDonativo.enlace) ...[
-                        const SizedBox(height: 10),
-                        SelectableText(metodo.enlace,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                        TextButton.icon(
-                          onPressed: () => FLauncherChannel().openUrl(metodo.enlace),
-                          icon: const Icon(Icons.open_in_browser),
-                          label: const Text('Abrir enlace de pago'),
-                        ),
-                      ],
-                    ] else ...[
-                      const Icon(Icons.info_outline, color: Colors.amber, size: 32),
-                      const SizedBox(height: 9),
-                      const Text('Enlace de donación pendiente de confirmar. '
-                        'No hay QR de pago disponible para este método.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text('No compartas claves, PIN ni códigos de seguridad. '
-                  'Los QR bancarios son informativos y no autorizan transferencias.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white60, fontSize: 12)),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.center,
-                child: TextButton.icon(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                  label: const Text('Cerrar'),
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
-          ),
-        ),
+          );
+  }
+
+  Widget _avisoSeguridad() {
+    return const Text(
+      'No compartas claves, PIN ni códigos de seguridad. '
+      'Los QR bancarios son informativos y no autorizan transferencias.',
+      textAlign: TextAlign.center,
+      style: TextStyle(color: Colors.white60, fontSize: 12),
+    );
+  }
+
+  Widget _botonCerrar(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: TextButton.icon(
+        onPressed: () => Navigator.of(context).pop(),
+        icon: const Icon(Icons.close),
+        label: const Text('Cerrar'),
       ),
     );
   }
