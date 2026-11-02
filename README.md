@@ -1,53 +1,114 @@
 # CLICK TV LAUNCHER
 
-CLICK TV LAUNCHER by CLICK TV DIGITAL es un lanzador libre, privado y sin anuncios para Android TV y Google TV. Está basado en [FLauncher](https://gitlab.com/flauncher/flauncher), originalmente creado por [etienn01](https://gitlab.com/flauncher/flauncher), y conserva sus licencias y atribuciones.
+<p align="center">
+  <img src="assets/icon.png" alt="Logo oficial de CLICK TV DIGITAL" width="128">
+</p>
 
-![CLICK TV DIGITAL](assets/banner.png)
+<p align="center">
+  <strong>CLICK TV LAUNCHER by CLICK TV DIGITAL</strong><br>
+  Un launcher libre, privado y sin anuncios para Android TV y TV Box.
+</p>
 
-## Funciones
+<p align="center">
+  <img src="assets/banner.png" alt="Banner de CLICK TV LAUNCHER" width="640">
+</p>
 
-- Interfaz en español por defecto, con más idiomas disponibles.
-- Navegación completa con el control remoto: cruceta, OK/Enter, Atrás y botones de juego equivalentes.
-- Categorías de aplicaciones en filas o cuadrícula, favoritos, ocultación y reordenamiento.
-- Canales Continue Watching, widgets de fecha, hora, red, clima y entradas TV.
-- Temas, fondos, salvapantallas y perfiles de accesibilidad para Android TV/Google TV.
-- Sección de apoyo con los diez métodos existentes. Los métodos pendientes se muestran como pendientes y no se activan ni se inventan enlaces.
+> Estado del proyecto: desarrollo activo en la rama de pruebas. El estado de CI debe comprobarse en cada commit; no se presenta como verde mientras existan trabajos o pruebas pendientes.
+
+CLICK TV LAUNCHER está basado en [FLauncher](https://gitlab.com/flauncher/flauncher), creado originalmente por [etienn01](https://gitlab.com/flauncher/flauncher). Conserva la licencia GPLv3, los avisos de copyright y las atribuciones de sus autores.
+
+## Características principales
+
+- Interfaz en español por defecto, con localizaciones adicionales.
+- Navegación con cruceta, OK/Enter, Atrás y controles equivalentes del mando.
+- Categorías de aplicaciones, favoritos, ocultación y reordenamiento.
+- Pantallas de Ajustes, Accesibilidad, Acerca de y Donativos adaptadas a TV.
+- QR ampliado para los métodos que disponen de un payload real; los métodos pendientes no muestran QR ficticios.
+- Splash con identidad CLICK TV, foco visible y diseño adaptable a 720p y 1080p.
+- Sin anuncios, sin bloqueo de funciones y sin procesos de pago obligatorios.
+
+Las funciones de clima, integración con Alerta EC, tráfico de red y orden inteligente de aplicaciones permanecen en revisión o desarrollo; no se anuncian aquí como terminadas.
 
 ## Compatibilidad
 
-- Android 5.0 (API 21) o posterior.
-- Android TV y Google TV; la pantalla táctil no es obligatoria.
+- Android 5.0 o posterior (API 21+).
+- Android TV, Google TV y TV Box; no se requiere pantalla táctil.
 - ARM de 32 bits (`armeabi-v7a`) y ARM de 64 bits (`arm64-v8a`).
-- El APK universal incluye ambas arquitecturas; los APK divididos reducen el tamaño de descarga.
+- Se recomienda verificar el certificado de firma antes de actualizar una instalación existente.
 
-La compatibilidad indicada debe confirmarse con pruebas en el modelo concreto del televisor. Este repositorio no instala APK, cambia el launcher del equipo ni elimina datos automáticamente.
+La documentación no cambia el launcher del dispositivo ni elimina aplicaciones. Algunos equipos requieren elegir manualmente el launcher predeterminado desde sus ajustes del sistema.
 
-## Compilación local
+## Vista del proyecto
 
-Requisitos: Flutter 3.24.5, Java 21, Android SDK con API 35 y SQLite de desarrollo.
+Las siguientes imágenes son recursos auténticos del proyecto y no sustituyen una comprobación visual en cada televisor:
+
+| Inicio | Aplicaciones |
+| --- | --- |
+| ![Pantalla de inicio de CLICK TV LAUNCHER](docs/images/screenshot_1.png) | ![Panel de aplicaciones](docs/images/screenshot_2.png) |
+
+| Ajustes | Personalización |
+| --- | --- |
+| ![Pantalla de ajustes](docs/images/screenshot_3.png) | ![Pantalla de personalización](docs/images/screenshot_4.png) |
+
+Las vistas de Acerca de, Accesibilidad y Donativos continúan evolucionando. Las capturas privadas, credenciales y QR de cuentas no se publican como miniaturas.
+
+## Uso con el control remoto
+
+- Usa las flechas para mover el foco y OK/Enter para activar una opción.
+- Atrás cierra primero el diálogo o vista interna activa y vuelve un nivel.
+- En listas y paneles desplazables, el elemento enfocado se mantiene visible.
+- Si un enlace externo no tiene una aplicación compatible, el launcher conserva su navegación y muestra el error de forma controlada.
+
+## Ajustes y Accesibilidad
+
+La pantalla de Ajustes incluye opciones de interfaz, categorías, accesibilidad y personalización. Las instrucciones de Accesibilidad están localizadas al español y mantienen los nombres técnicos Google TV, Home Button Fix y ADB cuando son necesarios. El launcher no activa permisos de Accesibilidad por sí solo.
+
+## Acerca de y enlaces oficiales
+
+Los enlaces oficiales actualmente definidos para CLICK TV DIGITAL son:
+
+- [Tienda online](https://click-tv-streaming.vercel.app)
+- [TV en vivo](https://t.me/clicktvgo)
+- [Streaming](https://t.me/click_tv_streaming)
+- [Contacto directo por Telegram](https://t.me/clicktvdigital)
+
+No se publica un enlace de WhatsApp hasta contar con una URL oficial válida de WhatsApp Business.
+
+## Donativos y apoyo voluntario
+
+CLICK TV LAUNCHER es gratuito y de código abierto. Si te resulta útil, puedes apoyar su desarrollo con un aporte voluntario. Cada ayuda permite seguir mejorando la experiencia en Android TV.
+
+Sugerencias culturales ecuatorianas para orientar el aporte:
+
+- ☕ Invítame un cafecito — **$1 USD**
+- 🫔 Invítame un tamalito lojano con café — **$3 USD**
+- 🍲 Invítame un encebollado — **$5 USD**
+
+Patrocinios mensuales sugeridos:
+
+- 💙 Amigo de CLICK TV — **$2 USD/mes**
+- 💚 Protector de CLICK TV — **$5 USD/mes**
+- 💜 Aliado de CLICK TV — **$10 USD/mes**
+
+Son montos orientativos: no activan cobros automáticos ni beneficios de suscripción. En una transferencia o QR, la persona elige el importe al pagar. GitHub Sponsors, Patreon y Binance se muestran como pendientes dentro de la aplicación hasta confirmar sus destinos oficiales; no se presentan como pagos activos desde este repositorio.
+
+## Instalación y desarrollo
+
+No se enlaza una APK inexistente desde esta documentación. Para compilar una variante de desarrollo se requiere Flutter 3.24.5, Java 21, Android SDK API 35 y SQLite de desarrollo:
 
 ```bash
 flutter pub get
 flutter gen-l10n
 flutter test
-flutter build apk --release --target-platform=android-arm,android-arm64
+flutter build apk --debug --target-platform=android-arm,android-arm64
 ```
 
-El `applicationId` de producción es `com.clicktv.launcher` y el `versionCode` actual es 8113. Las compilaciones release deben usar el certificado oficial configurado mediante secretos; no se debe actualizar una instalación existente sin verificar primero el certificado con `apksigner`.
+Las compilaciones firmadas y las actualizaciones de una instalación existente deben validar `applicationId`, `versionCode`, ABI y certificado con herramientas Android antes de instalarse.
 
-## GitHub Actions
+## Documentación y continuidad
 
-- `CLICK TV LAUNCHER - Validar APK firmada`: compilación manual, validación de package, `versionCode`, ABI y certificado, y entrega como artefacto privado de prueba.
-- `Release APK`: compila APK universal y divididos al crear una etiqueta o ejecutarlo manualmente. Exige `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` y `KEY_PASSWORD`; valida la firma antes de preparar los artefactos.
+El documento maestro de continuidad está en [`docs/CONTINUAR_AQUI.md`](docs/CONTINUAR_AQUI.md). Allí se separan las pruebas de CI, las revisiones estáticas y las comprobaciones físicas en TV.
 
-No se publican releases desde esta rama.
+## Licencia y créditos
 
-## Donaciones y atribuciones
-
-La interfaz incluye Banco Pichincha, Banco Guayaquil, Produbanco, Banco del Pacífico, Deuna!, PayPhone, PayPal, Binance, GitHub Sponsors y Patreon. Solo se muestran datos o enlaces ya existentes en el proyecto; Binance, GitHub Sponsors y Patreon permanecen pendientes hasta confirmar sus destinos oficiales.
-
-Se conserva la licencia [GNU GPL v3](LICENSE), los avisos de copyright y las atribuciones de FLauncher y sus colaboradores. No se deben eliminar al continuar el trabajo.
-
-## Estado del trabajo
-
-Consulta [`docs/CONTINUAR_AQUI.md`](docs/CONTINUAR_AQUI.md) para el estado de auditoría, las verificaciones ejecutadas y los pasos pendientes.
+Este proyecto se distribuye bajo [GNU GPLv3](LICENSE). Se conservan los créditos, avisos y licencias de FLauncher/LeanBitLab y de las dependencias utilizadas. CLICK TV DIGITAL mantiene su identidad y sus modificaciones, sin atribuirse la autoría exclusiva del código original de terceros.
