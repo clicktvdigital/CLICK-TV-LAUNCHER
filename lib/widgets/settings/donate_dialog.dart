@@ -240,7 +240,10 @@ class _DonateDialogState extends State<DonateDialog> {
         final altoQr = constraints.maxHeight.isFinite
             ? constraints.maxHeight * .46
             : maxQrSize;
-        final qrSize = math.max(1, math.min(maxQrSize, math.min(anchoQr, altoQr)));
+        final candidateQrSize = math.min(maxQrSize, math.min(anchoQr, altoQr)).toDouble();
+        final double qrSize = candidateQrSize.isFinite
+            ? math.max(1.0, candidateQrSize)
+            : maxQrSize;
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
