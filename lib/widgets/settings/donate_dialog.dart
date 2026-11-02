@@ -460,6 +460,8 @@ class _DonateDialogState extends State<DonateDialog> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
+                const SizedBox(height: 12),
+                _nivelesApoyo(),
               ],
             ),
           ),
@@ -507,8 +509,6 @@ class _DonateDialogState extends State<DonateDialog> {
                       children: [
                         _encabezado(),
                         const SizedBox(height: 8),
-                        _nivelesApoyo(),
-                        const SizedBox(height: 14),
                         Expanded(
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -558,8 +558,6 @@ class _DonateDialogState extends State<DonateDialog> {
                     children: [
                       _encabezado(),
                       const SizedBox(height: 8),
-                      _nivelesApoyo(),
-                      const SizedBox(height: 14),
                       Wrap(
                         alignment: WrapAlignment.center,
                         spacing: 9,

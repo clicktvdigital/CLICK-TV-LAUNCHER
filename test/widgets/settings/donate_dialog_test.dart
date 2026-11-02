@@ -59,7 +59,7 @@ void main() {
     expect(find.textContaining('AMIGO DE CLICK TV'), findsOneWidget);
     expect(find.textContaining('PROTECTOR DE CLICK TV'), findsOneWidget);
     expect(find.textContaining('ALIADO DE CLICK TV'), findsOneWidget);
-    expect(find.text('Banco Pichincha'), findsAtLeastNWidgets(2));
+    expect(find.text('Banco Pichincha'), findsOneWidget);
     expect(find.text('PayPal'), findsOneWidget);
 
     await tester.tap(find.textContaining('INVÍTAME UN CAFECITO'));
@@ -71,6 +71,11 @@ void main() {
   testWidgets('changes method without closing the dialog', (tester) async {
     await _pumpDonateDialog(tester, const Size(1280, 720));
 
+    await tester.scrollUntilVisible(
+      find.text('PayPal'),
+      200,
+      scrollable: find.byType(ListView),
+    );
     await tester.tap(find.text('PayPal').first);
     await tester.pumpAndSettle();
 
@@ -82,6 +87,11 @@ void main() {
   testWidgets('keeps pending methods without creating a QR', (tester) async {
     await _pumpDonateDialog(tester, const Size(1280, 720));
 
+    await tester.scrollUntilVisible(
+      find.text('Binance'),
+      200,
+      scrollable: find.byType(ListView),
+    );
     await tester.tap(find.text('Binance').first);
     await tester.pumpAndSettle();
 
