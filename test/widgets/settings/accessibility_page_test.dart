@@ -73,7 +73,12 @@ void main() {
     await tester.drag(list, const Offset(0, -420));
     await tester.pump();
     final hint = find.textContaining('Si usas Google TV');
-    await tester.ensureVisible(hint);
+    await tester.scrollUntilVisible(
+      hint,
+      240,
+      scrollable: list,
+    );
+    expect(hint, findsOneWidget);
     expect(tester.getRect(hint).bottom, lessThanOrEqualTo(640));
     expect(find.text('CLICK TV LAUNCHER no es el lanzador predeterminado'), findsOneWidget);
   });
