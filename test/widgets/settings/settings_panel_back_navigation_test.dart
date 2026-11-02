@@ -62,17 +62,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Modify section'), findsOneWidget);
 
+    // Android KEYCODE_BACK is delivered through the platform pop-route path.
+    // A goBack key event must not add a second navigation operation for the
+    // same physical gesture.
+    await tester.sendKeyEvent(LogicalKeyboardKey.goBack);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('Modify section'), findsNothing);
     expect(find.text('Favorite Apps'), findsOneWidget);
 
-    await tester.binding.handlePopRoute();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(find.text('Favorite Apps'), findsNothing);
     expect(find.text('Sections'), findsOneWidget);
 
-    await tester.binding.handlePopRoute();
+    await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonB);
     await tester.pumpAndSettle();
     expect(find.text('Sections'), findsNothing);
     expect(find.text('Interface'), findsOneWidget);

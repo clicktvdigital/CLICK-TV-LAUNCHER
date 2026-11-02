@@ -57,7 +57,6 @@ class FLauncherApp extends StatelessWidget
       shortcuts: {
         ...WidgetsApp.defaultShortcuts,
         const SingleActivator(LogicalKeyboardKey.escape): _backIntents,
-        const SingleActivator(LogicalKeyboardKey.goBack): _backIntents,
         const SingleActivator(LogicalKeyboardKey.gameButtonB): _backIntents,
         const SingleActivator(LogicalKeyboardKey.select): const ActivateIntent(),
         const SingleActivator(LogicalKeyboardKey.enter): const ActivateIntent(),
