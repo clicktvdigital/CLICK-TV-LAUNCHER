@@ -607,6 +607,7 @@ SettingsService mkSettingsService() {
   when(settingsService.showContinueWatching).thenReturn(false);
   when(settingsService.continueWatchingOrder).thenReturn(0);
   when(settingsService.hiddenWatchNextProgramIds).thenReturn(const []);
+  when(settingsService.hiddenWatchNextPackages).thenReturn(const []);
   when(settingsService.showNotificationsWidgetInStatusBar).thenReturn(true);
   when(settingsService.autoHideNotificationsWidget).thenReturn(false);
   when(settingsService.showWeatherInStatusBar).thenReturn(false);
