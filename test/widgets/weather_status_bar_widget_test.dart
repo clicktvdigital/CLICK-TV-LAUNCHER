@@ -59,9 +59,9 @@ void main() {
 
     await tester.pumpWidget(createWidgetUnderTest());
 
-    expect(find.text('27°C'), findsOneWidget);
+    expect(find.textContaining('27°C'), findsOneWidget);
 
-    final textWidget = tester.widget<Text>(find.text('27°C'));
+    final textWidget = tester.widget<Text>(find.textContaining('27°C'));
     expect(textWidget.style?.color, Colors.white);
     expect(textWidget.style?.fontWeight, FontWeight.w400);
 

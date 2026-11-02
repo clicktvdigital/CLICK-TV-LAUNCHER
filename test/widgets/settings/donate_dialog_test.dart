@@ -97,6 +97,7 @@ void main() {
         (tester) async {
       await _pumpDonateDialog(tester, size);
 
+      await tester.ensureVisible(find.text('Ver QR ampliado'));
       await tester.tap(find.text('Ver QR ampliado'));
       await tester.pumpAndSettle();
 
@@ -119,6 +120,7 @@ void main() {
 
   testWidgets('Back closes the expanded QR before the donate dialog', (tester) async {
     await _pumpDonateDialog(tester, const Size(1280, 720));
+    await tester.ensureVisible(find.text('Ver QR ampliado'));
     await tester.tap(find.text('Ver QR ampliado'));
     await tester.pumpAndSettle();
 

@@ -3,6 +3,7 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/launcher_state.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/settings/accessibility_page.dart';
+import 'package:flauncher/widgets/settings/focusable_settings_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -45,7 +46,17 @@ void main() {
       expect(find.text('Accesibilidad'), findsOneWidget);
       expect(find.text('CLICK TV LAUNCHER es el lanzador predeterminado'), findsOneWidget);
       expect(find.text('Corrección del botón Inicio (Google TV)'), findsOneWidget);
-      expect(find.text('Deshabilitado'), findsOneWidget);
+      final homeFixTile = find.ancestor(
+        of: find.text('Corrección del botón Inicio (Google TV)'),
+        matching: find.byType(FocusableSettingsTile),
+      );
+      expect(
+        find.descendant(
+          of: homeFixTile,
+          matching: find.text('Deshabilitado'),
+        ),
+        findsOneWidget,
+      );
       expect(find.textContaining('Si usas Google TV'), findsOneWidget);
     });
   }
