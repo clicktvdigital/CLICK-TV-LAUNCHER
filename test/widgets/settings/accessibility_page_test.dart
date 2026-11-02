@@ -73,7 +73,7 @@ void main() {
     await tester.drag(list, const Offset(0, -420));
     await tester.pump();
     final hint = find.textContaining('Si usas Google TV');
-    final scrollable = find.ancestor(
+    final scrollable = find.descendant(
       of: list,
       matching: find.byType(Scrollable),
     );

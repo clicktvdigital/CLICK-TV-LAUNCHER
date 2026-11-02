@@ -79,7 +79,7 @@ void main() {
   testWidgets('changes method without closing the dialog', (tester) async {
     await _pumpDonateDialog(tester, const Size(1280, 720));
 
-    final methodScroll = find.ancestor(
+    final methodScroll = find.descendant(
       of: find.byType(ListView),
       matching: find.byType(Scrollable),
     );
@@ -100,7 +100,7 @@ void main() {
   testWidgets('keeps pending methods without creating a QR', (tester) async {
     await _pumpDonateDialog(tester, const Size(1280, 720));
 
-    final methodScroll = find.ancestor(
+    final methodScroll = find.descendant(
       of: find.byType(ListView),
       matching: find.byType(Scrollable),
     );
