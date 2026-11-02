@@ -91,7 +91,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No se pudo abrir el enlace'), findsOneWidget);
-    expect(find.text('Enlaces oficiales'), findsOneWidget);
+    expect(find.text('ENLACES OFICIALES'), findsOneWidget);
     expect(find.text('Contacto directo · Telegram'), findsOneWidget);
   });
 
@@ -111,13 +111,22 @@ Future<void> _pumpAboutDialog(WidgetTester tester, SettingsService settingsServi
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: ChangeNotifierProvider<SettingsService>.value(
-          value: settingsService,
-          child: LTvLauncherAboutDialog(packageInfo: packageInfo),
+        body: Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) => ChangeNotifierProvider<SettingsService>.value(
+                value: settingsService,
+                child: LTvLauncherAboutDialog(packageInfo: packageInfo),
+              ),
+            ),
+            child: const Text('Abrir Acerca'),
+          ),
         ),
       ),
     ),
   );
+  await tester.tap(find.text('Abrir Acerca'));
   await tester.pumpAndSettle();
 }
 

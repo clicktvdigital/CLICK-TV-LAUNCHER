@@ -122,11 +122,13 @@ Future<void> _pumpPage(
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         initialRoute: initialRoute,
         routes: {
-          '/': (_) => const Scaffold(body: Center(child: Text('Ajustes'))),
+          if (initialRoute != null)
+            '/': (_) => const Scaffold(body: Center(child: Text('Ajustes'))),
           '/accessibility': (_) => const Scaffold(body: AccessibilityPage()),
         },
         home: initialRoute == null ? const Scaffold(body: AccessibilityPage()) : null,
