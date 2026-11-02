@@ -1,3 +1,4 @@
+import 'package:flauncher/actions.dart';
 import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/settings/settings_panel.dart';
@@ -20,26 +21,44 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AppsService>.value(
         value: appsService,
-        child: MaterialApp(
-          locale: const Locale('en'),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            key: const Key('Home'),
-            body: Center(
-              child: ElevatedButton(
-                key: const Key('OpenSettings'),
-                onPressed: () => Navigator.of(tester.element(find.byKey(const Key('Home')))).push(
-                  MaterialPageRoute(builder: (_) => const SettingsPanel()),
+        child: Builder(
+          builder: (context) {
+            const backIntents = PrioritizedIntents(orderedIntents: [
+              DismissIntent(),
+              BackIntent(),
+            ]);
+
+            return MaterialApp(
+              locale: const Locale('en'),
+              shortcuts: {
+                ...WidgetsApp.defaultShortcuts,
+                const SingleActivator(LogicalKeyboardKey.escape): backIntents,
+                const SingleActivator(LogicalKeyboardKey.gameButtonB): backIntents,
+              },
+              actions: {
+                ...WidgetsApp.defaultActions,
+                BackIntent: BackAction(context),
+              },
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+              ],
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                key: const Key('Home'),
+                body: Center(
+                  child: ElevatedButton(
+                    key: const Key('OpenSettings'),
+                    onPressed: () => Navigator.of(tester.element(find.byKey(const Key('Home')))).push(
+                      MaterialPageRoute(builder: (_) => const SettingsPanel()),
+                    ),
+                    child: const Text('Open settings'),
+                  ),
                 ),
-                child: const Text('Open settings'),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
