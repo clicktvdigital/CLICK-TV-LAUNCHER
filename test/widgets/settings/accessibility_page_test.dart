@@ -1,92 +1,137 @@
+import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/launcher_state.dart';
+import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/settings/accessibility_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flauncher/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
 
-import 'package:flauncher/providers/settings_service.dart';
 import '../../mocks.mocks.dart';
 
+const _methodChannel = MethodChannel('me.efesser.flauncher/method');
+
 void main() {
-  setUpAll(() async {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = Size(1280, 720);
-    binding.window.devicePixelRatioTestValue = 1.0;
-    binding.platformDispatcher.textScaleFactorTestValue = 0.8;
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    _methodChannel.setMockMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'checkAccessibilityPermission':
+          return false;
+        case 'openDefaultLauncherSettings':
+          return true;
+        case 'requestAccessibilityPermission':
+          return false;
+        default:
+          return null;
+      }
+    });
   });
 
-  testWidgets("AccessibilityPage renders correctly when default launcher", (tester) async {
-    final appsService = MockAppsService();
-    final launcherState = LauncherState();
-    final settingsService = MockSettingsService();
+  tearDown(() {
+    _methodChannel.setMockMethodCallHandler(null);
+  });
 
-    when(appsService.isDefaultLauncher()).thenAnswer((_) async => true);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
-    when(settingsService.startOnBoot).thenReturn(false);
-    when(settingsService.accentColorHex).thenReturn("7C4DFF");
+  for (final size in const [Size(1280, 720), Size(1920, 1080)]) {
+    testWidgets('fits and remains readable at ${size.width}x${size.height}', (tester) async {
+      _setViewport(tester, size);
+      await _pumpPage(tester, isDefault: true);
 
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AppsService>.value(value: appsService),
-          ChangeNotifierProvider<LauncherState>.value(value: launcherState),
-          ChangeNotifierProvider<SettingsService>.value(value: settingsService),
-        ],
-        builder: (_, __) => MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const Scaffold(body: AccessibilityPage()),
-        ),
-      ),
-    );
+      expect(tester.takeException(), isNull);
+      expect(find.text('Accesibilidad'), findsOneWidget);
+      expect(find.text('CLICK TV LAUNCHER es el lanzador predeterminado'), findsOneWidget);
+      expect(find.text('Corrección del botón Inicio (Google TV)'), findsOneWidget);
+      expect(find.text('Deshabilitado'), findsOneWidget);
+      expect(find.textContaining('Si usas Google TV'), findsOneWidget);
+    });
+  }
 
+  testWidgets('scrolls the complete page at narrow width with larger text', (tester) async {
+    _setViewport(tester, const Size(360, 640));
+    tester.binding.platformDispatcher.textScaleFactorTestValue = 1.6;
+    await _pumpPage(tester, isDefault: false);
+
+    expect(tester.takeException(), isNull);
+    final list = find.byType(ListView);
+    expect(list, findsOneWidget);
+
+    await tester.drag(list, const Offset(0, -420));
+    await tester.pump();
+    final hint = find.textContaining('Si usas Google TV');
+    await tester.ensureVisible(hint);
+    expect(tester.getRect(hint).bottom, lessThanOrEqualTo(640));
+    expect(find.text('CLICK TV LAUNCHER no es el lanzador predeterminado'), findsOneWidget);
+  });
+
+  testWidgets('remote arrows and Enter activate the focused default settings action', (tester) async {
+    _setViewport(tester, const Size(1280, 720));
+    await _pumpPage(tester, isDefault: true);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Back pops only the Accessibility route', (tester) async {
+    _setViewport(tester, const Size(1280, 720));
+    await _pumpPage(tester, isDefault: true, initialRoute: '/accessibility');
+
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
-    expect(find.text("Accessibility"), findsOneWidget);
-    expect(find.text("LTvLauncher is the default launcher"), findsOneWidget);
-    expect(find.text("Set as default launcher"), findsOneWidget);
+    expect(find.byType(AccessibilityPage), findsNothing);
+    expect(find.text('Ajustes'), findsOneWidget);
   });
+}
 
-  testWidgets("AccessibilityPage renders correctly when not default launcher", (tester) async {
-    final appsService = MockAppsService();
-    final launcherState = LauncherState();
-    final settingsService = MockSettingsService();
+void _setViewport(WidgetTester tester, Size size) {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+}
 
-    when(appsService.isDefaultLauncher()).thenAnswer((_) async => false);
-    when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
-    when(settingsService.startOnBoot).thenReturn(false);
-    when(settingsService.accentColorHex).thenReturn("7C4DFF");
+Future<void> _pumpPage(
+  WidgetTester tester, {
+  required bool isDefault,
+  String? initialRoute,
+}) async {
+  final appsService = MockAppsService();
+  final launcherState = LauncherState();
+  final settingsService = MockSettingsService();
 
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AppsService>.value(value: appsService),
-          ChangeNotifierProvider<LauncherState>.value(value: launcherState),
-          ChangeNotifierProvider<SettingsService>.value(value: settingsService),
+  when(appsService.isDefaultLauncher()).thenAnswer((_) async => isDefault);
+  when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
+  when(settingsService.startOnBoot).thenReturn(false);
+  when(settingsService.accentColorHex).thenReturn('7C4DFF');
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AppsService>.value(value: appsService),
+        ChangeNotifierProvider<LauncherState>.value(value: launcherState),
+        ChangeNotifierProvider<SettingsService>.value(value: settingsService),
+      ],
+      child: MaterialApp(
+        locale: const Locale('es'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
         ],
-        builder: (_, __) => MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const Scaffold(body: AccessibilityPage()),
-        ),
+        supportedLocales: AppLocalizations.supportedLocales,
+        initialRoute: initialRoute,
+        routes: {
+          '/': (_) => const Scaffold(body: Center(child: Text('Ajustes'))),
+          '/accessibility': (_) => const Scaffold(body: AccessibilityPage()),
+        },
+        home: initialRoute == null ? const Scaffold(body: AccessibilityPage()) : null,
       ),
-    );
-
-    await tester.pumpAndSettle();
-
-    expect(find.text("Accessibility"), findsOneWidget);
-    expect(find.text("LTvLauncher is not the default launcher"), findsOneWidget);
-  });
+    ),
+  );
+  await tester.pumpAndSettle();
 }

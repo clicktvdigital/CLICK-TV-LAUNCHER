@@ -5,9 +5,9 @@ import 'package:flauncher/providers/launcher_state.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'focusable_settings_tile.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class AccessibilityPage extends StatefulWidget {
   static const String routeName = "accessibility";
@@ -63,110 +63,107 @@ class _AccessibilityPageState extends State<AccessibilityPage> with WidgetsBindi
     SettingsService settingsService = context.watch<SettingsService>();
     bool isDefault = launcherState.isDefaultLauncher;
 
-    return Column(
-      children: [
-        Text(localizations.accessibility, style: Theme.of(context).textTheme.titleLarge),
-        const Divider(),
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                FocusableSettingsTile(
-                  autofocus: true,
-                  leading: Icon(
-                    isDefault ? Icons.check_circle : Icons.cancel,
-                    color: isDefault ? Colors.green : Colors.redAccent,
-                  ),
-                  title: Text(
-                    isDefault
-                        ? localizations.defaultLauncherIsDefault
-                        : localizations.defaultLauncherNotDefault,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  onPressed: _refreshStatus,
-                ),
-                const SizedBox(height: 8),
-                FocusableSettingsTile(
-                  leading: const Icon(Icons.home),
-                  title: Text(
-                    localizations.setAsDefaultLauncher,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  onPressed: () {
-                    FLauncherChannel().openDefaultLauncherSettings();
-                  },
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    localizations.defaultLauncherDescription,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white54,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 8),
-                FocusableSettingsTile(
-                  leading: Icon(
-                    _accessibilityEnabled ? Icons.settings_accessibility : Icons.accessibility_new,
-                    color: _accessibilityEnabled ? Colors.green : Colors.orange,
-                  ),
-                  title: Text(
-                    localizations.homeButtonFix,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  trailing: Text(
-                    _accessibilityEnabled ? localizations.enabled : localizations.disabled,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _accessibilityEnabled ? Colors.green : Colors.orange,
-                        ),
-                  ),
-                  onPressed: () async {
-                    final success = await FLauncherChannel().requestAccessibilityPermission();
-                    if (!success && context.mounted) {
-                      _showAccessibilityPermissionGuide(context);
-                    }
-                  },
-                ),
-                const SizedBox(height: 8),
-                FocusableSettingsTile(
-                  leading: Icon(
-                    Icons.power_settings_new,
-                    color: settingsService.startOnBoot ? Colors.green : Colors.white54,
-                  ),
-                  title: Text(
-                    localizations.startOnBoot,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  trailing: Text(
-                    settingsService.startOnBoot ? localizations.enabled : localizations.disabled,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: settingsService.startOnBoot ? Colors.green : Colors.white54,
-                        ),
-                  ),
-                  onPressed: () => settingsService.setStartOnBoot(!settingsService.startOnBoot),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    'If you are using Google TV, enable "Home Button Fix" under Accessibility settings to make the Home button open this launcher.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white54,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
+    return SafeArea(
+      minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: ListView(
+          padding: const EdgeInsets.only(top: 4, bottom: 24),
+          children: [
+            Text(
+              localizations.accessibility,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-          ),
+            const Divider(),
+            FocusableSettingsTile(
+              autofocus: true,
+              leading: Icon(
+                isDefault ? Icons.check_circle : Icons.cancel,
+                size: 28,
+                color: isDefault ? Colors.green : Colors.redAccent,
+              ),
+              title: Text(
+                isDefault
+                    ? localizations.defaultLauncherIsDefault
+                    : localizations.defaultLauncherNotDefault,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              onPressed: _refreshStatus,
+            ),
+            const SizedBox(height: 8),
+            FocusableSettingsTile(
+              leading: const Icon(Icons.home, size: 28),
+              title: Text(
+                localizations.setAsDefaultLauncher,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              onPressed: () => FLauncherChannel().openDefaultLauncherSettings(),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                localizations.defaultLauncherDescription,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white54,
+                      height: 1.35,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const Divider(),
+            FocusableSettingsTile(
+              leading: Icon(
+                _accessibilityEnabled ? Icons.settings_accessibility : Icons.accessibility_new,
+                size: 28,
+                color: _accessibilityEnabled ? Colors.green : Colors.orange,
+              ),
+              title: Text(
+                localizations.homeButtonFix,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              trailing: Text(
+                _accessibilityEnabled ? localizations.enabled : localizations.disabled,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: _accessibilityEnabled ? Colors.green : Colors.orange,
+                    ),
+              ),
+              onPressed: () async {
+                final success = await FLauncherChannel().requestAccessibilityPermission();
+                if (!success && context.mounted) {
+                  _showAccessibilityPermissionGuide(context);
+                }
+              },
+            ),
+            FocusableSettingsTile(
+              leading: Icon(
+                Icons.power_settings_new,
+                size: 28,
+                color: settingsService.startOnBoot ? Colors.green : Colors.white54,
+              ),
+              title: Text(
+                localizations.startOnBoot,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              trailing: Text(
+                settingsService.startOnBoot ? localizations.enabled : localizations.disabled,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: settingsService.startOnBoot ? Colors.green : Colors.white54,
+                    ),
+              ),
+              onPressed: () => settingsService.setStartOnBoot(!settingsService.startOnBoot),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                localizations.accessibilityGoogleTvHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white54,
+                      height: 1.35,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
         ),
-      ],
     );
   }
 
@@ -178,14 +175,13 @@ class _AccessibilityPageState extends State<AccessibilityPage> with WidgetsBindi
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Accessibility Permission'),
+        title: Text(AppLocalizations.of(context)!.accessibilityPermissionTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'On this device, the Accessibility settings screen could not be opened automatically.\n\n'
-              'To enable Home Button Fix, you can grant permission manually by running this ADB command from a computer connected to the TV:',
+            Text(
+              AppLocalizations.of(context)!.accessibilityPermissionUnavailable,
             ),
             const SizedBox(height: 12),
             Container(
