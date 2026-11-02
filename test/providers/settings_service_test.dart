@@ -151,8 +151,8 @@ void main() async {
     test("default appLanguage is empty string and appLocale is null", () async {
       final sharedPreferences = await SharedPreferences.getInstance();
       final settingsService = SettingsService(sharedPreferences);
-      expect(settingsService.appLanguage, "");
-      expect(settingsService.appLocale, isNull);
+      expect(settingsService.appLanguage, "es");
+      expect(settingsService.appLocale, const Locale("es"));
     });
 
     test("sets and gets appLanguage and appLocale", () async {

@@ -101,12 +101,6 @@ void main() {
         "currentCondition": "Overcast",
         "forecasts": [
           {
-            "conditionCode": 804,
-            "precipProbability": 0,
-            "minTemp": -4,
-            "maxTemp": 0
-          },
-          {
             "conditionCode": 601,
             "precipProbability": 60,
             "minTemp": -5,

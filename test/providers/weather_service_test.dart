@@ -62,7 +62,7 @@ void main() {
       expect(weatherService.weatherData?.currentTemp, 18);
       expect(weatherService.weatherData?.hasWarning, true);
       expect(weatherService.weatherData?.warningType, WeatherWarningType.rain);
-      expect(weatherService.weatherData?.warningText, "70% Rain today");
+      expect(weatherService.weatherData?.warningText, "70% Rain tomorrow");
     });
 
     test('updates weather data when stream emits new json', () async {

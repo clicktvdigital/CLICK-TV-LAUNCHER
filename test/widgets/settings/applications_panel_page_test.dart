@@ -117,7 +117,7 @@ void main() {
     await tester.tap(find.text("FLauncher"));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text("Add to Category"));
+    await tester.tap(find.text("Add to..."));
     await tester.pumpAndSettle();
     expect(find.byType(AddToCategoryDialog), findsOneWidget);
   });
@@ -153,6 +153,7 @@ Future<void> _pumpWidgetWithProviders(WidgetTester tester, MockAppsService appsS
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, __) => MaterialApp(
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,

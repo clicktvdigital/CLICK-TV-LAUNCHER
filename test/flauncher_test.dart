@@ -82,7 +82,7 @@ void main() {
     await _pumpWidgetWith(tester, appsService);
 
     expect(find.text("Applications"), findsOneWidget);
-    expect(find.text("Favorites"), findsOneWidget);
+    expect(find.text("Favorite Apps"), findsOneWidget);
     expect(find.byType(AppsGrid), findsOneWidget);
     expect(find.byKey(Key("me.efesser.flauncher.2")), findsOneWidget);
     expect(find.byType(CategoryRow), findsOneWidget);
@@ -105,7 +105,7 @@ void main() {
     await _pumpWidgetWith(tester, appsService);
 
     expect(find.text("Applications"), findsOneWidget);
-    expect(find.text("Favorites"), findsOneWidget);
+    expect(find.text("Favorite Apps"), findsOneWidget);
     expect(find.byType(CategoryRow), findsOneWidget);
     expect(find.byType(AppsGrid), findsOneWidget);
     expect(find.text("This category is empty."), findsNWidgets(2));
@@ -694,6 +694,7 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider(create: (_) => NetworkService(FLauncherChannel())),
       ],
       builder: (_, __) => MaterialApp(
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,

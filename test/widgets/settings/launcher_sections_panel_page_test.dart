@@ -51,7 +51,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, appsService);
 
-    expect(find.text("Favorites"), findsOneWidget);
+    expect(find.text("Favorite Apps"), findsOneWidget);
     expect(find.text("Applications"), findsOneWidget);
   });
 
@@ -64,7 +64,7 @@ void main() {
     await _pumpWidgetWithProviders(tester, appsService);
 
     // Explicitly request focus on the Focus node of the widget
-    Focus.of(tester.element(find.text("Favorites"))).requestFocus();
+    Focus.of(tester.element(find.text("Favorite Apps"))).requestFocus();
     await tester.pumpAndSettle();
 
     // Enter move state and move down
@@ -85,7 +85,7 @@ void main() {
     await _pumpWidgetWithProviders(tester, appsService);
 
     // Tap to open it
-    await tester.tap(find.text("Favorites"));
+    await tester.tap(find.text("Favorite Apps"));
     await tester.pumpAndSettle();
 
     expect(find.byKey(Key("LauncherSectionPanelPage")), findsOneWidget);
@@ -138,7 +138,7 @@ void main() {
     await _pumpWidgetWithProviders(tester, appsService, settingsService: settingsService);
 
     expect(find.text("Continue Watching"), findsOneWidget);
-    expect(find.text("Favorites"), findsOneWidget);
+    expect(find.text("Favorite Apps"), findsOneWidget);
     expect(find.text("Applications"), findsOneWidget);
   });
 
@@ -196,6 +196,7 @@ Future<void> _pumpWidgetWithProviders(
           ChangeNotifierProvider<SettingsService>.value(value: settingsService),
       ],
       builder: (_, __) => MaterialApp(
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
