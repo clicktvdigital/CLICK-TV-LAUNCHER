@@ -69,6 +69,10 @@ void main() {
     expect(tester.takeException(), isNull);
     final list = find.byType(ListView);
     expect(list, findsOneWidget);
+    expect(
+      find.text('CLICK TV LAUNCHER no es el lanzador predeterminado'),
+      findsOneWidget,
+    );
 
     await tester.drag(list, const Offset(0, -420));
     await tester.pump();
@@ -91,7 +95,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(hint, findsOneWidget);
     expect(tester.getRect(hint).bottom, lessThanOrEqualTo(640));
-    expect(find.text('CLICK TV LAUNCHER no es el lanzador predeterminado'), findsOneWidget);
   });
 
   testWidgets('remote arrows and Enter activate the focused default settings action', (tester) async {
