@@ -73,10 +73,15 @@ void main() {
     await tester.drag(list, const Offset(0, -420));
     await tester.pump();
     final hint = find.textContaining('Si usas Google TV');
+    final scrollable = find.ancestor(
+      of: list,
+      matching: find.byType(Scrollable),
+    );
+    expect(scrollable, findsOneWidget);
     await tester.scrollUntilVisible(
       hint,
       240,
-      scrollable: list,
+      scrollable: scrollable,
     );
     expect(hint, findsOneWidget);
     expect(tester.getRect(hint).bottom, lessThanOrEqualTo(640));
