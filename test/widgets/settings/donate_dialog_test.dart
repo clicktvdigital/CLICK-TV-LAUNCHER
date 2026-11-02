@@ -70,7 +70,15 @@ void main() {
     expect(find.text('Banco Pichincha'), findsAtLeastNWidgets(2));
     expect(find.text('PayPal'), findsOneWidget);
 
-    await tester.tap(find.textContaining('INVÍTAME UN CAFECITO'));
+    final supportTier = find.textContaining('INVÍTAME UN CAFECITO');
+    final detailScroll = find.ancestor(
+      of: supportTier,
+      matching: find.byType(Scrollable),
+    );
+    expect(detailScroll, findsOneWidget);
+    await tester.ensureVisible(supportTier);
+    expect(tester.getRect(supportTier).bottom, lessThanOrEqualTo(720));
+    await tester.tap(supportTier);
     await tester.pump();
     expect(find.textContaining('Sugerencia seleccionada'), findsOneWidget);
     expect(tester.takeException(), isNull);

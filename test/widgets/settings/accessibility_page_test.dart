@@ -83,6 +83,8 @@ void main() {
       240,
       scrollable: scrollable,
     );
+    await tester.ensureVisible(hint, alignment: 1.0);
+    await tester.pumpAndSettle();
     expect(hint, findsOneWidget);
     expect(tester.getRect(hint).bottom, lessThanOrEqualTo(640));
     expect(find.text('CLICK TV LAUNCHER no es el lanzador predeterminado'), findsOneWidget);
