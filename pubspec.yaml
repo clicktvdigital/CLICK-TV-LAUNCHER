@@ -58,3 +58,4 @@ flutter:
   assets:
     - assets/donaciones/logos/
     - assets/icon.png
+    - assets/click_tv_splash.png

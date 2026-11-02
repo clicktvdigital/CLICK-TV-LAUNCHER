@@ -38,10 +38,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'flauncher_app.dart';
+import 'widgets/startup_splash.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  initializeDateFormatting();
 
   // Configure LRU Image Cache bounds to preserve RAM on Android TV devices
   PaintingBinding.instance.imageCache.maximumSizeBytes = 50 * 1024 * 1024; // 50MB max RAM
@@ -88,11 +88,72 @@ Future<void> main() async {
     );
   };
 
-  final sharedPreferences = await SharedPreferences.getInstance();
-  final fLauncherChannel = FLauncherChannel();
-  final fLauncherDatabase = FLauncherDatabase(connect());
+  runApp(const _BootstrapApp());
+}
 
-  runApp(MultiProvider(
+class _BootstrapData {
+  final SharedPreferences sharedPreferences;
+  final FLauncherChannel fLauncherChannel;
+  final FLauncherDatabase fLauncherDatabase;
+
+  const _BootstrapData({
+    required this.sharedPreferences,
+    required this.fLauncherChannel,
+    required this.fLauncherDatabase,
+  });
+}
+
+class _BootstrapApp extends StatefulWidget {
+  const _BootstrapApp();
+
+  @override
+  State<_BootstrapApp> createState() => _BootstrapAppState();
+}
+
+class _BootstrapAppState extends State<_BootstrapApp> {
+  late final Future<_BootstrapData> _bootstrapFuture = _initialize();
+
+  Future<_BootstrapData> _initialize() async {
+    await initializeDateFormatting();
+    final sharedPreferences = await SharedPreferences.getInstance();
+    final fLauncherChannel = FLauncherChannel();
+    final fLauncherDatabase = FLauncherDatabase(connect());
+
+    return _BootstrapData(
+      sharedPreferences: sharedPreferences,
+      fLauncherChannel: fLauncherChannel,
+      fLauncherDatabase: fLauncherDatabase,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_BootstrapData>(
+      future: _bootstrapFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: StartupSplash(),
+          );
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const _StartupErrorApp();
+        }
+
+        final bootstrap = snapshot.data!;
+        return _buildLauncher(bootstrap);
+      },
+    );
+  }
+
+  Widget _buildLauncher(_BootstrapData bootstrap) {
+    final sharedPreferences = bootstrap.sharedPreferences;
+    final fLauncherChannel = bootstrap.fLauncherChannel;
+    final fLauncherDatabase = bootstrap.fLauncherDatabase;
+
+    return MultiProvider(
       providers: [
         Provider<BackupService>(
           create: (_) => BackupService(fLauncherDatabase, sharedPreferences),
@@ -117,7 +178,28 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => WatchNextService(fLauncherChannel)),
         ChangeNotifierProvider(create: (_) => WeatherService(fLauncherChannel)),
       ],
-      child: FLauncherApp()
-    )
-  );
+      child: FLauncherApp(),
+    );
+  }
+}
+
+class _StartupErrorApp extends StatelessWidget {
+  const _StartupErrorApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: Scaffold(
+        body: Center(
+          child: Text(
+            'No se pudo iniciar CLICK TV LAUNCHER.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+      ),
+    );
+  }
 }
