@@ -29,7 +29,7 @@ void main() {
     _methodChannel.setMockMethodCallHandler(null);
   });
 
-  testWidgets('shows the three official links and opens their exact URLs', (tester) async {
+  testWidgets('shows the four official links and opens their exact URLs', (tester) async {
     final openedUrls = <String>[];
     _methodChannel.setMockMethodCallHandler((call) async {
       if (call.method == 'openUrl') {
@@ -41,20 +41,24 @@ void main() {
 
     await _pumpAboutDialog(tester, settingsService);
 
-    expect(find.text('Enlaces oficiales'), findsOneWidget);
-    expect(find.text('Página oficial de CLICK TV'), findsOneWidget);
-    expect(find.text('Telegram · Televisión en vivo'), findsOneWidget);
-    expect(find.text('Telegram · Stream ID'), findsOneWidget);
+    expect(find.text('ENLACES OFICIALES'), findsOneWidget);
+    expect(find.text('Tienda online'), findsOneWidget);
+    expect(find.text('TV en vivo'), findsOneWidget);
+    expect(find.text('Streaming'), findsOneWidget);
+    expect(find.text('Contacto directo · Telegram'), findsOneWidget);
+    expect(find.text('WhatsApp'), findsNothing);
 
-    await tester.tap(find.text('Página oficial de CLICK TV'));
-    await tester.tap(find.text('Telegram · Televisión en vivo'));
-    await tester.tap(find.text('Telegram · Stream ID'));
+    await tester.tap(find.text('Tienda online'));
+    await tester.tap(find.text('TV en vivo'));
+    await tester.tap(find.text('Streaming'));
+    await tester.tap(find.text('Contacto directo · Telegram'));
     await tester.pumpAndSettle();
 
     expect(openedUrls, [
       'https://click-tv-streaming.vercel.app',
-      'https://t.me/televisionenvivo',
-      'https://t.me/streamid',
+      'https://t.me/clicktvgo',
+      'https://t.me/click_tv_streaming',
+      'https://t.me/clicktvdigital',
     ]);
   });
 
@@ -73,7 +77,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
-    expect(openedUrl, 'https://t.me/televisionenvivo');
+    expect(openedUrl, 'https://t.me/clicktvgo');
   });
 
   testWidgets('keeps the dialog open and reports an unavailable URL handler', (tester) async {
@@ -83,12 +87,22 @@ void main() {
     });
 
     await _pumpAboutDialog(tester, settingsService);
-    await tester.tap(find.text('Página oficial de CLICK TV'));
+    await tester.tap(find.text('Tienda online'));
     await tester.pumpAndSettle();
 
     expect(find.text('No se pudo abrir el enlace'), findsOneWidget);
     expect(find.text('Enlaces oficiales'), findsOneWidget);
-    expect(find.text('Telegram · Stream ID'), findsOneWidget);
+    expect(find.text('Contacto directo · Telegram'), findsOneWidget);
+  });
+
+  testWidgets('closes only the about dialog with the close action', (tester) async {
+    await _pumpAboutDialog(tester, settingsService);
+
+    await tester.tap(find.text('Cerrar'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LTvLauncherAboutDialog), findsNothing);
+    expect(find.byType(Scaffold), findsOneWidget);
   });
 }
 
