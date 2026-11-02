@@ -83,7 +83,11 @@ void main() {
       240,
       scrollable: scrollable,
     );
-    await tester.ensureVisible(hint, alignment: 1.0);
+    await Scrollable.ensureVisible(
+      tester.element(hint),
+      alignment: 1.0,
+      duration: Duration.zero,
+    );
     await tester.pumpAndSettle();
     expect(hint, findsOneWidget);
     expect(tester.getRect(hint).bottom, lessThanOrEqualTo(640));
