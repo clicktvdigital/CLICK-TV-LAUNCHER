@@ -641,6 +641,7 @@ NotificationsService mkNotificationsService() {
 WatchNextService mkWatchNextService() {
   final watchNextService = MockWatchNextService();
   when(watchNextService.programs).thenReturn([]);
+  when(watchNextService.hasPermission).thenReturn(false);
   return watchNextService;
 }
 
