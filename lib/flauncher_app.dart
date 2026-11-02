@@ -51,6 +51,7 @@ class FLauncherApp extends StatelessWidget
 
         return MaterialApp(
       locale: appLocale,
+      debugShowCheckedModeBanner: false,
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         overscroll: false,
       ),
