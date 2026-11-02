@@ -114,10 +114,15 @@ class _BootstrapAppState extends State<_BootstrapApp> {
   late final Future<_BootstrapData> _bootstrapFuture = _initialize();
 
   Future<_BootstrapData> _initialize() async {
+    // Keep the official splash visible long enough to be perceived on a cold
+    // Android TV start, without delaying resumes from an already running task.
+    final minimumSplash = Future<void>.delayed(const Duration(milliseconds: 1200));
     await initializeDateFormatting();
     final sharedPreferences = await SharedPreferences.getInstance();
     final fLauncherChannel = FLauncherChannel();
     final fLauncherDatabase = FLauncherDatabase(connect());
+
+    await minimumSplash;
 
     return _BootstrapData(
       sharedPreferences: sharedPreferences,
