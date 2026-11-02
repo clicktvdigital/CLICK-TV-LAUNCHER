@@ -69,6 +69,60 @@ void main() {
     expect(find.text('Enlace de donación pendiente de confirmar. '
         'No hay QR de pago disponible para este método.'), findsOneWidget);
     expect(find.byType(QrImageView), findsNothing);
+    expect(find.text('Ver QR ampliado'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final size in const [Size(1280, 720), Size(1920, 1080)]) {
+    testWidgets('opens a square expanded QR within the viewport at ${size.width}x${size.height}',
+        (tester) async {
+      await _pumpDonateDialog(tester, size);
+
+      final originalData = tester.widget<QrImageView>(find.byType(QrImageView).first).data;
+      await tester.tap(find.text('Ver QR ampliado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('QR ampliado · Banco Pichincha'), findsOneWidget);
+      final expandedQrFinder = find.byType(QrImageView).last;
+      final expandedQr = tester.getRect(expandedQrFinder);
+      final expandedData = tester.widget<QrImageView>(expandedQrFinder).data;
+      expect(expandedData, originalData);
+      expect(expandedQr.width, closeTo(expandedQr.height, 1));
+      expect(expandedQr.left, greaterThanOrEqualTo(0));
+      expect(expandedQr.top, greaterThanOrEqualTo(0));
+      expect(expandedQr.right, lessThanOrEqualTo(size.width));
+      expect(expandedQr.bottom, lessThanOrEqualTo(size.height));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('Back closes the expanded QR before the donate dialog', (tester) async {
+    await _pumpDonateDialog(tester, const Size(1280, 720));
+    await tester.tap(find.text('Ver QR ampliado'));
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('QR ampliado · Banco Pichincha'), findsNothing);
+    expect(find.byType(DonateDialog), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(DonateDialog), findsNothing);
+  });
+
+  testWidgets('opens the expanded QR from the narrow layout with larger text', (tester) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(640, 720);
+    binding.window.devicePixelRatioTestValue = 1;
+    binding.platformDispatcher.textScaleFactorTestValue = 1.35;
+    await _pumpDonateDialog(tester, null);
+
+    await tester.ensureVisible(find.text('Ver QR ampliado'));
+    await tester.tap(find.text('Ver QR ampliado'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('QR ampliado · Banco Pichincha'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

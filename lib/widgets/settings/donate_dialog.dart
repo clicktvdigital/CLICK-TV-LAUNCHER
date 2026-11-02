@@ -334,6 +334,12 @@ class _DonateDialogState extends State<DonateDialog> {
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
+                  const SizedBox(height: 6),
+                  TextButton.icon(
+                    onPressed: () => _verQrAmpliado(context, metodo, datosQr),
+                    icon: const Icon(Icons.zoom_in),
+                    label: const Text('Ver QR ampliado'),
+                  ),
                   if (metodo.tipo == _TipoDonativo.enlace) ...[
                     const SizedBox(height: 10),
                     SelectableText(
@@ -362,6 +368,21 @@ class _DonateDialogState extends State<DonateDialog> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _verQrAmpliado(
+    BuildContext context,
+    _MetodoDonativo metodo,
+    String datosQr,
+  ) {
+    return showDialog<void>(
+      context: context,
+      builder: (_) => _QrAmpliadoDialog(
+        metodo: metodo.titulo,
+        datosQr: datosQr,
+        color: metodo.color,
+      ),
     );
   }
 
@@ -507,6 +528,90 @@ class _DonateDialogState extends State<DonateDialog> {
         onPressed: () => Navigator.of(context).pop(),
         icon: const Icon(Icons.close),
         label: const Text('Cerrar'),
+      ),
+    );
+  }
+}
+
+class _QrAmpliadoDialog extends StatelessWidget {
+  final String metodo;
+  final String datosQr;
+  final Color color;
+
+  const _QrAmpliadoDialog({
+    required this.metodo,
+    required this.datosQr,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 1000,
+          maxHeight: MediaQuery.sizeOf(context).height * .92,
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final availableWidth = constraints.maxWidth - 48;
+              final availableHeight = constraints.maxHeight - 112;
+              final double qrSize = math.max(
+                1.0,
+                math.min(availableWidth, availableHeight),
+              ).toDouble();
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'QR ampliado · $metodo',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: color, width: 3),
+                      ),
+                      child: QrImageView(
+                        data: datosQr,
+                        version: QrVersions.auto,
+                        size: qrSize,
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.white,
+                        eyeStyle: const QrEyeStyle(
+                          eyeShape: QrEyeShape.square,
+                          color: Colors.black,
+                        ),
+                        dataModuleStyle: const QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Pulsa ATRÁS para volver',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
