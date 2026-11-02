@@ -109,8 +109,21 @@ class DonateDialog extends StatefulWidget {
 
 class _DonateDialogState extends State<DonateDialog> {
   int _seleccion = 0;
+  String? _aporteSeleccionado;
   static const _titular = 'Richard Ontaneda';
   static const _correo = 'clicktvdigital@gmail.com';
+
+  static const _aportesUnicos = <String>[
+    '☕ INVÍTAME UN CAFECITO · \$1 USD',
+    '🫔 INVÍTAME UN TAMALITO LOJANO CON CAFÉ · \$3 USD',
+    '🍲 INVÍTAME UN ENCEBOLLADO · \$5 USD',
+  ];
+
+  static const _patrociniosMensuales = <String>[
+    '💙 AMIGO DE CLICK TV · \$2 USD/mes',
+    '💚 PROTECTOR DE CLICK TV · \$5 USD/mes',
+    '💜 ALIADO DE CLICK TV · \$10 USD/mes',
+  ];
 
   String _datosQr(_MetodoDonativo metodo) {
     if (metodo.tipo == _TipoDonativo.enlace) return metodo.enlace;
@@ -223,6 +236,90 @@ class _DonateDialogState extends State<DonateDialog> {
                   ],
                 ),
         ),
+      ),
+    );
+  }
+
+  Widget _opcionApoyo(String texto) {
+    final seleccionada = texto == _aporteSeleccionado;
+    return OutlinedButton(
+      onPressed: () => setState(() => _aporteSeleccionado = texto),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        backgroundColor: seleccionada
+            ? const Color(0xFF254D42)
+            : const Color(0xFF16243A),
+        side: BorderSide(
+          color: seleccionada ? Colors.lightGreenAccent : Colors.white24,
+          width: seleccionada ? 2 : 1,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      ),
+      child: Text(
+        texto,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: Colors.white, fontSize: 11),
+      ),
+    );
+  }
+
+  Widget _nivelesApoyo() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111E31),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'APORTES VOLUNTARIOS SUGERIDOS',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 5,
+            children: _aportesUnicos.map(_opcionApoyo).toList(),
+          ),
+          const SizedBox(height: 7),
+          const Text(
+            'PATROCINIOS MENSUALES SUGERIDOS',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 5,
+            children: _patrociniosMensuales.map(_opcionApoyo).toList(),
+          ),
+          if (_aporteSeleccionado != null) ...[
+            const SizedBox(height: 5),
+            Text(
+              'Sugerencia seleccionada: $_aporteSeleccionado',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.lightGreenAccent, fontSize: 11),
+            ),
+          ],
+          const SizedBox(height: 4),
+          const Text(
+            'El monto es voluntario. Elige el importe al pagar; aquí no se activa un cobro automático.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white60, fontSize: 11),
+          ),
+        ],
       ),
     );
   }
@@ -409,6 +506,8 @@ class _DonateDialogState extends State<DonateDialog> {
                     child: Column(
                       children: [
                         _encabezado(),
+                        const SizedBox(height: 8),
+                        _nivelesApoyo(),
                         const SizedBox(height: 14),
                         Expanded(
                           child: Row(
@@ -458,6 +557,8 @@ class _DonateDialogState extends State<DonateDialog> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _encabezado(),
+                      const SizedBox(height: 8),
+                      _nivelesApoyo(),
                       const SizedBox(height: 14),
                       Wrap(
                         alignment: WrapAlignment.center,

@@ -45,7 +45,26 @@ void main() {
     await _pumpDonateDialog(tester, null);
 
     expect(find.text('Cerrar'), findsOneWidget);
-    expect(find.byType(OutlinedButton), findsNWidgets(10));
+    expect(find.byType(OutlinedButton), findsNWidgets(16));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shows Ecuadorian voluntary support tiers without changing methods',
+      (tester) async {
+    await _pumpDonateDialog(tester, const Size(1280, 720));
+
+    expect(find.textContaining('INVÍTAME UN CAFECITO'), findsOneWidget);
+    expect(find.textContaining('INVÍTAME UN TAMALITO LOJANO CON CAFÉ'), findsOneWidget);
+    expect(find.textContaining('INVÍTAME UN ENCEBOLLADO'), findsOneWidget);
+    expect(find.textContaining('AMIGO DE CLICK TV'), findsOneWidget);
+    expect(find.textContaining('PROTECTOR DE CLICK TV'), findsOneWidget);
+    expect(find.textContaining('ALIADO DE CLICK TV'), findsOneWidget);
+    expect(find.text('Banco Pichincha'), findsAtLeastNWidgets(2));
+    expect(find.text('PayPal'), findsOneWidget);
+
+    await tester.tap(find.textContaining('INVÍTAME UN CAFECITO'));
+    await tester.pump();
+    expect(find.textContaining('Sugerencia seleccionada'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
