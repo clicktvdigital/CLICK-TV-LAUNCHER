@@ -70,7 +70,10 @@ jobs:
         run: flutter analyze
 
   android-tv-debug:
+    if: contains(github.event.head_commit.message, '[private-apk-once]')
     needs: flutter-tests
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Obtener codigo
@@ -227,14 +230,21 @@ jobs:
           cp "$apk" build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
           test -s build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
           sha256sum build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
-      - name: Publicar resultado del APK DEBUG
-        if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG
-          path: build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
-          if-no-files-found: error
-          retention-days: 7
+      - name: Publicar APK en Release privada de pruebas
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "clicktvdigital/CLICK-TV-LAUNCHER"
+          test "$GITHUB_REF" = "refs/heads/test/click-tv-launcher-paralelo"
+          private=$(gh api "repos/$GITHUB_REPOSITORY" --jq ".private")
+          test "$private" = "true"
+          apk="build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk"
+          test -s "$apk"
+          sha256sum "$apk"
+          tag="private-test-${GITHUB_SHA:0:12}"
+          gh release create "$tag" "$apk#CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "CLICK TV LAUNCHER - prueba privada $tag" --notes "APK DEBUG privada para validar splash y pantalla completa. Commit $GITHUB_SHA. No es version publica." --prerelease --draft
       - name: Limpiar firma DEBUG temporal
         if: always()
         run: |
