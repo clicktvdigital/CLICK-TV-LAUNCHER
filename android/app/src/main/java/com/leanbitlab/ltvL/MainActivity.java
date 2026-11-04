@@ -711,6 +711,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private long getDailyDataUsage() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return -1;
         if (!checkUsageStatsPermission()) {
             return -1;
         }
@@ -773,6 +774,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private long getWeeklyDataUsage() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return -1;
         if (!checkUsageStatsPermission()) {
             return -1;
         }
@@ -836,6 +838,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private long getMonthlyDataUsage() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return -1;
         if (!checkUsageStatsPermission()) {
             return -1;
         }
@@ -899,6 +902,7 @@ public class MainActivity extends FlutterActivity {
     }
 
     private boolean checkUsageStatsPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false;
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int mode;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
