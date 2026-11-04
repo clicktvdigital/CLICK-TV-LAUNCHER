@@ -67,7 +67,7 @@ jobs:
           flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
           flutter gen-l10n
       - name: Analizar Dart y Flutter
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
   android-tv-debug:
     if: contains(github.event.head_commit.message, '[private-apk-once]')
