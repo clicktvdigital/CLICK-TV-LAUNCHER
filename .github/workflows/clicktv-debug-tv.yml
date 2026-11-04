@@ -71,7 +71,7 @@ jobs:
 
   android-tv-debug:
     if: contains(github.event.head_commit.message, '[private-apk-once]')
-    needs: flutter-tests
+    needs: flutter-analyze
     permissions:
       contents: write
     runs-on: ubuntu-latest
