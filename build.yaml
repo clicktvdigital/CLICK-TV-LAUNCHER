@@ -5,11 +5,12 @@ targets:
         enabled: false
       drift_dev|not_shared:
         enabled: true
+      mockito|mockBuilder:
+        enabled: false
       build_resolvers|transitive_digests:
         enabled: false
 
   run_built_value:
-    sources: []
     dependencies: [ 'flauncher' ]
     builders:
       drift_dev:
