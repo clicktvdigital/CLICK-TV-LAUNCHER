@@ -70,7 +70,7 @@ void main() {
               const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 48),
               const SizedBox(height: 12),
               const Text(
-                'Something went wrong',
+                'Se produjo un error',
                 style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -111,7 +111,8 @@ class _BootstrapApp extends StatefulWidget {
 }
 
 class _BootstrapAppState extends State<_BootstrapApp> {
-  late final Future<_BootstrapData> _bootstrapFuture = _initialize();
+  late Future<_BootstrapData> _bootstrapFuture = _initialize()
+      .timeout(const Duration(seconds: 30));
 
   Future<_BootstrapData> _initialize() async {
     // Keep the official splash visible long enough to be perceived on a cold
@@ -144,7 +145,12 @@ class _BootstrapAppState extends State<_BootstrapApp> {
         }
 
         if (snapshot.hasError || !snapshot.hasData) {
-          return const _StartupErrorApp();
+          debugPrint('CLICK TV LAUNCHER: error de inicio: ${snapshot.error}');
+          return _StartupErrorApp(onRetry: () {
+            setState(() {
+              _bootstrapFuture = _initialize().timeout(const Duration(seconds: 30));
+            });
+          });
         }
 
         final bootstrap = snapshot.data!;
@@ -189,7 +195,8 @@ class _BootstrapAppState extends State<_BootstrapApp> {
 }
 
 class _StartupErrorApp extends StatelessWidget {
-  const _StartupErrorApp();
+  final VoidCallback onRetry;
+  const _StartupErrorApp({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -198,10 +205,18 @@ class _StartupErrorApp extends StatelessWidget {
       theme: ThemeData.dark(),
       home: Scaffold(
         body: Center(
-          child: Text(
-            'No se pudo iniciar CLICK TV LAUNCHER.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('No se pudo iniciar CLICK TV LAUNCHER.',
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                autofocus: true,
+                onPressed: onRetry,
+                child: const Text('Reintentar'),
+              ),
+            ],
           ),
         ),
       ),

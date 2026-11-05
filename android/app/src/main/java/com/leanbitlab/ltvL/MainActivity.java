@@ -49,9 +49,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.io.ByteArrayOutputStream;
-import android.app.usage.NetworkStats;
-import android.app.usage.NetworkStatsManager;
-import android.app.AppOpsManager;
 import android.os.RemoteException;
 
 import io.flutter.embedding.android.FlutterActivity;
@@ -94,9 +91,18 @@ public class MainActivity extends FlutterActivity {
 
         new MethodChannel(messenger, METHOD_CHANNEL).setMethodCallHandler((call, result) -> {
             switch (call.method) {
-                case "getApplications" -> result.success(getApplications());
-                case "getApplicationBanner" -> result.success(getApplicationBanner(call.arguments()));
-                case "getApplicationIcon" -> result.success(getApplicationIcon(call.arguments()));
+                case "getApplications" -> sIoExecutor.execute(() -> {
+                    try {
+                        List<Map<String, Serializable>> apps = getApplications();
+                        runOnUiThread(() -> result.success(apps));
+                    } catch (Exception e) {
+                        android.util.Log.e("ClickTvLauncher", "Application discovery failed", e);
+                        runOnUiThread(() -> result.error("APPS_UNAVAILABLE",
+                                "No se pudieron cargar las aplicaciones", null));
+                    }
+                });
+                case "getApplicationBanner" -> runIo(result, () -> getApplicationBanner(call.arguments()));
+                case "getApplicationIcon" -> runIo(result, () -> getApplicationIcon(call.arguments()));
                 case "launchActivityFromAction" -> result.success(launchActivityFromAction(call.arguments()));
                 case "launchApp" -> result.success(launchApp(call.arguments()));
                 case "openUrl" -> result.success(openUrl(call.arguments()));
@@ -335,93 +341,123 @@ public class MainActivity extends FlutterActivity {
         );
     }
 
-    private List<Map<String, Serializable>> getApplications() {
+    private void runIo(MethodChannel.Result result, java.util.concurrent.Callable<?> work) {
+        sIoExecutor.execute(() -> {
+            try {
+                Object value = work.call();
+                runOnUiThread(() -> result.success(value));
+            } catch (Exception e) {
+                android.util.Log.w("ClickTvLauncher", "Application artwork unavailable", e);
+                runOnUiThread(() -> result.error("ARTWORK_UNAVAILABLE", e.getMessage(), null));
+            }
+        });
+    }
+
+    private List<Map<String, Serializable>> getApplications() throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(4);
         CompletionService<Pair<Boolean, List<ResolveInfo>>> queryIntentActivitiesCompletionService = new ExecutorCompletionService<>(
                 executor);
         queryIntentActivitiesCompletionService.submit(() -> Pair.create(false, queryIntentActivities(false)));
         queryIntentActivitiesCompletionService.submit(() -> Pair.create(true, queryIntentActivities(true)));
-        List<ResolveInfo> tvActivitiesInfo = null;
-        List<ResolveInfo> nonTvActivitiesInfo = null;
+        try {
+            long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(15);
+            List<ResolveInfo> tvActivitiesInfo = null;
+            List<ResolveInfo> nonTvActivitiesInfo = null;
 
-        int completed = 0;
-        while (completed < 2) {
-            try {
-                var activitiesInfo = queryIntentActivitiesCompletionService.take().get();
+            int completed = 0;
+            while (completed < 2) {
+                try {
+                    var completedQuery = queryIntentActivitiesCompletionService.poll(
+                            Math.max(0, deadline - System.nanoTime()), java.util.concurrent.TimeUnit.NANOSECONDS);
+                    if (completedQuery == null) throw new java.util.concurrent.TimeoutException("Application query timed out");
+                    var activitiesInfo = completedQuery.get();
 
-                if (!activitiesInfo.first) {
-                    tvActivitiesInfo = activitiesInfo.second;
-                } else {
-                    nonTvActivitiesInfo = activitiesInfo.second;
+                    if (!activitiesInfo.first) {
+                        tvActivitiesInfo = activitiesInfo.second;
+                    } else {
+                        nonTvActivitiesInfo = activitiesInfo.second;
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                } catch (ExecutionException e) {
+                    android.util.Log.w("ClickTvLauncher", "Skipping unavailable application", e);
+                } finally {
+                    completed += 1;
                 }
-            } catch (InterruptedException | ExecutionException ignored) {
-            } finally {
-                completed += 1;
-            }
-        }
-
-        if (tvActivitiesInfo == null) tvActivitiesInfo = Collections.emptyList();
-        if (nonTvActivitiesInfo == null) nonTvActivitiesInfo = Collections.emptyList();
-
-        CompletionService<Map<String, Serializable>> completionService = new ExecutorCompletionService<>(executor);
-
-        List<Map<String, Serializable>> applications = new ArrayList<>(
-                tvActivitiesInfo.size() + nonTvActivitiesInfo.size());
-
-        boolean settingsPresent = false;
-        int appCount = 0;
-        for (ResolveInfo tvActivityInfo : tvActivitiesInfo) {
-            if (!settingsPresent) {
-                settingsPresent = tvActivityInfo.activityInfo.packageName.equals("com.android.tv.settings");
             }
 
-            completionService.submit(() -> buildAppMap(tvActivityInfo.activityInfo, false, null));
-            appCount += 1;
-        }
+            if (tvActivitiesInfo == null) tvActivitiesInfo = Collections.emptyList();
+            if (nonTvActivitiesInfo == null) nonTvActivitiesInfo = Collections.emptyList();
 
-        for (ResolveInfo nonTvActivityInfo : nonTvActivitiesInfo) {
-            boolean nonDuplicate = true;
+            CompletionService<Map<String, Serializable>> completionService = new ExecutorCompletionService<>(executor);
 
-            if (!settingsPresent) {
-                settingsPresent = nonTvActivityInfo.activityInfo.packageName.equals("com.android.settings");
-            }
+            List<Map<String, Serializable>> applications = new ArrayList<>(
+                    tvActivitiesInfo.size() + nonTvActivitiesInfo.size());
 
+            boolean settingsPresent = false;
+            int appCount = 0;
             for (ResolveInfo tvActivityInfo : tvActivitiesInfo) {
-                if (tvActivityInfo.activityInfo.packageName.equals(nonTvActivityInfo.activityInfo.packageName)) {
-                    nonDuplicate = false;
-                    break;
+                if (!settingsPresent) {
+                    settingsPresent = tvActivityInfo.activityInfo.packageName.equals("com.android.tv.settings");
+                }
+
+                completionService.submit(() -> buildAppMap(tvActivityInfo.activityInfo, false, null));
+                appCount += 1;
+            }
+
+            for (ResolveInfo nonTvActivityInfo : nonTvActivitiesInfo) {
+                boolean nonDuplicate = true;
+
+                if (!settingsPresent) {
+                    settingsPresent = nonTvActivityInfo.activityInfo.packageName.equals("com.android.settings");
+                }
+
+                for (ResolveInfo tvActivityInfo : tvActivitiesInfo) {
+                    if (tvActivityInfo.activityInfo.packageName.equals(nonTvActivityInfo.activityInfo.packageName)) {
+                        nonDuplicate = false;
+                        break;
+                    }
+                }
+
+                if (nonDuplicate) {
+                    appCount += 1;
+                    completionService.submit(() -> buildAppMap(nonTvActivityInfo.activityInfo, true, null));
                 }
             }
 
-            if (nonDuplicate) {
-                appCount += 1;
-                completionService.submit(() -> buildAppMap(nonTvActivityInfo.activityInfo, true, null));
+            deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(15);
+            while (appCount > 0) {
+                try {
+                    Future<Map<String, Serializable>> appMap = completionService.poll(
+                            Math.max(0, deadline - System.nanoTime()), java.util.concurrent.TimeUnit.NANOSECONDS);
+                    if (appMap == null) throw new java.util.concurrent.TimeoutException("Application metadata timed out");
+                    applications.add(appMap.get());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                } catch (ExecutionException e) {
+                    android.util.Log.w("ClickTvLauncher", "Skipping unavailable application", e);
+                } finally {
+                    appCount -= 1;
+                }
             }
-        }
 
-        while (appCount > 0) {
-            try {
-                Future<Map<String, Serializable>> appMap = completionService.take();
-                applications.add(appMap.get());
-            } catch (InterruptedException | ExecutionException ignored) {
-            } finally {
-                appCount -= 1;
+
+            if (!settingsPresent) {
+                PackageManager packageManager = getPackageManager();
+                Intent settingsIntent = new Intent(Settings.ACTION_SETTINGS);
+                ActivityInfo activityInfo = settingsIntent.resolveActivityInfo(packageManager, 0);
+
+                if (activityInfo != null) {
+                    applications.add(buildAppMap(activityInfo, false, Settings.ACTION_SETTINGS));
+                }
             }
+
+            return applications;
+        } finally {
+            executor.shutdownNow();
         }
-
-        executor.shutdown();
-
-        if (!settingsPresent) {
-            PackageManager packageManager = getPackageManager();
-            Intent settingsIntent = new Intent(Settings.ACTION_SETTINGS);
-            ActivityInfo activityInfo = settingsIntent.resolveActivityInfo(packageManager, 0);
-
-            if (activityInfo != null) {
-                applications.add(buildAppMap(activityInfo, false, Settings.ACTION_SETTINGS));
-            }
-        }
-
-        return applications;
     }
 
     public Map<String, Serializable> getApplication(String packageName) {
@@ -712,230 +748,26 @@ public class MainActivity extends FlutterActivity {
 
     private long getDailyDataUsage() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return -1;
-        if (!checkUsageStatsPermission()) {
-            return -1;
-        }
-
-        NetworkStatsManager networkStatsManager = (NetworkStatsManager) getSystemService(Context.NETWORK_STATS_SERVICE);
-        if (networkStatsManager == null)
-            return 0;
-
-
-
-        java.util.Calendar calendar = java.util.Calendar.getInstance();
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
-        calendar.set(java.util.Calendar.MINUTE, 0);
-        calendar.set(java.util.Calendar.SECOND, 0);
-        calendar.set(java.util.Calendar.MILLISECOND, 0);
-        long startTime = calendar.getTimeInMillis();
-        long endTime = System.currentTimeMillis();
-
-        long totalBytes = 0;
-        try {
-            NetworkStats.Bucket wifiBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_WIFI,
-                    null,
-                    startTime,
-                    endTime);
-            if (wifiBucket != null) {
-                totalBytes += wifiBucket.getRxBytes() + wifiBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            NetworkStats.Bucket mobileBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_MOBILE,
-                    null,
-                    startTime,
-                    endTime);
-            if (mobileBucket != null) {
-                totalBytes += mobileBucket.getRxBytes() + mobileBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            NetworkStats.Bucket ethernetBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_ETHERNET,
-                    null,
-                    startTime,
-                    endTime);
-            if (ethernetBucket != null) {
-                totalBytes += ethernetBucket.getRxBytes() + ethernetBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return totalBytes;
+        return new NetworkUsageApi23(this).getDailyDataUsage();
     }
 
     private long getWeeklyDataUsage() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return -1;
-        if (!checkUsageStatsPermission()) {
-            return -1;
-        }
-
-        NetworkStatsManager networkStatsManager = (NetworkStatsManager) getSystemService(Context.NETWORK_STATS_SERVICE);
-        if (networkStatsManager == null)
-            return 0;
-
-
-
-        java.util.Calendar calendar = java.util.Calendar.getInstance();
-        calendar.set(java.util.Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
-        calendar.set(java.util.Calendar.MINUTE, 0);
-        calendar.set(java.util.Calendar.SECOND, 0);
-        calendar.set(java.util.Calendar.MILLISECOND, 0);
-        long startTime = calendar.getTimeInMillis();
-        long endTime = System.currentTimeMillis();
-
-        long totalBytes = 0;
-        try {
-            NetworkStats.Bucket wifiBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_WIFI,
-                    null,
-                    startTime,
-                    endTime);
-            if (wifiBucket != null) {
-                totalBytes += wifiBucket.getRxBytes() + wifiBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            NetworkStats.Bucket mobileBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_MOBILE,
-                    null,
-                    startTime,
-                    endTime);
-            if (mobileBucket != null) {
-                totalBytes += mobileBucket.getRxBytes() + mobileBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            NetworkStats.Bucket ethernetBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_ETHERNET,
-                    null,
-                    startTime,
-                    endTime);
-            if (ethernetBucket != null) {
-                totalBytes += ethernetBucket.getRxBytes() + ethernetBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return totalBytes;
+        return new NetworkUsageApi23(this).getWeeklyDataUsage();
     }
 
     private long getMonthlyDataUsage() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return -1;
-        if (!checkUsageStatsPermission()) {
-            return -1;
-        }
-
-        NetworkStatsManager networkStatsManager = (NetworkStatsManager) getSystemService(Context.NETWORK_STATS_SERVICE);
-        if (networkStatsManager == null)
-            return 0;
-
-
-
-        java.util.Calendar calendar = java.util.Calendar.getInstance();
-        calendar.set(java.util.Calendar.DAY_OF_MONTH, 1);
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
-        calendar.set(java.util.Calendar.MINUTE, 0);
-        calendar.set(java.util.Calendar.SECOND, 0);
-        calendar.set(java.util.Calendar.MILLISECOND, 0);
-        long startTime = calendar.getTimeInMillis();
-        long endTime = System.currentTimeMillis();
-
-        long totalBytes = 0;
-        try {
-            NetworkStats.Bucket wifiBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_WIFI,
-                    null,
-                    startTime,
-                    endTime);
-            if (wifiBucket != null) {
-                totalBytes += wifiBucket.getRxBytes() + wifiBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            NetworkStats.Bucket mobileBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_MOBILE,
-                    null,
-                    startTime,
-                    endTime);
-            if (mobileBucket != null) {
-                totalBytes += mobileBucket.getRxBytes() + mobileBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            NetworkStats.Bucket ethernetBucket = networkStatsManager.querySummaryForDevice(
-                    ConnectivityManager.TYPE_ETHERNET,
-                    null,
-                    startTime,
-                    endTime);
-            if (ethernetBucket != null) {
-                totalBytes += ethernetBucket.getRxBytes() + ethernetBucket.getTxBytes();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return totalBytes;
+        return new NetworkUsageApi23(this).getMonthlyDataUsage();
     }
 
     private boolean checkUsageStatsPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false;
-        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-        int mode;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            mode = appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(), getPackageName());
-        } else {
-            mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(), getPackageName());
-        }
-
-        if (mode == AppOpsManager.MODE_ALLOWED) {
-            return true;
-        }
-
-        if (mode == AppOpsManager.MODE_DEFAULT) {
-            try {
-                NetworkStatsManager networkStatsManager = (NetworkStatsManager) getSystemService(Context.NETWORK_STATS_SERVICE);
-                if (networkStatsManager != null) {
-                    long now = System.currentTimeMillis();
-                    networkStatsManager.querySummaryForDevice(ConnectivityManager.TYPE_WIFI, null, now - 1, now);
-                    return true;
-                }
-            } catch (SecurityException e) {
-                return false;
-            } catch (Exception e) {
-                return true;
-            }
-        }
-
-        return false;
+        return new NetworkUsageApi23(this).checkUsageStatsPermission();
     }
 
     private void requestUsageStatsPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
         Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
         tryStartActivity(intent);
     }

@@ -232,6 +232,24 @@ class _FLauncherState extends State<FLauncher> {
   Widget _emptyState(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
 
+    final appsService = context.watch<AppsService>();
+    if (appsService.initializationError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('No se pudieron cargar las aplicaciones.'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              autofocus: true,
+              onPressed: appsService.retryInitialization,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

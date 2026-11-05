@@ -38,6 +38,10 @@ class AppsService extends ChangeNotifier {
   final FLauncherDatabase _database;
 
   bool _initialized = false;
+  bool _initializing = false;
+  Object? _initializationError;
+  Object? get initializationError => _initializationError;
+  bool get initializing => _initializing;
 
   List<LauncherSection> _launcherSections = List.empty(growable: true);
   Map<String, App> _applications = Map();
@@ -97,12 +101,27 @@ class AppsService extends ChangeNotifier {
       .toList(growable: false);
 
   AppsService(this._fLauncherChannel, this._database) {
-    _init();
+    retryInitialization();
+  }
+
+  Future<void> retryInitialization() async {
+    if (_initializing || _initialized) return;
+    _initializing = true;
+    _initializationError = null;
+    try {
+      await _init();
+    } catch (error, stack) {
+      _initializationError = error;
+      debugPrint('CLICK TV LAUNCHER: no se pudo cargar el catálogo: $error\n$stack');
+    } finally {
+      _initializing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _init() async {
     await _refreshState(shouldNotifyListeners: false);
-    if (_database.wasCreated) {
+    if (_database.wasCreated && _categoriesById.isEmpty) {
       await _initDefaultCategories();
     } else {
       await _ensureTvAppsSectionOrder();
@@ -245,14 +264,16 @@ class AppsService extends ChangeNotifier {
   }
 
   Future<void> _initDefaultCategories() {
-    final tvApplications = _applications.values
-        .where((application) => application.sideloaded == false);
+    // Generic Android boxes often expose only CATEGORY_LAUNCHER activities.
+    // Include both launcher categories on a fresh install; preserve existing
+    // category membership and hidden apps on subsequent starts.
+    final initialApplications = _applications.values.where((app) => !app.hidden);
     return _database.transaction(() async {
       int tvCategoryId = await addCategory(defaultHomeCategoryName,
           type: CategoryType.grid, shouldNotifyListeners: false);
-      if (tvApplications.isNotEmpty) {
+      if (initialApplications.isNotEmpty) {
         Category tvAppsCategory = _categoriesById[tvCategoryId]!;
-        await addAllToCategory(tvApplications, tvAppsCategory,
+        await addAllToCategory(initialApplications, tvAppsCategory,
             shouldNotifyListeners: false);
       }
 
@@ -349,13 +370,15 @@ class AppsService extends ChangeNotifier {
   Future<void> refreshState() => _refreshState(shouldNotifyListeners: true);
 
   Future<void> _refreshState({bool shouldNotifyListeners = true}) async {
-    Future<List<App>> appsFromDatabaseFuture = _database.getApplications();
-    Future<List<AppCategory>> appsCategoriesFuture =
-        _database.getAppsCategories();
-    Future<List<Category>> categoriesFuture = _database.getCategories();
-    Future<List<LauncherSpacer>> spacersFuture = _database.getLauncherSpacers();
-    List<Map<dynamic, dynamic>> appsFromSystem =
-        await _fLauncherChannel.getApplications();
+    final appsFromDatabaseBefore = await _database.getApplications();
+    List<Map<dynamic, dynamic>> appsFromSystem;
+    try {
+      appsFromSystem = await _fLauncherChannel.getApplications();
+    } catch (error) {
+      if (appsFromDatabaseBefore.isEmpty) rethrow;
+      debugPrint('CLICK TV LAUNCHER: usando catálogo guardado: $error');
+      appsFromSystem = const [];
+    }
 
     // Even if Android returns no apps, continue loading the saved catalog.
     // Temporary discovery failures must not hide existing categories.
@@ -367,7 +390,6 @@ class AppsService extends ChangeNotifier {
     Map<String, (Map, AppsCompanion)> appsFromSystemByPackageName =
         Map.fromEntries(appEntries);
 
-    List<App> appsFromDatabaseBefore = await appsFromDatabaseFuture;
     final Set<String> knownPackageNames =
         appsFromDatabaseBefore.map((a) => a.packageName).toSet();
 
@@ -378,19 +400,10 @@ class AppsService extends ChangeNotifier {
           appsFromSystemByPackageName.values.map((record) => record.$2));
     });
 
-    appsFromDatabaseFuture = _database.getApplications();
-
-    await Future.wait([
-      appsFromDatabaseFuture,
-      appsCategoriesFuture,
-      categoriesFuture,
-      spacersFuture
-    ]);
-
-    List<App> appsFromDatabase = await appsFromDatabaseFuture;
-    List<AppCategory> appsCategories = await appsCategoriesFuture;
-    List<Category> categories = await categoriesFuture;
-    List<LauncherSpacer> spacers = await spacersFuture;
+    final appsFromDatabase = await _database.getApplications();
+    final appsCategories = await _database.getAppsCategories();
+    final categories = await _database.getCategories();
+    final spacers = await _database.getLauncherSpacers();
 
     _categoriesById = Map.fromEntries(
         categories.map((category) => MapEntry(category.id, category)));

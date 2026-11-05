@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
+
 import 'package:flauncher/flauncher_channel.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +44,27 @@ void main() {
     expect(apps, [
       {'packageName': 'me.efesser.flauncher'}
     ]);
+  });
+
+  test('application discovery errors reach the startup recovery UI', () async {
+    const channel = MethodChannel('me.efesser.flauncher/method');
+    channel.setMockMethodCallHandler((call) async {
+      throw PlatformException(code: 'APPS_UNAVAILABLE');
+    });
+    await expectLater(FLauncherChannel().getApplications(),
+        throwsA(isA<PlatformException>()));
+  });
+
+  testWidgets('a stalled native query times out instead of loading forever', (tester) async {
+    const channel = MethodChannel('me.efesser.flauncher/method');
+    final stalled = Completer<List<Map<dynamic, dynamic>>>();
+    channel.setMockMethodCallHandler((call) => stalled.future);
+    final expectation = expectLater(FLauncherChannel().getApplications(),
+        throwsA(isA<TimeoutException>()));
+    await tester.pump(const Duration(seconds: 36));
+    await expectation;
+    stalled.complete([]);
+    await tester.pump();
   });
 
   test("launchApp", () async {

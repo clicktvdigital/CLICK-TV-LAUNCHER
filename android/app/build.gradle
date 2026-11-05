@@ -63,6 +63,9 @@ def parallelDebugKeyAlias = System.getenv("PARALLEL_DEBUG_KEY_ALIAS")
 def parallelDebugKeyPassword = System.getenv("PARALLEL_DEBUG_KEY_PASSWORD")
 def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
 def isDebugTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('debug') }
+// Explicit local builds use a separate package and the standard Android debug key.
+// The shared parallel APK continues to require its existing signing identity.
+def useLocalDebugSigning = project.findProperty('localDebug') == 'true'
 
 if (isReleaseTask) {
     def missingSigningValues = []
@@ -76,7 +79,7 @@ if (isReleaseTask) {
     }
 }
 
-if (isDebugTask) {
+if (isDebugTask && !useLocalDebugSigning) {
     def missingParallelDebugSigningValues = []
     if (!parallelDebugKeystoreFilePath) missingParallelDebugSigningValues << 'PARALLEL_DEBUG_KEYSTORE_FILE'
     if (!parallelDebugKeystoreFile || !parallelDebugKeystoreFile.isFile()) missingParallelDebugSigningValues << 'keystore file'
@@ -125,8 +128,8 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix '.parallel.debug'
-            signingConfig signingConfigs.parallelDebug
+            applicationIdSuffix useLocalDebugSigning ? '.local.debug' : '.parallel.debug'
+            signingConfig useLocalDebugSigning ? signingConfigs.debug : signingConfigs.parallelDebug
             ndk {
                 abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
