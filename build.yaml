@@ -5,10 +5,6 @@ targets:
         enabled: false
       drift_dev|not_shared:
         enabled: true
-      mockito|mockBuilder:
-        enabled: true
-        generate_for:
-          - test/mocks.dart
       build_resolvers|transitive_digests:
         enabled: false
 
