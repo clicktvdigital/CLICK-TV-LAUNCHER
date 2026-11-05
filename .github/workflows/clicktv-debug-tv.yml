@@ -244,13 +244,6 @@ jobs:
           cp "$apk" build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
           test -s build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
           sha256sum build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
-      - name: Entregar APK DEBUG para instalar mediante ADB
-        uses: actions/upload-artifact@v4
-        with:
-          name: CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG
-          path: build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
-          if-no-files-found: error
-          retention-days: 14
       - name: Entregar APK en Release privada de pruebas
         env:
           GH_TOKEN: ${{ github.token }}
