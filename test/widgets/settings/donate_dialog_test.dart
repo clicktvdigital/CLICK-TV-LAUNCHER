@@ -1,237 +1,251 @@
+import 'package:flauncher/widgets/settings/donate_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import 'package:flauncher/widgets/settings/donate_dialog.dart';
+Finder _key(String value) => find.byKey(ValueKey(value));
+Finder _method(int index) => _key('donativo-metodo-$index');
+
+bool _focused(WidgetTester tester, Finder finder) =>
+    tester.widget<ButtonStyleButton>(finder).focusNode!.hasFocus;
+
+Future<void> _press(WidgetTester tester, LogicalKeyboardKey key) async {
+  await tester.sendKeyEvent(key);
+  await tester.pumpAndSettle();
+}
+
+void _inside(Rect child, Rect viewport) {
+  expect(child.left, greaterThanOrEqualTo(viewport.left - .1));
+  expect(child.top, greaterThanOrEqualTo(viewport.top - .1));
+  expect(child.right, lessThanOrEqualTo(viewport.right + .1));
+  expect(child.bottom, lessThanOrEqualTo(viewport.bottom + .1));
+}
+
+void _checkQr(WidgetTester tester, Size logical) {
+  final qr = tester.getRect(find.byType(QrImageView));
+  expect(qr.width, closeTo(qr.height, .01));
+  expect(qr.width, greaterThanOrEqualTo(180));
+  _inside(qr, Offset.zero & logical);
+  // Screen bounds alone miss clipping by a smaller inner viewport.
+  _inside(qr, tester.getRect(_key('donativo-detalle')));
+  _inside(tester.getRect(_key('donativo-cerrar')), Offset.zero & logical);
+  expect(tester.takeException(), isNull);
+}
+
+Future<void> _open(WidgetTester tester, Size logical, {
+  double density = 1,
+  double textScale = 1,
+  bool overscan = false,
+}) async {
+  tester.view.physicalSize = logical * density;
+  tester.view.devicePixelRatio = density;
+  tester.platformDispatcher.textScaleFactorTestValue = textScale;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+    tester.platformDispatcher.clearTextScaleFactorTestValue();
+  });
+  await tester.pumpWidget(MaterialApp(
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        padding: overscan ? const EdgeInsets.fromLTRB(24, 16, 24, 16) : EdgeInsets.zero,
+      ),
+      child: child!,
+    ),
+    home: Builder(builder: (context) => Scaffold(
+      body: Center(child: ElevatedButton(
+        onPressed: () => showDialog<void>(context: context,
+          builder: (_) => const DonateDialog()),
+        child: const Text('Abrir donativos'),
+      )),
+    )),
+  ));
+  await tester.tap(find.text('Abrir donativos'));
+  await tester.pumpAndSettle();
+}
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  for (final size in const [Size(960, 540), Size(1280, 720), Size(1920, 1080)]) {
+    testWidgets('QR and pinned close fit the actual viewport at $size', (tester) async {
+      await _open(tester, size, density: size.width == 960 ? 2 : 1);
+      _checkQr(tester, size);
+      expect(_focused(tester, _method(0)), isTrue);
 
-  tearDown(() {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.clearPhysicalSizeTestValue();
-    binding.window.clearDevicePixelRatioTestValue();
-    binding.platformDispatcher.clearTextScaleFactorTestValue();
-  });
+      // Scrolling all detail actions must not move or crop the pinned QR/footer.
+      await _press(tester, LogicalKeyboardKey.arrowRight);
+      final qrBefore = tester.getRect(find.byType(QrImageView));
+      for (var i = 0; i < 7; i++) {
+        await _press(tester, LogicalKeyboardKey.arrowDown);
+      }
+      expect(_focused(tester, _key('donativo-aporte-5')), isTrue);
+      final detailViewport = tester.getRect(_key('donativo-scroll-detalle'));
+      _inside(tester.getRect(_key('donativo-aporte-5')), detailViewport);
+      expect(tester.getRect(find.byType(QrImageView)), qrBefore);
+      _checkQr(tester, size);
+    });
 
-  testWidgets('shows the initial QR completely on a 1280x720 TV', (tester) async {
-    await _pumpDonateDialog(tester, const Size(1280, 720));
-
-    final qr = tester.getRect(find.byType(QrImageView));
-    expect(qr.left, greaterThanOrEqualTo(0));
-    expect(qr.top, greaterThanOrEqualTo(0));
-    expect(qr.right, lessThanOrEqualTo(1280));
-    expect(qr.bottom, lessThanOrEqualTo(720));
-    expect(qr.width, closeTo(qr.height, 1));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('uses the available space on a 1920x1080 TV', (tester) async {
-    await _pumpDonateDialog(tester, const Size(1920, 1080));
-
-    final qr = tester.getRect(find.byType(QrImageView));
-    expect(qr.width, greaterThan(180));
-    expect(qr.width, closeTo(qr.height, 1));
-    expect(qr.bottom, lessThanOrEqualTo(1080));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('keeps the narrow layout usable with larger text', (tester) async {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(640, 720);
-    binding.window.devicePixelRatioTestValue = 1;
-    binding.platformDispatcher.textScaleFactorTestValue = 1.35;
-    await _pumpDonateDialog(tester, null);
-
-    expect(find.text('Cerrar'), findsOneWidget);
-    expect(find.byType(OutlinedButton), findsNWidgets(16));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('shows Ecuadorian voluntary support tiers without changing methods',
-      (tester) async {
-    await _pumpDonateDialog(tester, const Size(1280, 720));
-
-    expect(find.textContaining('INVÍTAME UN CAFECITO'), findsOneWidget);
-    expect(find.textContaining('INVÍTAME UN TAMALITO LOJANO CON CAFÉ'), findsOneWidget);
-    expect(find.textContaining('INVÍTAME UN ENCEBOLLADO'), findsOneWidget);
-    expect(find.textContaining('AMIGO DE CLICK TV'), findsOneWidget);
-    expect(find.textContaining('PROTECTOR DE CLICK TV'), findsOneWidget);
-    expect(find.textContaining('ALIADO DE CLICK TV'), findsOneWidget);
-    final methodList = find.byType(ListView);
-    expect(
-      find.descendant(
-        of: methodList,
-        matching: find.text('Banco Pichincha'),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Banco Pichincha'), findsAtLeastNWidgets(2));
-    expect(find.text('PayPal'), findsOneWidget);
-
-    final supportTier = find.textContaining('INVÍTAME UN CAFECITO');
-    final detailScroll = find.ancestor(
-      of: supportTier,
-      matching: find.byType(Scrollable),
-    );
-    expect(detailScroll, findsOneWidget);
-    await tester.ensureVisible(supportTier);
-    expect(tester.getRect(supportTier).bottom, lessThanOrEqualTo(720));
-    await tester.tap(supportTier);
-    await tester.pump();
-    expect(find.textContaining('Sugerencia seleccionada'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('changes method without closing the dialog', (tester) async {
-    await _pumpDonateDialog(tester, const Size(1280, 720));
-
-    final methodScroll = find.descendant(
-      of: find.byType(ListView),
-      matching: find.byType(Scrollable),
-    );
-    expect(methodScroll, findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('PayPal'),
-      200,
-      scrollable: methodScroll,
-    );
-    await tester.tap(find.text('PayPal').first);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(DonateDialog), findsOneWidget);
-    expect(find.text('PayPal'), findsAtLeastNWidgets(2));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('keeps pending methods without creating a QR', (tester) async {
-    await _pumpDonateDialog(tester, const Size(1280, 720));
-
-    final methodScroll = find.descendant(
-      of: find.byType(ListView),
-      matching: find.byType(Scrollable),
-    );
-    expect(methodScroll, findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Binance'),
-      200,
-      scrollable: methodScroll,
-    );
-    await tester.tap(find.text('Binance').first);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Enlace de donación pendiente de confirmar. '
-        'No hay QR de pago disponible para este método.'), findsOneWidget);
-    expect(find.byType(QrImageView), findsNothing);
-    expect(find.text('Ver QR ampliado'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
-
-  for (final size in const [Size(1280, 720), Size(1920, 1080)]) {
-    testWidgets('opens a square expanded QR within the viewport at ${size.width}x${size.height}',
-        (tester) async {
-      await _pumpDonateDialog(tester, size);
-
-      await tester.ensureVisible(find.text('Ver QR ampliado'));
-      await tester.tap(find.text('Ver QR ampliado'));
-      await tester.pumpAndSettle();
-
+    testWidgets('expanded QR and return button fit without scrolling at $size', (tester) async {
+      await _open(tester, size, density: size.width == 960 ? 2 : 1);
+      await _press(tester, LogicalKeyboardKey.select); // method -> QR
+      expect(_focused(tester, _key('donativo-qr')), isTrue);
+      await _press(tester, LogicalKeyboardKey.select); // QR -> enlarged view
       expect(find.text('QR ampliado · Banco Pichincha'), findsOneWidget);
-      final expandedQrFinder = find.byType(QrImageView).last;
-      final expandedQr = tester.getRect(expandedQrFinder);
-      // qr_flutter 4.1.0 does not expose QrImageView.data. The production
-      // dialog passes the same payload to both views; assert that the
-      // original and expanded QR widgets coexist instead of reaching through
-      // a package-private implementation detail.
-      expect(find.byType(QrImageView), findsNWidgets(2));
-      expect(expandedQr.width, closeTo(expandedQr.height, 1));
-      expect(expandedQr.left, greaterThanOrEqualTo(0));
-      expect(expandedQr.top, greaterThanOrEqualTo(0));
-      expect(expandedQr.right, lessThanOrEqualTo(size.width));
-      expect(expandedQr.bottom, lessThanOrEqualTo(size.height));
+      final expanded = tester.getRect(find.byType(QrImageView).last);
+      expect(expanded.width, closeTo(expanded.height, .01));
+      expect(expanded.width, greaterThanOrEqualTo(180));
+      _inside(expanded, Offset.zero & size);
+      _inside(tester.getRect(_key('donativo-qr-volver')), Offset.zero & size);
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('Back closes the expanded QR before the donate dialog', (tester) async {
-    await _pumpDonateDialog(tester, const Size(1280, 720));
-    await tester.ensureVisible(find.text('Ver QR ampliado'));
-    await tester.tap(find.text('Ver QR ampliado'));
-    await tester.pumpAndSettle();
+  testWidgets('OK closes expanded QR and restores its original focus', (tester) async {
+    await _open(tester, const Size(960, 540));
+    await _press(tester, LogicalKeyboardKey.select);
+    await _press(tester, LogicalKeyboardKey.select);
+    expect(find.text('QR ampliado · Banco Pichincha'), findsOneWidget);
+    await _press(tester, LogicalKeyboardKey.select);
+    expect(find.text('QR ampliado · Banco Pichincha'), findsNothing);
+    expect(_focused(tester, _key('donativo-qr')), isTrue);
+    expect(find.byType(DonateDialog), findsOneWidget);
+  });
 
+  testWidgets('960x540 with overscan and enlarged text keeps QR and close visible', (tester) async {
+    const size = Size(960, 540);
+    await _open(tester, size, density: 2, textScale: 1.35, overscan: true);
+    _checkQr(tester, size);
+    _inside(tester.getRect(_key('donativo-cerrar')), const Rect.fromLTRB(24, 16, 936, 524));
+    await _press(tester, LogicalKeyboardKey.select);
+    await _press(tester, LogicalKeyboardKey.select);
+    final enlarged = tester.getRect(find.byType(QrImageView).last);
+    expect(enlarged.width, closeTo(enlarged.height, .01));
+    _inside(enlarged, const Rect.fromLTRB(24, 16, 936, 524));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('all ten methods can be visited and revisited using only the D-pad', (tester) async {
+    await _open(tester, const Size(960, 540), density: 2);
+    const names = ['Banco Pichincha', 'Banco Guayaquil', 'Produbanco',
+      'Banco del Pacífico', 'Deuna!', 'PayPhone', 'PayPal', 'Binance',
+      'GitHub Sponsors', 'Patreon'];
+    const numbers = ['2205375908', '0013647475', '12009308674', '1062494589', '7701517809'];
+    const links = ['https://ppls.me/izAAuu8fptGHF6uZBV9L4Q',
+      'https://www.paypal.com/ncp/payment/NKS3NQA6Q2Q5N'];
+    for (var round = 0; round < 2; round++) {
+      for (var i = 0; i < names.length; i++) {
+        expect(_focused(tester, _method(i)), isTrue);
+        _inside(tester.getRect(_method(i)), tester.getRect(_key('donativo-scroll-metodos')));
+        await _press(tester, LogicalKeyboardKey.select);
+        expect(tester.widget<Text>(_key('donativo-titulo-metodo')).data, names[i]);
+        if (i < 5) expect(find.text(numbers[i]), findsOneWidget);
+        if (i == 5 || i == 6) expect(find.text(links[i - 5]), findsOneWidget);
+        if (i < 7) {
+          expect(_focused(tester, _key('donativo-qr')), isTrue);
+          _checkQr(tester, const Size(960, 540));
+          await _press(tester, LogicalKeyboardKey.arrowDown);
+          expect(_focused(tester, _key('donativo-ampliar')), isTrue);
+          await _press(tester, LogicalKeyboardKey.arrowUp);
+          expect(_focused(tester, _key('donativo-qr')), isTrue);
+        } else {
+          expect(find.byType(QrImageView), findsNothing);
+          expect(_focused(tester, _key('donativo-aporte-0')), isTrue);
+        }
+        await _press(tester, LogicalKeyboardKey.arrowLeft);
+        expect(_focused(tester, _method(i)), isTrue);
+        if (i < names.length - 1) await _press(tester, LogicalKeyboardKey.arrowDown);
+      }
+      for (var i = 0; i < 9; i++) await _press(tester, LogicalKeyboardKey.arrowUp);
+      expect(_focused(tester, _method(0)), isTrue);
+    }
+    expect(find.byType(DonateDialog), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('right and left return between methods and detail after scrolling', (tester) async {
+    await _open(tester, const Size(960, 540));
+    for (var i = 0; i < 6; i++) await _press(tester, LogicalKeyboardKey.arrowDown);
+    await _press(tester, LogicalKeyboardKey.arrowRight);
+    expect(_focused(tester, _key('donativo-qr')), isTrue);
+    for (var i = 0; i < 8; i++) await _press(tester, LogicalKeyboardKey.arrowDown);
+    expect(_focused(tester, _key('donativo-aporte-5')), isTrue);
+    await _press(tester, LogicalKeyboardKey.arrowLeft);
+    expect(_focused(tester, _method(6)), isTrue);
+    for (var i = 0; i < 6; i++) await _press(tester, LogicalKeyboardKey.arrowUp);
+    await _press(tester, LogicalKeyboardKey.enter);
+    expect(tester.widget<Text>(_key('donativo-titulo-metodo')).data, 'Banco Pichincha');
+    expect(_focused(tester, _key('donativo-qr')), isTrue);
+    _checkQr(tester, const Size(960, 540));
+  });
+
+  testWidgets('Back restores QR opener, then bank selection, then closes only the dialog', (tester) async {
+    await _open(tester, const Size(960, 540));
+    await _press(tester, LogicalKeyboardKey.select);
+    await _press(tester, LogicalKeyboardKey.arrowDown);
+    await _press(tester, LogicalKeyboardKey.select); // zoom control
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('QR ampliado · Banco Pichincha'), findsNothing);
+    expect(_focused(tester, _key('donativo-ampliar')), isTrue);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(_focused(tester, _method(0)), isTrue);
     expect(find.byType(DonateDialog), findsOneWidget);
-
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(DonateDialog), findsNothing);
+    expect(find.text('Abrir donativos'), findsOneWidget);
   });
 
-  testWidgets('opens the expanded QR from the narrow layout with larger text', (tester) async {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = const Size(640, 720);
-    binding.window.devicePixelRatioTestValue = 1;
-    binding.platformDispatcher.textScaleFactorTestValue = 1.35;
-    await _pumpDonateDialog(tester, null);
+  testWidgets('hardware escape and OK return without trapping focus', (tester) async {
+    await _open(tester, const Size(960, 540));
+    await _press(tester, LogicalKeyboardKey.arrowRight);
+    await _press(tester, LogicalKeyboardKey.escape);
+    expect(_focused(tester, _method(0)), isTrue);
+    await _press(tester, LogicalKeyboardKey.arrowRight);
+    for (var i = 0; i < 8; i++) await _press(tester, LogicalKeyboardKey.arrowDown);
+    expect(_focused(tester, _key('donativo-volver')), isTrue);
+    await _press(tester, LogicalKeyboardKey.select);
+    expect(_focused(tester, _method(0)), isTrue);
+    await _press(tester, LogicalKeyboardKey.escape);
+    expect(find.byType(DonateDialog), findsNothing);
+  });
 
-    await tester.ensureVisible(find.text('Ver QR ampliado'));
-    await tester.tap(find.text('Ver QR ampliado'));
-    await tester.pumpAndSettle();
+  testWidgets('close remains outside scrolling and is reachable by remote', (tester) async {
+    await _open(tester, const Size(960, 540));
+    for (var i = 0; i < 10; i++) await _press(tester, LogicalKeyboardKey.arrowDown);
+    expect(_focused(tester, _key('donativo-cerrar')), isTrue);
+    await _press(tester, LogicalKeyboardKey.select);
+    expect(find.byType(DonateDialog), findsNothing);
+  });
 
+  testWidgets('support choices survive method changes without modifying bank data', (tester) async {
+    await _open(tester, const Size(960, 540));
+    await _press(tester, LogicalKeyboardKey.arrowRight);
+    await _press(tester, LogicalKeyboardKey.arrowDown); // zoom
+    await _press(tester, LogicalKeyboardKey.arrowDown); // coffee
+    await _press(tester, LogicalKeyboardKey.select);
+    expect(find.textContaining('Sugerencia seleccionada:'), findsOneWidget);
+    await _press(tester, LogicalKeyboardKey.arrowLeft);
+    await _press(tester, LogicalKeyboardKey.arrowDown);
+    await _press(tester, LogicalKeyboardKey.select);
+    expect(find.text('0013647475'), findsOneWidget);
+    expect(find.text('Titular: Richard Ontaneda'), findsOneWidget);
+    expect(find.text('Contacto: clicktvdigital@gmail.com'), findsOneWidget);
+    expect(find.textContaining('Sugerencia seleccionada:'), findsOneWidget);
+  });
+
+  testWidgets('compact layout scrolls to QR and keeps close pinned with large text', (tester) async {
+    const size = Size(640, 720);
+    await _open(tester, size, textScale: 1.35);
+    expect(find.byType(OutlinedButton), findsNWidgets(17)); // 10 methods + QR + 6 tiers
+    await _press(tester, LogicalKeyboardKey.select);
+    _checkQr(tester, size);
+    await _press(tester, LogicalKeyboardKey.arrowLeft);
+    expect(_focused(tester, _method(0)), isTrue);
+    await _press(tester, LogicalKeyboardKey.arrowRight);
+    await _press(tester, LogicalKeyboardKey.select);
     expect(find.text('QR ampliado · Banco Pichincha'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-
-  testWidgets('supports remote focus and closes one dialog route', (tester) async {
-    await _pumpDonateDialog(tester, const Size(1280, 720));
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await tester.pump();
-    expect(tester.takeException(), isNull);
-
-    await tester.tap(find.text('Cerrar'));
-    await tester.pumpAndSettle();
-    expect(find.byType(DonateDialog), findsNothing);
-  });
-
-  testWidgets('Back closes only the donate dialog route', (tester) async {
-    await _pumpDonateDialog(tester, const Size(1280, 720));
-
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-    expect(find.byType(DonateDialog), findsNothing);
-  });
-}
-
-Future<void> _pumpDonateDialog(WidgetTester tester, Size? size) async {
-  if (size != null) {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.window.physicalSizeTestValue = size;
-    binding.window.devicePixelRatioTestValue = 1;
-    binding.platformDispatcher.textScaleFactorTestValue = 1;
-  }
-
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (_) => const DonateDialog(),
-              ),
-              child: const Text('Abrir donativos'),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-  await tester.tap(find.text('Abrir donativos'));
-  await tester.pumpAndSettle();
 }

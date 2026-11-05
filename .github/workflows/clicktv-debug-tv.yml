@@ -1,6 +1,7 @@
 name: CLICK TV LAUNCHER - Android TV Debug APK
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - test/click-tv-launcher-paralelo
@@ -32,8 +33,9 @@ jobs:
       - name: Instalar dependencias y generar codigo
         run: |
           set -euo pipefail
-          flutter pub get
+          flutter pub get --enforce-lockfile
           flutter pub run build_runner build --delete-conflicting-outputs
+          test -s test/mocks.mocks.dart
           flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
           flutter gen-l10n
       - name: Ejecutar pruebas Flutter
@@ -62,15 +64,16 @@ jobs:
       - name: Instalar dependencias y generar codigo
         run: |
           set -euo pipefail
-          flutter pub get
+          flutter pub get --enforce-lockfile
           flutter pub run build_runner build --delete-conflicting-outputs
+          test -s test/mocks.mocks.dart
           flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
           flutter gen-l10n
       - name: Analizar Dart y Flutter
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
   android-tv-debug:
-    if: contains(github.event.head_commit.message, '[private-apk-once]')
+    if: github.ref == 'refs/heads/test/click-tv-launcher-paralelo'
     needs: flutter-analyze
     permissions:
       contents: write
@@ -100,8 +103,9 @@ jobs:
       - name: Instalar dependencias y generar codigo
         run: |
           set -euo pipefail
-          flutter pub get
+          flutter pub get --enforce-lockfile
           flutter pub run build_runner build --delete-conflicting-outputs
+          test -s test/mocks.mocks.dart
           flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
           flutter gen-l10n
       - name: Restaurar firma DEBUG paralela
@@ -197,6 +201,13 @@ jobs:
           javac -d "$java_dir" "$java_dir/ValidateParallelSigning.java"
           java -cp "$java_dir" ValidateParallelSigning
           echo "Firma DEBUG paralela validada correctamente"
+      - name: Verificar inicio, aplicaciones y control remoto
+        run: >-
+          flutter test test/providers/apps_service_startup_test.dart
+          test/flauncher_channel_test.dart test/widgets/startup_splash_test.dart
+          test/custom_traversal_policy_test.dart test/actions_test.dart
+          test/widgets/app_card_test.dart
+          test/widgets/settings/donate_dialog_test.dart
       - name: Compilar APK DEBUG para Android TV
         id: build
         env:
@@ -220,31 +231,48 @@ jobs:
           test -n "$sdk"
           aapt=$(find "$sdk/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)
           test -x "$aapt"
+          apksigner=$(find "$sdk/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)
+          test -x "$apksigner"
+          "$apksigner" verify --verbose --min-sdk-version 21 "$apk"
           badging=$("$aapt" dump badging "$apk")
           printf '%s\n' "$badging"
           printf '%s\n' "$badging" | grep -F "package: name='com.clicktv.launcher.test.parallel.debug'"
           printf '%s\n' "$badging" | grep -F "sdkVersion:'21'"
-          unzip -l "$apk" | grep -F 'lib/armeabi-v7a/'
-          unzip -l "$apk" | grep -F 'lib/arm64-v8a/'
+          unzip -Z1 "$apk" | grep -Fx 'lib/armeabi-v7a/libflutter.so'
+          unzip -Z1 "$apk" | grep -Fx 'lib/arm64-v8a/libflutter.so'
           mkdir -p build/android-tv-debug
           cp "$apk" build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
           test -s build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
           sha256sum build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
-      - name: Publicar APK en Release privada de pruebas
-        if: success()
+      - name: Entregar APK DEBUG para instalar mediante ADB
+        uses: actions/upload-artifact@v4
+        with:
+          name: CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG
+          path: build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Entregar APK en Release privada de pruebas
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "clicktvdigital/CLICK-TV-LAUNCHER"
           test "$GITHUB_REF" = "refs/heads/test/click-tv-launcher-paralelo"
-          private=$(gh api "repos/$GITHUB_REPOSITORY" --jq ".private")
-          test "$private" = "true"
+          test "$(gh api "repos/$GITHUB_REPOSITORY" --jq '.private')" = "true"
           apk="build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk"
           test -s "$apk"
-          sha256sum "$apk"
           tag="private-test-${GITHUB_SHA:0:12}"
-          gh release create "$tag" "$apk#CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "CLICK TV LAUNCHER - prueba privada $tag" --notes "APK DEBUG privada para validar splash y pantalla completa. Commit $GITHUB_SHA. No es version publica." --prerelease --draft
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # Preserve existing release assets on reruns; never replace backups.
+            asset=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk") | .name')
+            if [ -z "$asset" ]; then
+              gh release upload "$tag" "$apk" --repo "$GITHUB_REPOSITORY"
+            fi
+            url=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq '.url')
+          else
+            url=$(gh release create "$tag" "$apk" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "CLICK TV LAUNCHER - DEBUG privado $tag" --notes "APK DEBUG firmada. Donaciones adaptables y navegación D-pad. Commit $GITHUB_SHA. Instalar mediante adb install -r; no borrar datos." --prerelease --draft)
+          fi
+          printf 'APK DEBUG firmada en Release privada de pruebas: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
       - name: Limpiar firma DEBUG temporal
         if: always()
         run: |
