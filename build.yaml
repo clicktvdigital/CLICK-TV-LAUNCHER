@@ -9,6 +9,7 @@ targets:
         enabled: false
 
   run_built_value:
+    sources: []
     dependencies: [ 'flauncher' ]
     builders:
       drift_dev:
