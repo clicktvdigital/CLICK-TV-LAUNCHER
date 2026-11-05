@@ -211,6 +211,18 @@ void main() {
     expect(find.byType(DonateDialog), findsNothing);
   });
 
+  testWidgets('returning focus to methods also resets Back handling', (tester) async {
+    await _open(tester, const Size(960, 540));
+    await _press(tester, LogicalKeyboardKey.arrowRight);
+    tester.widget<ButtonStyleButton>(_method(0)).focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+    expect(_focused(tester, _method(0)), isTrue);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(DonateDialog), findsNothing);
+    expect(find.text('Abrir donativos'), findsOneWidget);
+  });
+
   testWidgets('close remains outside scrolling and is reachable by remote', (tester) async {
     await _open(tester, const Size(960, 540));
     for (var i = 0; i < 10; i++) await _press(tester, LogicalKeyboardKey.arrowDown);

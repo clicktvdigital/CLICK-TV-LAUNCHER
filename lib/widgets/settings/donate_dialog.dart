@@ -170,6 +170,9 @@ class _DonateDialogState extends State<DonateDialog> {
     if (!enfocado) return;
     if (_detalleNodes.contains(node) && !_enDetalle) {
       setState(() => _enDetalle = true);
+    } else if (_metodoNodes.contains(node) && _enDetalle) {
+      // Pointer and Tab traversal must obey the same Back behavior as D-pad.
+      setState(() => _enDetalle = false);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final context = node.context;
