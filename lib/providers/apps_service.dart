@@ -658,10 +658,11 @@ class AppsService extends ChangeNotifier {
 
   Future<void> launchApp(App app) async {
     app.lastLaunchedAt = DateTime.now();
-    await _database.updateApp(app.packageName,
-        AppsCompanion(lastLaunchedAt: Value(app.lastLaunchedAt)));
     notifyListeners();
 
+    // Se lanza la app primero: la escritura en la base de datos ya no la
+    // bloquea. En TV box lentos esa escritura podía tardar y el launcher
+    // parecía colgado sin abrir la app.
     Future<void> future;
     if (app.action == null) {
       future = _fLauncherChannel.launchApp(app.packageName);
@@ -669,7 +670,18 @@ class AppsService extends ChangeNotifier {
       future = _fLauncherChannel.launchActivityFromAction(app.action!);
     }
 
+    unawaited(_saveLastLaunchedAt(app));
+
     return future;
+  }
+
+  Future<void> _saveLastLaunchedAt(App app) async {
+    try {
+      await _database.updateApp(app.packageName,
+          AppsCompanion(lastLaunchedAt: Value(app.lastLaunchedAt)));
+    } catch (error) {
+      debugPrint('CLICK TV LAUNCHER: no se pudo guardar el último uso: $error');
+    }
   }
 
   Future<void> openAppInfo(App app) =>
