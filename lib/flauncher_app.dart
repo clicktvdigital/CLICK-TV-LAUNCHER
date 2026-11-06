@@ -51,6 +51,7 @@ class FLauncherApp extends StatelessWidget
 
         return MaterialApp(
       locale: appLocale,
+      debugShowCheckedModeBanner: false,
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         overscroll: false,
       ),
@@ -75,7 +76,7 @@ class FLauncherApp extends StatelessWidget
         GlobalWidgetsLocalizations.delegate
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      title: 'FLauncher',
+      title: 'CLICK TV LAUNCHER',
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,

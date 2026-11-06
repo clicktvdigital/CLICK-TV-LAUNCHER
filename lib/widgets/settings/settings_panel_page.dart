@@ -82,7 +82,7 @@ class SettingsPanelPage extends StatelessWidget {
                 ),
                 FocusableSettingsTile(
                   leading: const Icon(Icons.favorite_rounded),
-                  title: Text("Support & Donate", style: Theme.of(context).textTheme.bodyMedium),
+                  title: Text("Apoyar a CLICK TV LAUNCHER", style: Theme.of(context).textTheme.bodyMedium),
                   onPressed: () => showDialog(
                     context: context,
                     builder: (_) => const DonateDialog(),

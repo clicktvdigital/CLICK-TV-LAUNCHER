@@ -132,7 +132,12 @@ extension Geometry on FocusNode {
   }
 
   bool isOnTheSameRow(FocusNode other) {
-    return rect.center.dy.round() == other.rect.center.dy.round();
+    // Allow controls of different heights to share horizontal navigation.
+    // Require substantial vertical overlap to avoid jumping between rows.
+    final overlap = min(rect.bottom, other.rect.bottom) -
+        max(rect.top, other.rect.top);
+    final smallerHeight = min(rect.height, other.rect.height);
+    return smallerHeight > 0 && overlap >= smallerHeight * 0.5;
   }
 
   double distance(FocusNode other) {

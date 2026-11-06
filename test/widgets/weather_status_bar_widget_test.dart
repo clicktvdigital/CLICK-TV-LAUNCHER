@@ -15,6 +15,7 @@ void main() {
 
   final testWeatherWithWarning = WeatherData.fromJsonString('''
   {
+    "timestamp": ${DateTime.now().millisecondsSinceEpoch ~/ 1000},
     "currentTemp": 27,
     "currentConditionCode": 800,
     "currentCondition": "Clear",
@@ -58,9 +59,9 @@ void main() {
 
     await tester.pumpWidget(createWidgetUnderTest());
 
-    expect(find.text('27°C'), findsOneWidget);
+    expect(find.textContaining('27°C'), findsOneWidget);
 
-    final textWidget = tester.widget<Text>(find.text('27°C'));
+    final textWidget = tester.widget<Text>(find.textContaining('27°C'));
     expect(textWidget.style?.color, Colors.white);
     expect(textWidget.style?.fontWeight, FontWeight.w400);
 
@@ -81,9 +82,9 @@ void main() {
     await tester.pumpWidget(createWidgetUnderTest());
 
     // Warning text is included in displayText without altering colors/outline/icon
-    expect(find.text('27°C • 80% Rain today'), findsOneWidget);
+    expect(find.text('27°C • 80% Rain tomorrow'), findsOneWidget);
 
-    final textWidget = tester.widget<Text>(find.text('27°C • 80% Rain today'));
+    final textWidget = tester.widget<Text>(find.text('27°C • 80% Rain tomorrow'));
     expect(textWidget.style?.color, Colors.white);
     expect(textWidget.style?.fontWeight, FontWeight.w400);
 

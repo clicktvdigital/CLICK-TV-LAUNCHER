@@ -1,0 +1,277 @@
+name: CLICK TV LAUNCHER - Android TV Debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/click-tv-launcher-paralelo
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+      - name: Instalar SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3 libsqlite3-dev
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+      - name: Instalar dependencias y generar codigo
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          flutter pub run build_runner build --delete-conflicting-outputs
+          test -s test/mocks.mocks.dart
+          flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
+          flutter gen-l10n
+      - name: Ejecutar pruebas Flutter
+        run: flutter test
+
+  flutter-analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+      - name: Instalar SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3 libsqlite3-dev
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+      - name: Instalar dependencias y generar codigo
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          flutter pub run build_runner build --delete-conflicting-outputs
+          test -s test/mocks.mocks.dart
+          flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
+          flutter gen-l10n
+      - name: Analizar Dart y Flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+  android-tv-debug:
+    if: github.ref == 'refs/heads/test/click-tv-launcher-paralelo'
+    needs: flutter-analyze
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Instalar SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3 libsqlite3-dev
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+      - name: Instalar dependencias y generar codigo
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          flutter pub run build_runner build --delete-conflicting-outputs
+          test -s test/mocks.mocks.dart
+          flutter pub run drift_dev schema generate drift_schemas/ test/generated_migrations/
+          flutter gen-l10n
+      - name: Restaurar firma DEBUG paralela
+        env:
+          PARALLEL_DEBUG_KEYSTORE_BASE64: ${{ secrets.PARALLEL_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          : "${PARALLEL_DEBUG_KEYSTORE_BASE64:?Falta el secreto PARALLEL_DEBUG_KEYSTORE_BASE64}"
+          key_path="$RUNNER_TEMP/click-tv-parallel-debug.keystore"
+          umask 077
+          if ! printf '%s' "$PARALLEL_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$key_path"; then
+            echo "ERROR: PARALLEL_DEBUG_KEYSTORE_BASE64 no es Base64 válido"
+            exit 1
+          fi
+          chmod 600 "$key_path"
+          test -s "$key_path"
+          printf 'PARALLEL_DEBUG_KEYSTORE_FILE=%s\n' "$key_path" >> "$GITHUB_ENV"
+      - name: Validar firma DEBUG paralela
+        env:
+          PARALLEL_DEBUG_KEYSTORE_FILE: ${{ runner.temp }}/click-tv-parallel-debug.keystore
+          PARALLEL_DEBUG_KEYSTORE_PASSWORD: ${{ secrets.PARALLEL_DEBUG_KEYSTORE_PASSWORD }}
+          PARALLEL_DEBUG_KEY_ALIAS: ${{ secrets.PARALLEL_DEBUG_KEY_ALIAS }}
+          PARALLEL_DEBUG_KEY_PASSWORD: ${{ secrets.PARALLEL_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          java_dir="$RUNNER_TEMP/click-tv-parallel-signing-validation"
+          umask 077
+          mkdir -p "$java_dir"
+          trap 'rm -rf -- "$java_dir"' EXIT
+          cat > "$java_dir/ValidateParallelSigning.java" <<'JAVA'
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+          import java.security.Key;
+          import java.security.KeyStore;
+          import java.security.MessageDigest;
+          import java.security.PrivateKey;
+          import java.security.Signature;
+          import java.security.cert.X509Certificate;
+
+          public final class ValidateParallelSigning {
+            private static final String EXPECTED_SHA256 =
+                "7b22552d86d6add9223b995730f88cea3ea4368370c26333cec3bbc704968c70";
+
+            private static String sha256(byte[] value) throws Exception {
+              byte[] digest = MessageDigest.getInstance("SHA-256").digest(value);
+              StringBuilder result = new StringBuilder(digest.length * 2);
+              for (byte item : digest) {
+                result.append(String.format("%02x", item & 0xff));
+              }
+              return result.toString();
+            }
+
+            public static void main(String[] args) throws Exception {
+              String keystorePath = System.getenv("PARALLEL_DEBUG_KEYSTORE_FILE");
+              String storePassword = System.getenv("PARALLEL_DEBUG_KEYSTORE_PASSWORD");
+              String alias = System.getenv("PARALLEL_DEBUG_KEY_ALIAS");
+              String keyPassword = System.getenv("PARALLEL_DEBUG_KEY_PASSWORD");
+              if (keystorePath == null || storePassword == null
+                  || alias == null || keyPassword == null) {
+                throw new IllegalStateException("missing signing configuration");
+              }
+
+              KeyStore keystore = KeyStore.getInstance("PKCS12");
+              try (var input = Files.newInputStream(Path.of(keystorePath))) {
+                keystore.load(input, storePassword.toCharArray());
+              }
+              Key key = keystore.getKey(alias, keyPassword.toCharArray());
+              if (!(key instanceof PrivateKey)) {
+                throw new IllegalStateException("private key unavailable");
+              }
+              if (!(keystore.getCertificate(alias) instanceof X509Certificate certificate)) {
+                throw new IllegalStateException("certificate unavailable");
+              }
+              if (!EXPECTED_SHA256.equals(sha256(certificate.getEncoded()))) {
+                throw new IllegalStateException("certificate fingerprint mismatch");
+              }
+
+              byte[] message = "click-tv-parallel-signing-validation"
+                  .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+              Signature signer = Signature.getInstance("SHA256withRSA");
+              signer.initSign((PrivateKey) key);
+              signer.update(message);
+              byte[] signature = signer.sign();
+              Signature verifier = Signature.getInstance("SHA256withRSA");
+              verifier.initVerify(certificate.getPublicKey());
+              verifier.update(message);
+              if (!verifier.verify(signature)) {
+                throw new IllegalStateException("private key does not match certificate");
+              }
+            }
+          }
+          JAVA
+          javac -d "$java_dir" "$java_dir/ValidateParallelSigning.java"
+          java -cp "$java_dir" ValidateParallelSigning
+          echo "Firma DEBUG paralela validada correctamente"
+      - name: Verificar inicio, aplicaciones y control remoto
+        run: >-
+          flutter test test/providers/apps_service_startup_test.dart
+          test/flauncher_channel_test.dart test/widgets/startup_splash_test.dart
+          test/custom_traversal_policy_test.dart test/actions_test.dart
+          test/widgets/app_card_test.dart
+          test/widgets/settings/donate_dialog_test.dart
+      - name: Compilar APK DEBUG para Android TV
+        id: build
+        env:
+          PARALLEL_DEBUG_KEYSTORE_FILE: ${{ runner.temp }}/click-tv-parallel-debug.keystore
+          PARALLEL_DEBUG_KEYSTORE_PASSWORD: ${{ secrets.PARALLEL_DEBUG_KEYSTORE_PASSWORD }}
+          PARALLEL_DEBUG_KEY_ALIAS: ${{ secrets.PARALLEL_DEBUG_KEY_ALIAS }}
+          PARALLEL_DEBUG_KEY_PASSWORD: ${{ secrets.PARALLEL_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          flutter build apk --debug --target-platform=android-arm,android-arm64
+          apk=$(find build/app/outputs/flutter-apk -maxdepth 1 -type f -name "*debug.apk" -print -quit 2>/dev/null)
+          if [ -z "$apk" ]; then
+            apk=$(find build/app/outputs/apk/debug -maxdepth 1 -type f -name "*debug.apk" -print -quit 2>/dev/null)
+          fi
+          if [ -z "$apk" ]; then
+            echo "ERROR: no se encontró la APK universal DEBUG"
+            find build/app/outputs -type f -name '*.apk' -print
+            exit 1
+          fi
+          sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}
+          test -n "$sdk"
+          aapt=$(find "$sdk/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)
+          test -x "$aapt"
+          apksigner=$(find "$sdk/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)
+          test -x "$apksigner"
+          "$apksigner" verify --verbose --min-sdk-version 21 "$apk"
+          badging=$("$aapt" dump badging "$apk")
+          printf '%s\n' "$badging"
+          printf '%s\n' "$badging" | grep -F "package: name='com.clicktv.launcher.test.parallel.debug'"
+          printf '%s\n' "$badging" | grep -F "sdkVersion:'21'"
+          unzip -Z1 "$apk" | grep -Fx 'lib/armeabi-v7a/libflutter.so'
+          unzip -Z1 "$apk" | grep -Fx 'lib/arm64-v8a/libflutter.so'
+          mkdir -p build/android-tv-debug
+          cp "$apk" build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+          test -s build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+          sha256sum build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk
+      - name: Entregar APK en Release privada de pruebas
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "clicktvdigital/CLICK-TV-LAUNCHER"
+          test "$GITHUB_REF" = "refs/heads/test/click-tv-launcher-paralelo"
+          test "$(gh api "repos/$GITHUB_REPOSITORY" --jq '.private')" = "true"
+          apk="build/android-tv-debug/CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk"
+          test -s "$apk"
+          tag="private-test-${GITHUB_SHA:0:12}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # Preserve existing release assets on reruns; never replace backups.
+            asset=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "CLICK-TV-LAUNCHER-ANDROID-TV-DEBUG.apk") | .name')
+            if [ -z "$asset" ]; then
+              gh release upload "$tag" "$apk" --repo "$GITHUB_REPOSITORY"
+            fi
+            url=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url --jq '.url')
+          else
+            url=$(gh release create "$tag" "$apk" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "CLICK TV LAUNCHER - DEBUG privado $tag" --notes "APK DEBUG firmada. Donaciones adaptables y navegación D-pad. Commit $GITHUB_SHA. Instalar mediante adb install -r; no borrar datos." --prerelease --draft)
+          fi
+          printf 'APK DEBUG firmada en Release privada de pruebas: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
+      - name: Limpiar firma DEBUG temporal
+        if: always()
+        run: |
+          set -euo pipefail
+          key_path="$RUNNER_TEMP/click-tv-parallel-debug.keystore"
+          if [ -e "$key_path" ]; then
+            chmod u+w "$key_path" || true
+            rm -f -- "$key_path"
+          fi

@@ -494,7 +494,7 @@ abstract class AppLocalizations {
   /// No description provided for @textAboutDialog.
   ///
   /// In en, this message translates to:
-  /// **'LTvLauncher is a customized open-source launcher for Android TV, based on FLauncher.\n\nDeveloped by LeanBitLab.\nSource code available at {repoUrl}.'**
+  /// **'CLICK TV LAUNCHER is a customized open-source launcher for Android TV and Google TV, based on FLauncher.\n\nDeveloped by CLICK TV DIGITAL.\nSource code available at {repoUrl}.'**
   String textAboutDialog(String repoUrl);
 
   /// No description provided for @textEmptyCategory.
@@ -584,13 +584,13 @@ abstract class AppLocalizations {
   /// No description provided for @defaultLauncherIsDefault.
   ///
   /// In en, this message translates to:
-  /// **'LTvLauncher is the default launcher'**
+  /// **'CLICK TV LAUNCHER is the default launcher'**
   String get defaultLauncherIsDefault;
 
   /// No description provided for @defaultLauncherNotDefault.
   ///
   /// In en, this message translates to:
-  /// **'LTvLauncher is not the default launcher'**
+  /// **'CLICK TV LAUNCHER is not the default launcher'**
   String get defaultLauncherNotDefault;
 
   /// No description provided for @setAsDefaultLauncher.
@@ -602,7 +602,7 @@ abstract class AppLocalizations {
   /// No description provided for @defaultLauncherDescription.
   ///
   /// In en, this message translates to:
-  /// **'When set as the default launcher, the Home button will always return to LTvLauncher. The TV will also boot directly into LTvLauncher.'**
+  /// **'When set as the default launcher, the Home button will always return to CLICK TV LAUNCHER. The TV will also boot directly into CLICK TV LAUNCHER.'**
   String get defaultLauncherDescription;
 
   /// No description provided for @inputs.
@@ -1034,8 +1034,11 @@ abstract class AppLocalizations {
   /// No description provided for @breezyWeatherSetupHint.
   ///
   /// In en, this message translates to:
-  /// **'Install Breezy Weather and enable \'Local data sharing\' / \'Gadgetbridge\' in its settings to see weather and rain warnings.'**
+  /// **'Install Alerta EC and enable \'Local data sharing\' / \'Gadgetbridge\' in its settings to see weather and rain warnings.'**
   String get breezyWeatherSetupHint;
+
+  /// Mensaje para Alerta EC instalada sin datos meteorologicos.
+  String get alertaEcWeatherDataHint;
 
   /// No description provided for @displayAndScreensaver.
   ///

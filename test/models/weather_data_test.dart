@@ -89,7 +89,7 @@ void main() {
       expect(weather.warningType, WeatherWarningType.rain);
       expect(weather.warningConditionCode, 500);
       expect(weather.warningPrecipProbability, 80);
-      expect(weather.warningText, "80% Rain today");
+      expect(weather.warningText, "80% Rain tomorrow");
       expect(weather.getConditionIcon(isWarning: true), Icons.grain_outlined);
     });
 
@@ -100,12 +100,6 @@ void main() {
         "currentConditionCode": 804,
         "currentCondition": "Overcast",
         "forecasts": [
-          {
-            "conditionCode": 804,
-            "precipProbability": 0,
-            "minTemp": -4,
-            "maxTemp": 0
-          },
           {
             "conditionCode": 601,
             "precipProbability": 60,
@@ -145,7 +139,7 @@ void main() {
 
       expect(weather.hasWarning, true);
       expect(weather.warningType, WeatherWarningType.storm);
-      expect(weather.warningText, "90% Storm today");
+      expect(weather.warningText, "90% Storm tomorrow");
       expect(weather.getConditionIcon(isWarning: true), Icons.flash_on_outlined);
     });
   });

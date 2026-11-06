@@ -481,7 +481,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fahrenheit => 'Fahrenheit (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'Installieren Sie Breezy Weather und aktivieren Sie \'Lokale Datenfreigabe\' / \'Gadgetbridge\' in den Einstellungen, um Wetter und Regenwarnungen anzuzeigen.';
+  String get breezyWeatherSetupHint => "Installieren Sie Alerta EC und aktivieren Sie 'Lokale Datenfreigabe' / 'Gadgetbridge' in den Einstellungen, um Wetter und Regenwarnungen anzuzeigen.";
+
+  @override
+  String get alertaEcWeatherDataHint => "Öffne Alerta EC und aktiviere in den Einstellungen die Freigabe der Wetterdaten für CLICK TV LAUNCHER.";
 
   @override
   String get displayAndScreensaver => 'Display & Bildschirmschoner';

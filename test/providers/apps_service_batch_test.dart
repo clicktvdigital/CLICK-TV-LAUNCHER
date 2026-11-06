@@ -183,8 +183,10 @@ void main() {
     Category cat1 = appsService.categories.firstWhere((c) => c.id == catId1);
     Category cat2 = appsService.categories.firstWhere((c) => c.id == catId2);
 
-    expect(cat1.order, 3);
-    expect(cat2.order, 4);
+    // This fixture starts with the service's initial categories hidden from the
+    // user, so newly created categories receive the first available orders.
+    expect(cat1.order, 1);
+    expect(cat2.order, 2);
   });
 
   test(

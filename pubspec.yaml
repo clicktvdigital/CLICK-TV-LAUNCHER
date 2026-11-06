@@ -1,7 +1,7 @@
 name: flauncher
-description: Flutter-based Android TV launcher.
+description: CLICK TV LAUNCHER by CLICK TV DIGITAL para Android TV y Google TV.
 
-version: 2026.10.03+8112
+version: 2026.10.31+8113
 
 environment:
   sdk: ">=3.4.3"
@@ -58,3 +58,4 @@ flutter:
   assets:
     - assets/donaciones/logos/
     - assets/icon.png
+    - assets/click_tv_splash.png

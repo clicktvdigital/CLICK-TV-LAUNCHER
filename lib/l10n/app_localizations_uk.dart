@@ -481,7 +481,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fahrenheit => 'Фаренгейт (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'Встановіть Breezy Weather та увімкніть \'Локальний обмін даними\' / \'Gadgetbridge\' у налаштуваннях для перегляду погоди та попереджень про дощ.';
+  String get breezyWeatherSetupHint => "Встановіть Alerta EC та увімкніть 'Локальний обмін даними' / 'Gadgetbridge' у налаштуваннях для перегляду погоди та попереджень про дощ.";
+
+  @override
+  String get alertaEcWeatherDataHint => "Відкрийте Alerta EC та увімкніть у налаштуваннях передачу даних про погоду до CLICK TV LAUNCHER.";
 
   @override
   String get displayAndScreensaver => 'Екран та заставка';

@@ -7,7 +7,7 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get aboutFlauncher => 'Acerca de LTvLauncher';
+  String get aboutFlauncher => 'Acerca de CLICK TV LAUNCHER';
 
   @override
   String get addCategory => 'Agregar categoría';
@@ -202,7 +202,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String textAboutDialog(String repoUrl) {
-    return 'LTvLauncher es un lanzador de código abierto personalizado para Android TV, basado en FLauncher.\n\nDesarrollado por LeanBitLab.\nCódigo fuente disponible en $repoUrl.';
+    return 'CLICK TV LAUNCHER es un lanzador de código abierto personalizado para Android TV y Google TV, basado en FLauncher.\n\nDesarrollado por CLICK TV DIGITAL.\nCódigo fuente disponible en $repoUrl.';
   }
 
   @override
@@ -215,7 +215,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get titleStatusBarSettingsPage => 'Elija la información a mostrar en la barra de estado';
 
   @override
-  String get tvApplications => 'Aplicaciones del televisor';
+  String get tvApplications => 'Aplicaciones de TV';
 
   @override
   String get type => 'Tipo';
@@ -248,16 +248,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get accessibility => 'Accesibilidad';
 
   @override
-  String get defaultLauncherIsDefault => 'LTvLauncher es el lanzador predeterminado';
+  String get defaultLauncherIsDefault => 'CLICK TV LAUNCHER es el lanzador predeterminado';
 
   @override
-  String get defaultLauncherNotDefault => 'LTvLauncher no es el lanzador predeterminado';
+  String get defaultLauncherNotDefault => 'CLICK TV LAUNCHER no es el lanzador predeterminado';
 
   @override
   String get setAsDefaultLauncher => 'Establecer como lanzador predeterminado';
 
   @override
-  String get defaultLauncherDescription => 'Cuando se establece como lanzador predeterminado, el botón de inicio siempre regresará a LTvLauncher. El TV también iniciará directamente en LTvLauncher.';
+  String get defaultLauncherDescription => 'Cuando se establece como lanzador predeterminado, el botón de inicio siempre regresará a CLICK TV LAUNCHER. El TV también iniciará directamente en CLICK TV LAUNCHER.';
 
   @override
   String get inputs => 'Entradas';
@@ -481,7 +481,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fahrenheit => 'Fahrenheit (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'Instala Breezy Weather y activa \'Compartir datos locales\' / \'Gadgetbridge\' en sus ajustes para ver el clima y avisos de lluvia.';
+  String get breezyWeatherSetupHint => "Instala Alerta EC y activa 'Compartir datos locales' / 'Gadgetbridge' en sus ajustes para ver el clima y avisos de lluvia.";
+
+  @override
+  String get alertaEcWeatherDataHint => "Abre Alerta EC y habilita en sus ajustes el envío de datos del clima a CLICK TV LAUNCHER.";
 
   @override
   String get displayAndScreensaver => 'Pantalla y salvapantallas';

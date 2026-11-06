@@ -56,7 +56,7 @@ def get_git_changelog(current_tag):
         log_output = subprocess.check_output(
             ['git', 'log', '--pretty=format:- %s', git_log_range]
         ).decode().strip()
-        
+
         changelog_lines = []
         if log_output:
             for line in log_output.split('\n'):
@@ -64,9 +64,9 @@ def get_git_changelog(current_tag):
                 if "Merge" in line or "chore: " in line:
                     continue
                 changelog_lines.append(line)
-        return "\n".join(changelog_lines) if changelog_lines else "- General improvements and bug fixes"
+        return "\n".join(changelog_lines) if changelog_lines else "- Mejoras generales y correcciones"
     except Exception as e:
-        return f"- New changes in release {current_tag}"
+        return f"- Nuevos cambios en la release {current_tag}"
 
 def find_apk_size(*filenames):
     candidate_dirs = [
@@ -94,31 +94,46 @@ def main():
     # Try loading Fastlane changelog first
     version_code = get_version_code()
     changelog = get_fastlane_changelog(version_code)
-    
+
     # Fallback to git changelog if Fastlane is missing/empty
     if not changelog:
         changelog = get_git_changelog(tag_name)
-    
-    size_universal = find_apk_size("LTvLauncher-universal-release.apk", "app-release.apk")
-    size_armv7 = find_apk_size("LTvLauncher-armeabi-v7a-release.apk", "app-armeabi-v7a-release.apk")
-    size_arm64 = find_apk_size("LTvLauncher-arm64-v8a-release.apk", "app-arm64-v8a-release.apk")
 
-    release_notes = f"""### 💖 Support Our Work
+    size_universal = find_apk_size("CLICK-TV-LAUNCHER-universal-release.apk", "app-release.apk")
+    size_armv7 = find_apk_size("CLICK-TV-LAUNCHER-armeabi-v7a-release.apk", "app-armeabi-v7a-release.apk")
+    size_arm64 = find_apk_size("CLICK-TV-LAUNCHER-arm64-v8a-release.apk", "app-arm64-v8a-release.apk")
 
-As an open-source, community-funded project, we operate on a very limited budget. If LTvLauncher helps you daily, please consider supporting us on [GitHub Sponsors](https://github.com/sponsors/LeanBitLab) or [Open Collective](https://opencollective.com/leanbitlab-org). Sharing LTvLauncher with friends and family makes a huge difference!
+    release_notes = f"""# CLICK TV LAUNCHER {tag_name}
 
-## 🚀 What's New
+Launcher libre, privado y sin anuncios para Android TV, Google TV y TV Box, desarrollado por CLICK TV DIGITAL.
 
-### ✨ Highlights & Changes
+## 🚀 Novedades
 {changelog}
 
-## 📦 Downloads (Choose Your Architecture)
+## 📦 Descargas
 
-| File | Target Devices | Architecture | Size |
+Elige el archivo según tu dispositivo:
+
+| Archivo | Dispositivos | Arquitectura | Tamaño |
 |:---|:---|:---|:---|
-| **`LTvLauncher-universal-release.apk`** | All Android TV & Fire TV devices (Universal) | All | {size_universal} |
-| **`LTvLauncher-arm64-v8a-release.apk`** | Chromecast with Google TV, Nvidia Shield, modern TVs | 64-bit ARM (`arm64-v8a`) | {size_arm64} |
-| **`LTvLauncher-armeabi-v7a-release.apk`** | Fire TV Stick (Lite, 4K, 4K Max), older smart TVs | 32-bit ARM (`armeabi-v7a`) | {size_armv7} |
+| **`CLICK-TV-LAUNCHER-universal-release.apk`** | Recomendado: funciona en todos los dispositivos compatibles | Universal | {size_universal} |
+| **`CLICK-TV-LAUNCHER-arm64-v8a-release.apk`** | Televisores y TV box modernos de 64 bits | ARM de 64 bits (`arm64-v8a`) | {size_arm64} |
+| **`CLICK-TV-LAUNCHER-armeabi-v7a-release.apk`** | Dispositivos antiguos de 32 bits | ARM de 32 bits (`armeabi-v7a`) | {size_armv7} |
+
+Requisitos: Android 5.0 o posterior (API 21+).
+
+## 💙 Apoya CLICK TV
+
+CLICK TV LAUNCHER es gratuito y de código abierto. Si te resulta útil, puedes apoyar su desarrollo con un aporte voluntario. Consulta las opciones en la sección Donativos de la aplicación o en el [README del proyecto](https://github.com/clicktvdigital/CLICK-TV-LAUNCHER#donativos-y-apoyo-voluntario).
+
+Enlaces oficiales de CLICK TV DIGITAL:
+
+- [Tienda online](https://click-tv-streaming.vercel.app)
+- [Contacto directo por Telegram](https://t.me/clicktvdigital)
+
+## 📄 Licencia y créditos
+
+Distribuido bajo GNU GPLv3. Basado en FLauncher, creado originalmente por etienn01 y mantenido por LeanBitLab; se conservan sus créditos y avisos de licencia.
 """
 
     with open("release_notes.md", "w") as f:

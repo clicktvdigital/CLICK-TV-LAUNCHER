@@ -65,7 +65,10 @@ class _FocusableSettingsTileState extends State<FocusableSettingsTile> {
                   Expanded(child: widget.title),
                   if (widget.trailing != null) ...[
                     const SizedBox(width: 16),
-                    widget.trailing!,
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: widget.trailing!,
+                    ),
                   ],
                 ],
               ),

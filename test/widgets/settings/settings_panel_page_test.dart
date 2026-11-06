@@ -147,7 +147,7 @@ void main() {
     verify(appsService.openSettings());
   });
 
-  testWidgets("'About LTvLauncher' opens about dialog", (tester) async {
+  testWidgets("'About CLICK TV LAUNCHER' opens about dialog", (tester) async {
     final settingsService = MockSettingsService();
     final appsService = MockAppsService();
     when(appsService.launcherSections).thenReturn([]);
@@ -158,12 +158,12 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
-    await tester.tap(find.text("About LTvLauncher"));
+    await tester.tap(find.text("About CLICK TV LAUNCHER"));
     await tester.pumpAndSettle();
     expect(find.byType(LTvLauncherAboutDialog), findsOneWidget);
   });
 
-  testWidgets("'Support & Donate' opens donate dialog", (tester) async {
+  testWidgets("'Apoyar a CLICK TV LAUNCHER' opens donate dialog", (tester) async {
     final settingsService = MockSettingsService();
     final appsService = MockAppsService();
     when(appsService.launcherSections).thenReturn([]);
@@ -173,7 +173,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, settingsService, appsService);
 
-    await tester.tap(find.text("Support & Donate"));
+    await tester.tap(find.text("Apoyar a CLICK TV LAUNCHER"));
     await tester.pumpAndSettle();
     expect(find.byType(DonateDialog), findsOneWidget);
   });
@@ -191,6 +191,7 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, __) => MaterialApp(
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,

@@ -106,7 +106,7 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                        children: [
                          const Icon(Icons.add_box_outlined),
                          Container(width: 8),
-                         Text('Add to Category', style: Theme.of(context).textTheme.bodyMedium),
+                         Text(localizations.withEllipsisAddTo, style: Theme.of(context).textTheme.bodyMedium),
                        ],
                      ),
                      onPressed: () async {
@@ -154,7 +154,9 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                              Container(width: 8),
                              Flexible(
                                child: Text(
-                                 isInFavorites ? 'Remove from Fav' : 'Add to Fav',
+                                 isInFavorites
+                                     ? localizations.removeFrom(localizations.favoriteApps)
+                                     : '${localizations.withEllipsisAddTo} ${localizations.favoriteApps}',
                                  style: Theme.of(context).textTheme.bodyMedium,
                                  overflow: TextOverflow.ellipsis,
                                ),

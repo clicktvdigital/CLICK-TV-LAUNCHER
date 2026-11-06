@@ -243,7 +243,8 @@ class SettingsService extends ChangeNotifier {
     _startOnBoot = _sharedPreferences.getBool(_startOnBootKey) ?? false;
     _showNotificationsWidgetInStatusBar = _sharedPreferences.getBool(_showNotificationsWidgetInStatusBarKey) ?? true;
     _autoHideNotificationsWidget = _sharedPreferences.getBool(_autoHideNotificationsWidgetKey) ?? false;
-    _appLanguage = _sharedPreferences.getString(_appLanguageKey) ?? "";
+    // Spanish is the product default; users can still select system or another language.
+    _appLanguage = _sharedPreferences.getString(_appLanguageKey) ?? "es";
     _showWeatherInStatusBar = _sharedPreferences.getBool(_showWeatherInStatusBarKey) ?? false;
     _showWeatherWarnings = _sharedPreferences.getBool(_showWeatherWarningsKey) ?? true;
     _temperatureUnit = _sharedPreferences.getString(_temperatureUnitKey) ?? TEMPERATURE_UNIT_CELSIUS;

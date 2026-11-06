@@ -29,12 +29,10 @@ class FLauncherChannel {
   static const _watchNextEventChannel = EventChannel('me.efesser.flauncher/event_watch_next');
 
   Future<List<Map<dynamic, dynamic>>> getApplications() async {
-    try {
-      List<Map<dynamic, dynamic>>? applications = await _methodChannel.invokeListMethod("getApplications");
-      return applications ?? const [];
-    } catch (_) {
-      return const [];
-    }
+    final applications = await _methodChannel
+        .invokeListMethod<Map<dynamic, dynamic>>("getApplications")
+        .timeout(const Duration(seconds: 35));
+    return applications ?? const [];
   }
 
   Future<Uint8List> getApplicationBanner(String packageName) async {

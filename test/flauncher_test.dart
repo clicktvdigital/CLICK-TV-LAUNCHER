@@ -82,7 +82,7 @@ void main() {
     await _pumpWidgetWith(tester, appsService);
 
     expect(find.text("Applications"), findsOneWidget);
-    expect(find.text("Favorites"), findsOneWidget);
+    expect(find.text("Favorite Apps"), findsOneWidget);
     expect(find.byType(AppsGrid), findsOneWidget);
     expect(find.byKey(Key("me.efesser.flauncher.2")), findsOneWidget);
     expect(find.byType(CategoryRow), findsOneWidget);
@@ -105,7 +105,7 @@ void main() {
     await _pumpWidgetWith(tester, appsService);
 
     expect(find.text("Applications"), findsOneWidget);
-    expect(find.text("Favorites"), findsOneWidget);
+    expect(find.text("Favorite Apps"), findsOneWidget);
     expect(find.byType(CategoryRow), findsOneWidget);
     expect(find.byType(AppsGrid), findsOneWidget);
     expect(find.text("This category is empty."), findsNWidgets(2));
@@ -606,6 +606,8 @@ SettingsService mkSettingsService() {
   when(settingsService.appSelectorTransitionAnimationEnabled).thenReturn(true);
   when(settingsService.showContinueWatching).thenReturn(false);
   when(settingsService.continueWatchingOrder).thenReturn(0);
+  when(settingsService.hiddenWatchNextProgramIds).thenReturn(const []);
+  when(settingsService.hiddenWatchNextPackages).thenReturn(const []);
   when(settingsService.showNotificationsWidgetInStatusBar).thenReturn(true);
   when(settingsService.autoHideNotificationsWidget).thenReturn(false);
   when(settingsService.showWeatherInStatusBar).thenReturn(false);
@@ -639,6 +641,7 @@ NotificationsService mkNotificationsService() {
 WatchNextService mkWatchNextService() {
   final watchNextService = MockWatchNextService();
   when(watchNextService.programs).thenReturn([]);
+  when(watchNextService.hasPermission).thenReturn(false);
   return watchNextService;
 }
 
@@ -691,6 +694,7 @@ Future<void> _pumpWidgetWithProviders(
         ChangeNotifierProvider(create: (_) => NetworkService(FLauncherChannel())),
       ],
       builder: (_, __) => MaterialApp(
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,

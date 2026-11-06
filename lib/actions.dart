@@ -55,12 +55,22 @@ class BackAction extends Action<BackIntent> {
 
   @override
   Future<void> invoke(BackIntent intent) async {
-    NavigatorState? navigator = Navigator.maybeOf(context);
-
-    if (navigator != null) {
-      navigator.maybePop();
+    final focusedContext = FocusManager.instance.primaryFocus?.context;
+    final focusedNavigator = focusedContext == null
+        ? null
+        : Navigator.maybeOf(focusedContext);
+    if (focusedNavigator != null && focusedNavigator.canPop()) {
+      await focusedNavigator.maybePop();
+      return;
     }
-    else {
+
+    final rootNavigator = Navigator.maybeOf(context);
+    if (rootNavigator != null && rootNavigator.canPop()) {
+      await rootNavigator.maybePop();
+      return;
+    }
+
+    {
       LauncherState state = context.read<LauncherState>();
       state.handleBackNavigation(context);
     }

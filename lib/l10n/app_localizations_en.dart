@@ -7,7 +7,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get aboutFlauncher => 'About LTvLauncher';
+  String get aboutFlauncher => 'About CLICK TV LAUNCHER';
 
   @override
   String get addCategory => 'Add category';
@@ -202,7 +202,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String textAboutDialog(String repoUrl) {
-    return 'LTvLauncher is a customized open-source launcher for Android TV, based on FLauncher.\n\nDeveloped by LeanBitLab.\nSource code available at $repoUrl.';
+    return 'CLICK TV LAUNCHER is a customized open-source launcher for Android TV and Google TV, based on FLauncher.\n\nDeveloped by CLICK TV DIGITAL.\nSource code available at $repoUrl.';
   }
 
   @override
@@ -248,16 +248,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accessibility => 'Accessibility';
 
   @override
-  String get defaultLauncherIsDefault => 'LTvLauncher is the default launcher';
+  String get defaultLauncherIsDefault => 'CLICK TV LAUNCHER is the default launcher';
 
   @override
-  String get defaultLauncherNotDefault => 'LTvLauncher is not the default launcher';
+  String get defaultLauncherNotDefault => 'CLICK TV LAUNCHER is not the default launcher';
 
   @override
   String get setAsDefaultLauncher => 'Set as default launcher';
 
   @override
-  String get defaultLauncherDescription => 'When set as the default launcher, the Home button will always return to LTvLauncher. The TV will also boot directly into LTvLauncher.';
+  String get defaultLauncherDescription => 'When set as the default launcher, the Home button will always return to CLICK TV LAUNCHER. The TV will also boot directly into CLICK TV LAUNCHER.';
 
   @override
   String get inputs => 'Inputs';
@@ -481,7 +481,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fahrenheit => 'Fahrenheit (°F)';
 
   @override
-  String get breezyWeatherSetupHint => 'Install Breezy Weather and enable \'Local data sharing\' / \'Gadgetbridge\' in its settings to see weather and rain warnings.';
+  String get breezyWeatherSetupHint => "Install Alerta EC and enable 'Local data sharing' / 'Gadgetbridge' in its settings to see weather and rain warnings.";
+
+  @override
+  String get alertaEcWeatherDataHint => "Open Alerta EC and enable weather data sharing with CLICK TV LAUNCHER in its settings.";
 
   @override
   String get displayAndScreensaver => 'Display & Screensaver';

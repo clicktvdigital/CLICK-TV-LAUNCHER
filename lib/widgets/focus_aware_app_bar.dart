@@ -201,7 +201,10 @@ class FocusAwareAppBarState extends State<FocusAwareAppBar>
           // Right side: Weather and Date/Time
           actions: [
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 32),
+              padding: EdgeInsets.only(
+                left: MediaQuery.sizeOf(context).width < 720 ? 6 : 12,
+                right: MediaQuery.sizeOf(context).width < 720 ? 8 : 24,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

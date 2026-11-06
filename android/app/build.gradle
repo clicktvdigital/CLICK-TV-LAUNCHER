@@ -43,7 +43,7 @@ if (localPropertiesFile.exists()) {
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
+    flutterVersionCode = '8113'
 }
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
@@ -51,13 +51,45 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-def secretProperties = new Properties()
-secretProperties.setProperty("signing_keystore_password", "${System.getenv('FLAUNCHER_KEYSTORE_PASSWORD')}")
-secretProperties.setProperty("signing_key_password", "${System.getenv('FLAUNCHER_SIGNING_KEY_PASSWORD')}")
-secretProperties.setProperty("signing_key_alias", "${System.getenv('FLAUNCHER_SIGNING_KEY_ALIAS')}")
+def releaseKeystoreFilePath = System.getenv("KEYSTORE_FILE") ?: localProperties['storeFile']
+def releaseKeystoreFile = releaseKeystoreFilePath ? file(releaseKeystoreFilePath) : null
+def releaseStorePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProperties['storePassword']
+def releaseKeyAlias = System.getenv("KEY_ALIAS") ?: localProperties['keyAlias']
+def releaseKeyPassword = System.getenv("KEY_PASSWORD") ?: localProperties['keyPassword']
+def parallelDebugKeystoreFilePath = System.getenv("PARALLEL_DEBUG_KEYSTORE_FILE")
+def parallelDebugKeystoreFile = parallelDebugKeystoreFilePath ? file(parallelDebugKeystoreFilePath) : null
+def parallelDebugStorePassword = System.getenv("PARALLEL_DEBUG_KEYSTORE_PASSWORD")
+def parallelDebugKeyAlias = System.getenv("PARALLEL_DEBUG_KEY_ALIAS")
+def parallelDebugKeyPassword = System.getenv("PARALLEL_DEBUG_KEY_PASSWORD")
+def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+def isDebugTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('debug') }
+// Explicit local builds use a separate package and the standard Android debug key.
+// The shared parallel APK continues to require its existing signing identity.
+def useLocalDebugSigning = project.findProperty('localDebug') == 'true'
 
-def keystoreFilePath = System.getenv("KEYSTORE_FILE") ?: localProperties['storeFile']
-def hasKeystore = keystoreFilePath != null && file(keystoreFilePath).exists()
+if (isReleaseTask) {
+    def missingSigningValues = []
+    if (!releaseKeystoreFilePath) missingSigningValues << 'KEYSTORE_FILE'
+    if (!releaseKeystoreFile || !releaseKeystoreFile.isFile()) missingSigningValues << 'keystore file'
+    if (!releaseStorePassword) missingSigningValues << 'KEYSTORE_PASSWORD'
+    if (!releaseKeyAlias) missingSigningValues << 'KEY_ALIAS'
+    if (!releaseKeyPassword) missingSigningValues << 'KEY_PASSWORD'
+    if (!missingSigningValues.isEmpty()) {
+        throw new GradleException("Release signing configuration is incomplete: ${missingSigningValues.join(', ')}")
+    }
+}
+
+if (isDebugTask && !useLocalDebugSigning) {
+    def missingParallelDebugSigningValues = []
+    if (!parallelDebugKeystoreFilePath) missingParallelDebugSigningValues << 'PARALLEL_DEBUG_KEYSTORE_FILE'
+    if (!parallelDebugKeystoreFile || !parallelDebugKeystoreFile.isFile()) missingParallelDebugSigningValues << 'keystore file'
+    if (!parallelDebugStorePassword) missingParallelDebugSigningValues << 'PARALLEL_DEBUG_KEYSTORE_PASSWORD'
+    if (!parallelDebugKeyAlias) missingParallelDebugSigningValues << 'PARALLEL_DEBUG_KEY_ALIAS'
+    if (!parallelDebugKeyPassword) missingParallelDebugSigningValues << 'PARALLEL_DEBUG_KEY_PASSWORD'
+    if (!missingParallelDebugSigningValues.isEmpty()) {
+        throw new GradleException("Parallel debug signing configuration is incomplete: ${missingParallelDebugSigningValues.join(', ')}")
+    }
+}
 
 android {
     dependenciesInfo {
@@ -68,7 +100,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.clicktvdigital.launcher"
+        applicationId "com.clicktv.launcher"
         compileSdk 35
         minSdk 21
         targetSdk 35
@@ -81,20 +113,23 @@ android {
 
     signingConfigs {
         debug {}
-        release {
-            if (hasKeystore) {
-                storeFile file(keystoreFilePath)
-                storePassword System.getenv("KEYSTORE_PASSWORD") ?: localProperties['storePassword']
-                keyAlias System.getenv("KEY_ALIAS") ?: localProperties['keyAlias']
-                keyPassword System.getenv("KEY_PASSWORD") ?: localProperties['keyPassword']
-            }
-        }
+        parallelDebug {}
+        release {}
     }
+
+    signingConfigs.parallelDebug.storeFile = parallelDebugKeystoreFile
+    signingConfigs.parallelDebug.storePassword = parallelDebugStorePassword
+    signingConfigs.parallelDebug.keyAlias = parallelDebugKeyAlias
+    signingConfigs.parallelDebug.keyPassword = parallelDebugKeyPassword
+    signingConfigs.release.storeFile = releaseKeystoreFile
+    signingConfigs.release.storePassword = releaseStorePassword
+    signingConfigs.release.keyAlias = releaseKeyAlias
+    signingConfigs.release.keyPassword = releaseKeyPassword
 
     buildTypes {
         debug {
-            applicationIdSuffix '.debug'
-            signingConfig signingConfigs.debug
+            applicationIdSuffix useLocalDebugSigning ? '.local.debug' : '.test.parallel.debug'
+            signingConfig useLocalDebugSigning ? signingConfigs.debug : signingConfigs.parallelDebug
             ndk {
                 abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
@@ -103,9 +138,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (hasKeystore) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
             ndk {
                 abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
@@ -123,8 +156,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        // Java 17 is supported by the Android Gradle Plugin used here and is
+        // available in more build environments than Java 21. This does not
+        // reduce the Android API range (minSdk remains 21).
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     namespace 'com.leanbitlab.ltvL'
@@ -134,9 +170,9 @@ android {
             output.versionCodeOverride = variant.versionCode
             def abi = output.getFilter(com.android.build.OutputFile.ABI)
             if (abi != null) {
-                outputFileName = "LTvLauncher-${abi}-${variant.buildType.name}.apk"
+                outputFileName = "CLICK-TV-LAUNCHER-${abi}-${variant.buildType.name}.apk"
             } else {
-                outputFileName = "LTvLauncher-universal-${variant.buildType.name}.apk"
+                outputFileName = "CLICK-TV-LAUNCHER-universal-${variant.buildType.name}.apk"
             }
         }
     }
@@ -144,4 +180,8 @@ android {
 
 flutter {
     source '../..'
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
 }

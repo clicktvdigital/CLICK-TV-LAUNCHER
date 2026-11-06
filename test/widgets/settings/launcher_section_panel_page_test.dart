@@ -49,7 +49,7 @@ void main() {
 
     await _pumpWidgetWithProviders(tester, appsService, 0);
 
-    expect(find.text("Favorites"), findsWidgets);
+    expect(find.text("Favorite Apps"), findsWidgets);
   });
 
   testWidgets("'Delete' calls AppsService", (tester) async {
@@ -79,6 +79,7 @@ Future<void> _pumpWidgetWithProviders(WidgetTester tester, AppsService appsServi
         ChangeNotifierProvider<AppsService>.value(value: appsService),
       ],
       builder: (_, __) => MaterialApp(
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,

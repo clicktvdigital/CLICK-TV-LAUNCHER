@@ -31,12 +31,17 @@ import 'package:pool/pool.dart';
 
 import '../models/app.dart';
 import '../models/category.dart';
+import 'automatic_sections.dart';
 
 class AppsService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
   final FLauncherDatabase _database;
 
   bool _initialized = false;
+  bool _initializing = false;
+  Object? _initializationError;
+  Object? get initializationError => _initializationError;
+  bool get initializing => _initializing;
 
   List<LauncherSection> _launcherSections = List.empty(growable: true);
   Map<String, App> _applications = Map();
@@ -44,6 +49,7 @@ class AppsService extends ChangeNotifier {
   Map<String, Uint8List> _bannerCache = Map();
 
   Map<int, Category> _categoriesById = Map();
+  final Set<int> _hiddenAutomaticCategoryIds = <int>{};
   Map<String, Category>? _categoriesByNameCache;
   Category? _fallbackCategoryCache;
 
@@ -88,16 +94,38 @@ class AppsService extends ChangeNotifier {
       .map((category) => category.unmodifiable())
       .toList(growable: false);
 
+  List<Category> get hiddenAutomaticCategories => _hiddenAutomaticCategoryIds
+      .map((id) => _categoriesById[id])
+      .whereType<Category>()
+      .map((category) => category.unmodifiable())
+      .toList(growable: false);
+
   AppsService(this._fLauncherChannel, this._database) {
-    _init();
+    retryInitialization();
+  }
+
+  Future<void> retryInitialization() async {
+    if (_initializing || _initialized) return;
+    _initializing = true;
+    _initializationError = null;
+    try {
+      await _init();
+    } catch (error, stack) {
+      _initializationError = error;
+      debugPrint('CLICK TV LAUNCHER: no se pudo cargar el catálogo: $error\n$stack');
+    } finally {
+      _initializing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _init() async {
     await _refreshState(shouldNotifyListeners: false);
-    if (_database.wasCreated) {
+    if (_database.wasCreated && _categoriesById.isEmpty) {
       await _initDefaultCategories();
     } else {
       await _ensureTvAppsSectionOrder();
+      await _hideUnmodifiedAutomaticSections();
     }
 
     _fLauncherChannel.addAppsChangedListener((event) async {
@@ -236,31 +264,19 @@ class AppsService extends ChangeNotifier {
   }
 
   Future<void> _initDefaultCategories() {
-    final tvApplications = _applications.values
-        .where((application) => application.sideloaded == false);
-    final nonTvApplications = _applications.values
-        .where((application) => application.sideloaded == true);
-
+    // Generic Android boxes often expose only CATEGORY_LAUNCHER activities.
+    // Include both launcher categories on a fresh install; preserve existing
+    // category membership and hidden apps on subsequent starts.
+    final initialApplications = _applications.values.where((app) => !app.hidden);
     return _database.transaction(() async {
-      int tvCategoryId = await addCategory("TV Apps",
+      int tvCategoryId = await addCategory(defaultHomeCategoryName,
           type: CategoryType.grid, shouldNotifyListeners: false);
-      if (tvApplications.isNotEmpty) {
+      if (initialApplications.isNotEmpty) {
         Category tvAppsCategory = _categoriesById[tvCategoryId]!;
-        await addAllToCategory(tvApplications, tvAppsCategory,
+        await addAllToCategory(initialApplications, tvAppsCategory,
             shouldNotifyListeners: false);
       }
 
-      int nonTvCategoryId = await addCategory(
-        "Non-TV Apps",
-        shouldNotifyListeners: false,
-      );
-      if (nonTvApplications.isNotEmpty) {
-        Category nonTvAppsCategory = _categoriesById[nonTvCategoryId]!;
-        await addAllToCategory(nonTvApplications, nonTvAppsCategory,
-            shouldNotifyListeners: false);
-      }
-
-      await addCategory("Favorites", shouldNotifyListeners: false);
     });
   }
 
@@ -300,16 +316,73 @@ class AppsService extends ChangeNotifier {
     await prefs.setBool(migrationKey, true);
   }
 
+  Future<void> _hideUnmodifiedAutomaticSections() async {
+    final categories = _categoriesById.values.toList();
+    final tvApps = categories.where((category) => category.name == 'TV Apps');
+    final nonTvApps = categories.where((category) => category.name == 'Non-TV Apps');
+    final favorites = categories.where((category) => category.name == 'Favorites');
+    if (tvApps.length != 1 || nonTvApps.length != 1 || favorites.length != 1) {
+      return;
+    }
+
+    final tvCategory = tvApps.single;
+    final nonTvCategory = nonTvApps.single;
+    final favoritesCategory = favorites.single;
+    final tvPackages = _applications.values
+        .where((app) => !app.sideloaded)
+        .map((app) => app.packageName)
+        .toSet();
+    final nonTvPackages = _applications.values
+        .where((app) => app.sideloaded)
+        .map((app) => app.packageName)
+        .toSet();
+
+    // This is deliberately strict. If order, layout, name, or membership has
+    // changed, assume the user customized the sections and show everything.
+    final matchesAutomaticLayout =
+        isUnmodifiedAutomaticCategory(tvCategory, name: 'TV Apps', order: 0, expectedPackages: tvPackages) &&
+        isUnmodifiedAutomaticCategory(nonTvCategory, name: 'Non-TV Apps', order: 1, expectedPackages: nonTvPackages) &&
+        isUnmodifiedAutomaticCategory(favoritesCategory, name: 'Favorites', order: 2, expectedPackages: <String>{});
+    if (!matchesAutomaticLayout) {
+      return;
+    }
+
+    _hiddenAutomaticCategoryIds
+      ..add(nonTvCategory.id)
+      ..add(favoritesCategory.id);
+    _launcherSections.removeWhere(
+        (section) => _hiddenAutomaticCategoryIds.contains(section.id));
+  }
+
+  Future<void> restoreAutomaticCategory(Category category) async {
+    final storedCategory = _categoriesById[category.id];
+    if (storedCategory == null || !_hiddenAutomaticCategoryIds.remove(category.id)) {
+      return;
+    }
+
+    storedCategory.order = _launcherSections.length;
+    _launcherSections.add(storedCategory);
+    _launcherSections.sort((a, b) => a.order.compareTo(b.order));
+    await persistSectionsOrder();
+    notifyListeners();
+  }
+
   Future<void> refreshState() => _refreshState(shouldNotifyListeners: true);
 
   Future<void> _refreshState({bool shouldNotifyListeners = true}) async {
-    Future<List<App>> appsFromDatabaseFuture = _database.getApplications();
-    Future<List<AppCategory>> appsCategoriesFuture =
-        _database.getAppsCategories();
-    Future<List<Category>> categoriesFuture = _database.getCategories();
-    Future<List<LauncherSpacer>> spacersFuture = _database.getLauncherSpacers();
-    List<Map<dynamic, dynamic>> appsFromSystem =
-        await _fLauncherChannel.getApplications();
+    final appsFromDatabaseBefore = await _database.getApplications();
+    List<Map<dynamic, dynamic>> appsFromSystem;
+    try {
+      appsFromSystem = await _fLauncherChannel.getApplications();
+    } catch (error) {
+      if (appsFromDatabaseBefore.isEmpty) rethrow;
+      debugPrint('CLICK TV LAUNCHER: usando catálogo guardado: $error');
+      appsFromSystem = const [];
+    }
+
+    // Even if Android returns no apps, continue loading the saved catalog.
+    // Temporary discovery failures must not hide existing categories.
+
     Iterable<MapEntry<String, (Map, AppsCompanion)>> appEntries =
         appsFromSystem.map((appFromSystem) => new MapEntry(
             appFromSystem['packageName'],
@@ -317,48 +390,43 @@ class AppsService extends ChangeNotifier {
     Map<String, (Map, AppsCompanion)> appsFromSystemByPackageName =
         Map.fromEntries(appEntries);
 
-    List<App> appsFromDatabaseBefore = await appsFromDatabaseFuture;
     final Set<String> knownPackageNames =
         appsFromDatabaseBefore.map((a) => a.packageName).toSet();
 
-    final List<String> uninstalledPackageNames = knownPackageNames
-        .where((pkg) => !appsFromSystemByPackageName.containsKey(pkg))
-        .toList();
-    if (uninstalledPackageNames.isNotEmpty) {
-      await _database.deleteApps(uninstalledPackageNames);
-    }
-
+    // A partial Android app query must not erase saved app settings.
+    // Actual package removal is handled by PACKAGE_REMOVED events.
     await _database.transaction(() async {
       await _database.persistApps(
           appsFromSystemByPackageName.values.map((record) => record.$2));
     });
 
-    appsFromDatabaseFuture = _database.getApplications();
-
-    await Future.wait([
-      appsFromDatabaseFuture,
-      appsCategoriesFuture,
-      categoriesFuture,
-      spacersFuture
-    ]);
-
-    List<App> appsFromDatabase = await appsFromDatabaseFuture;
-    List<AppCategory> appsCategories = await appsCategoriesFuture;
-    List<Category> categories = await categoriesFuture;
-    List<LauncherSpacer> spacers = await spacersFuture;
+    final appsFromDatabase = await _database.getApplications();
+    final appsCategories = await _database.getAppsCategories();
+    final categories = await _database.getCategories();
+    final spacers = await _database.getLauncherSpacers();
 
     _categoriesById = Map.fromEntries(
         categories.map((category) => MapEntry(category.id, category)));
     _invalidateCategoryCache();
-    _applications = Map.fromEntries(appsFromDatabase
-        .where((application) =>
-            appsFromSystemByPackageName.containsKey(application.packageName))
-        .map((application) => MapEntry(application.packageName, application)));
+    final previousApplications = _applications;
+    _applications = Map.fromEntries(appsFromDatabase.map((application) {
+      // Retain runtime metadata when an installed app is temporarily
+      // absent from the latest Android discovery result.
+      final previous = previousApplications[application.packageName];
+      if (!appsFromSystemByPackageName.containsKey(application.packageName) &&
+          previous != null) {
+        application.sideloaded = previous.sideloaded;
+        application.action = previous.action;
+      }
+      return MapEntry(application.packageName, application);
+    }));
 
     _launcherSections.clear();
     _launcherSections.addAll(categories);
     _launcherSections.addAll(spacers);
     _launcherSections.sort((ls0, ls1) => ls0.order.compareTo(ls1.order));
+    _launcherSections.removeWhere(
+        (section) => _hiddenAutomaticCategoryIds.contains(section.id));
 
     Map<String, List<AppCategory>> appsCategoriesByPackage = {};
     if (appsCategories.isNotEmpty) {
@@ -510,7 +578,11 @@ class AppsService extends ChangeNotifier {
     }
 
     final targetName = isSideloaded ? "non-tv apps" : "tv apps";
-    return _categoriesByNameCache![targetName] ?? _fallbackCategoryCache;
+    final target = _categoriesByNameCache![targetName];
+    if (isSideloaded && target == null) {
+      return null;
+    }
+    return target ?? _fallbackCategoryCache;
   }
 
   Future<Uint8List> getAppBanner(String packageName) async {
@@ -586,10 +658,11 @@ class AppsService extends ChangeNotifier {
 
   Future<void> launchApp(App app) async {
     app.lastLaunchedAt = DateTime.now();
-    await _database.updateApp(app.packageName,
-        AppsCompanion(lastLaunchedAt: Value(app.lastLaunchedAt)));
     notifyListeners();
 
+    // Se lanza la app primero: la escritura en la base de datos ya no la
+    // bloquea. En TV box lentos esa escritura podía tardar y el launcher
+    // parecía colgado sin abrir la app.
     Future<void> future;
     if (app.action == null) {
       future = _fLauncherChannel.launchApp(app.packageName);
@@ -597,7 +670,18 @@ class AppsService extends ChangeNotifier {
       future = _fLauncherChannel.launchActivityFromAction(app.action!);
     }
 
+    unawaited(_saveLastLaunchedAt(app));
+
     return future;
+  }
+
+  Future<void> _saveLastLaunchedAt(App app) async {
+    try {
+      await _database.updateApp(app.packageName,
+          AppsCompanion(lastLaunchedAt: Value(app.lastLaunchedAt)));
+    } catch (error) {
+      debugPrint('CLICK TV LAUNCHER: no se pudo guardar el último uso: $error');
+    }
   }
 
   Future<void> openAppInfo(App app) =>

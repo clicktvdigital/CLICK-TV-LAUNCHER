@@ -28,7 +28,7 @@ class WeatherService extends ChangeNotifier with WidgetsBindingObserver {
   WeatherData? get weatherData => _weatherData;
   bool get isBreezyInstalled => _isBreezyInstalled;
   bool get initialized => _initialized;
-  bool get hasWeather => _weatherData != null;
+  bool get hasWeather => _isBreezyInstalled && _weatherData != null;
 
   Future<void> _init() async {
     try {
@@ -51,7 +51,11 @@ class WeatherService extends ChangeNotifier with WidgetsBindingObserver {
   void _startPeriodicTimer() {
     _refreshTimer?.cancel();
     // 15-minute fallback timer in case a broadcast was missed while paused
-    _refreshTimer = Timer.periodic(const Duration(minutes: 15), (_) => _fetchLatest());
+    _refreshTimer = Timer.periodic(const Duration(minutes: 15), (_) async {
+      await _fetchLatest();
+      // Actualizar tambien el indicador de antiguedad del pronostico.
+      if (hasListeners) notifyListeners();
+    });
   }
 
   @override
@@ -76,7 +80,19 @@ class WeatherService extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> _fetchLatest() async {
     try {
+      final wasInstalled = _isBreezyInstalled;
       _isBreezyInstalled = await _channel.isBreezyWeatherInstalled();
+
+      if (!_isBreezyInstalled) {
+        // Do not show cached weather from an app that is no longer installed.
+        final hadWeather = _weatherData != null;
+        _weatherData = null;
+        _lastJson = null;
+        if (wasInstalled || hadWeather) notifyListeners();
+        return;
+      }
+
+      if (!wasInstalled) notifyListeners();
       final latestJson = await _channel.getLatestWeatherData();
       if (latestJson != null && latestJson.isNotEmpty) {
         _processWeatherJson(latestJson);
