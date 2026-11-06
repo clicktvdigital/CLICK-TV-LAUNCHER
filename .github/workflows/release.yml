@@ -89,6 +89,25 @@ jobs:
           done
           find build/app/outputs -type f -name '*release.apk' -exec sha256sum {} \;
 
+      - name: Preparar APK con nombres fijos
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          universal=$(find build/app/outputs/flutter-apk build/app/outputs/apk/release -maxdepth 1 -type f -name '*release.apk' ! -name '*arm*' | sort | head -n 1)
+          arm64=$(find build/app/outputs/flutter-apk build/app/outputs/apk/release -maxdepth 1 -type f -name '*arm64-v8a*release.apk' | sort | head -n 1)
+          armv7=$(find build/app/outputs/flutter-apk build/app/outputs/apk/release -maxdepth 1 -type f -name '*armeabi-v7a*release.apk' | sort | head -n 1)
+          test -n "$universal"
+          test -s "$universal"
+          test -n "$arm64"
+          test -s "$arm64"
+          test -n "$armv7"
+          test -s "$armv7"
+          cp "$universal" release-assets/CLICK-TV-LAUNCHER-universal-release.apk
+          cp "$arm64" release-assets/CLICK-TV-LAUNCHER-arm64-v8a-release.apk
+          cp "$armv7" release-assets/CLICK-TV-LAUNCHER-armeabi-v7a-release.apk
+          ls -l release-assets
+          sha256sum release-assets/*.apk
+
       - name: Generate Release Notes
         env:
           TAG_NAME: ${{ github.event.inputs.tag_name || github.ref_name }}
@@ -99,11 +118,19 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           body_path: release_notes.md
-          files: |
-            build/app/outputs/flutter-apk/CLICK-TV-LAUNCHER-universal-release.apk
-            build/app/outputs/flutter-apk/CLICK-TV-LAUNCHER-armeabi-v7a-release.apk
-            build/app/outputs/flutter-apk/CLICK-TV-LAUNCHER-arm64-v8a-release.apk
+          files: release-assets/*.apk
+          fail_on_unmatched_files: true
           draft: false
           prerelease: ${{ contains(github.event.inputs.tag_name || github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verificar APK adjuntos en la Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.inputs.tag_name || github.ref_name }}
+        run: |
+          set -euo pipefail
+          count=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json assets --jq '[.assets[] | select(.name | endswith(".apk"))] | length')
+          echo "APK adjuntos: $count"
+          test "$count" -eq 3
