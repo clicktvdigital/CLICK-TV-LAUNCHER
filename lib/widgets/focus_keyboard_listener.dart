@@ -39,6 +39,11 @@ class FocusKeyboardListener extends StatefulWidget {
 }
 
 class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
+  // Tiempo que hay que mantener OK pulsado para abrir el menú lateral.
+  // Antes eran 500 ms; en TV box lentos (o con build debug) una pulsación
+  // normal podía superar ese tiempo y abría el menú en vez de lanzar la app.
+  static const Duration _longPressDelay = Duration(milliseconds: 800);
+
   Timer? _longPressTimer;
   bool _longPressFired = false;
   int? _keyDownAt;
@@ -110,7 +115,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       _keyDownAt = DateTime.now().millisecondsSinceEpoch;
       _longPressFired = false;
       _longPressTimer?.cancel();
-      _longPressTimer = Timer(const Duration(milliseconds: 500), () {
+      _longPressTimer = Timer(_longPressDelay, () {
         if (!mounted) return;
         if (_keyDownAt != null) {
           _longPressFired = true;
@@ -144,5 +149,8 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
     return KeyEventResult.ignored;
   }
 
-  bool _longPress() => _keyDownAt != null && DateTime.now().millisecondsSinceEpoch - _keyDownAt! >= 500;
+  bool _longPress() =>
+      _keyDownAt != null &&
+      DateTime.now().millisecondsSinceEpoch - _keyDownAt! >=
+          _longPressDelay.inMilliseconds;
 }
