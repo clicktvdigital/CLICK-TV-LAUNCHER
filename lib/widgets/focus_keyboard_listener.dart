@@ -52,7 +52,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   // normal podía superar ese tiempo y abría el menú en vez de lanzar la app.
   static const Duration _longPressDelay = Duration(milliseconds: 800);
 
-  // Un KeyDown repetido de la misma tecla física antes de este tiempo se
+  // Un KeyDown repetido de una tecla de validación antes de este tiempo se
   // considera duplicado del control. Después se trata como pulsación nueva,
   // para que una tecla cuyo KeyUp se perdió no quede bloqueada.
   static const Duration _staleKeyDelay = Duration(milliseconds: 2000);
@@ -84,14 +84,18 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   KeyEventResult _handleKey(BuildContext context, KeyEvent keyEvent) {
     if (keyEvent is KeyDownEvent) {
       final now = DateTime.now();
-      final tracked = _pressedKeys[keyEvent.physicalKey];
+      final physicalKey = keyEvent.physicalKey;
+      final tracked = _pressedKeys[physicalKey];
+      // Solo las teclas de validación bloquean duplicados. En las flechas el
+      // foco puede cambiar entre KeyDown y KeyUp, y el registro quedaría
+      // obsoleto en este widget.
       if (tracked != null &&
+          AppCardKeys.longPressableKeys.contains(tracked.logicalKey) &&
           now.difference(tracked.pressedAt) < _staleKeyDelay) {
         // KeyDown duplicado sin KeyUp: no reinicia la pulsación.
         return KeyEventResult.handled;
       }
-      _pressedKeys[keyEvent.physicalKey] =
-          _PressedKey(keyEvent.logicalKey, now);
+      _pressedKeys[physicalKey] = _PressedKey(keyEvent.logicalKey, now);
       return _keyDownEvent(context, keyEvent.logicalKey);
     }
 
