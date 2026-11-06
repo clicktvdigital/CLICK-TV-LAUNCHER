@@ -38,16 +38,35 @@ class FocusKeyboardListener extends StatefulWidget {
   _FocusKeyboardListenerState createState() => _FocusKeyboardListenerState();
 }
 
+// Tecla registrada en su KeyDown: tecla lógica y momento de la pulsación.
+class _PressedKey {
+  const _PressedKey(this.logicalKey, this.pressedAt);
+
+  final LogicalKeyboardKey logicalKey;
+  final DateTime pressedAt;
+}
+
 class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   // Tiempo que hay que mantener OK pulsado para abrir el menú lateral.
   // Antes eran 500 ms; en TV box lentos (o con build debug) una pulsación
   // normal podía superar ese tiempo y abría el menú en vez de lanzar la app.
   static const Duration _longPressDelay = Duration(milliseconds: 800);
 
+  // Un KeyDown repetido de la misma tecla física antes de este tiempo se
+  // considera duplicado del control. Después se trata como pulsación nueva,
+  // para que una tecla cuyo KeyUp se perdió no quede bloqueada.
+  static const Duration _staleKeyDelay = Duration(milliseconds: 2000);
+
   Timer? _longPressTimer;
   bool _longPressFired = false;
   int? _keyDownAt;
   final Set<LogicalKeyboardKey> _handledKeys = {};
+
+  // Teclas físicas pulsadas. Algunos controles de TV box envían la misma tecla
+  // física con códigos lógicos distintos al presionar y al soltar (por ejemplo
+  // Select y Control Right), así que el KeyUp se empareja por tecla física y
+  // usa la tecla lógica registrada en el KeyDown.
+  final Map<PhysicalKeyboardKey, _PressedKey> _pressedKeys = {};
 
   @override
   void dispose() {
@@ -63,8 +82,22 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       );
 
   KeyEventResult _handleKey(BuildContext context, KeyEvent keyEvent) {
+    if (keyEvent is KeyDownEvent) {
+      final now = DateTime.now();
+      final tracked = _pressedKeys[keyEvent.physicalKey];
+      if (tracked != null &&
+          now.difference(tracked.pressedAt) < _staleKeyDelay) {
+        // KeyDown duplicado sin KeyUp: no reinicia la pulsación.
+        return KeyEventResult.handled;
+      }
+      _pressedKeys[keyEvent.physicalKey] =
+          _PressedKey(keyEvent.logicalKey, now);
+      return _keyDownEvent(context, keyEvent.logicalKey);
+    }
+
     if (keyEvent is KeyRepeatEvent) {
-      final key = keyEvent.logicalKey;
+      final key = _pressedKeys[keyEvent.physicalKey]?.logicalKey ??
+          keyEvent.logicalKey;
 
       // Once long press fires, ignore repeats until the key is released.
       // Otherwise a repeat may start a new short press accidentally.
@@ -72,25 +105,22 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
         return KeyEventResult.handled;
       }
 
-      if (key == LogicalKeyboardKey.arrowLeft ||
-          key == LogicalKeyboardKey.arrowRight ||
-          key == LogicalKeyboardKey.arrowUp ||
-          key == LogicalKeyboardKey.arrowDown) {
+      if (AppCardKeys.isArrowKey(key)) {
         final result = widget.onPressed?.call(key) ?? KeyEventResult.ignored;
         if (result == KeyEventResult.handled) {
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
       }
+      return _keyDownEvent(context, key);
     }
 
-    switch (keyEvent.runtimeType) {
-      case KeyDownEvent:
-      case KeyRepeatEvent:
-        return _keyDownEvent(context, keyEvent.logicalKey);
-      case KeyUpEvent:
-        return _keyUpEvent(context, keyEvent.logicalKey);
+    if (keyEvent is KeyUpEvent) {
+      final key = _pressedKeys.remove(keyEvent.physicalKey)?.logicalKey ??
+          keyEvent.logicalKey;
+      return _keyUpEvent(context, key);
     }
+
     return KeyEventResult.handled;
   }
 
