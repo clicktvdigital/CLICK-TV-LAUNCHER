@@ -232,6 +232,11 @@ class _FLauncherState extends State<FLauncher> {
             ),
           ),
         ),
+        Consumer<SettingsService>(
+          builder: (_, settings, __) => settings.wallpaperExtraDim == 0
+              ? const SizedBox.shrink()
+              : Container(color: Colors.black.withOpacity(settings.wallpaperExtraDim / 100)),
+        ),
         if (wallpaperService.caption != null)
           Positioned(
             left: 48,

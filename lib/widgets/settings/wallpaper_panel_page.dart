@@ -59,6 +59,18 @@ class WallpaperPanelPage extends StatelessWidget {
           ),
           Consumer<SettingsService>(
             builder: (_, settings, __) {
+              return FocusableSettingsTile(
+                leading: Icon(Icons.brightness_6),
+                title: Text("${localizations.wallpaperDimming}: ${settings.wallpaperExtraDim}%"),
+                onPressed: () {
+                  final next = settings.wallpaperExtraDim >= 60 ? 0 : settings.wallpaperExtraDim + 10;
+                  settings.setWallpaperExtraDim(next);
+                },
+              );
+            }
+          ),
+          Consumer<SettingsService>(
+            builder: (_, settings, __) {
               if (settings.timeBasedWallpaperEnabled) {
                 return Column(
                   children: [
