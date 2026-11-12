@@ -80,7 +80,8 @@ jobs:
             exit 1
           fi
           badging=$("$aapt" dump badging "$apk")
-          printf "%s\n" "$badging" | grep -F "package: name='com.clicktv.launcher.test'"
+          # El build de release no añade sufijo: el paquete es com.clicktv.launcher (ver applicationId en android/app/build.gradle).
+          printf "%s\n" "$badging" | grep -qF "package: name='com.clicktv.launcher' " || { echo "ERROR: el paquete de la APK no es com.clicktv.launcher"; printf "%s\n" "$badging" | grep -F "package:"; exit 1; }
           version_code=$(printf "%s\n" "$badging" | sed -n "s/.*versionCode='\([0-9][0-9]*\)'.*/\1/p")
           test -n "$version_code"
           test "$version_code" = 8113
