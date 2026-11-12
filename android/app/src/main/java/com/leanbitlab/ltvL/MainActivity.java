@@ -490,12 +490,52 @@ public class MainActivity extends FlutterActivity {
             Drawable drawable = info.loadBanner(packageManager);
 
             if (drawable != null) {
-                imageBytes = drawableToByteArray(drawable);
+                imageBytes = composeTvBanner(drawable);
             }
         } catch (PackageManager.NameNotFoundException ignored) {
         }
 
         return imageBytes;
+    }
+
+    /**
+     * Banner 16:9 de 640x360: la imagen original completa y centrada, sobre
+     * una versión difuminada de sí misma. Así cualquier banner (no solo 16:9)
+     * ocupa toda la tarjeta sin recortarse ni dejar franjas vacías.
+     */
+    private byte[] composeTvBanner(Drawable drawable) {
+        try {
+            Bitmap src = drawableToBitmap(drawable);
+            if (src == null || src.getWidth() <= 0 || src.getHeight() <= 0) {
+                return new byte[0];
+            }
+            final int w = 640;
+            final int h = 360;
+            Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(out);
+            canvas.drawColor(android.graphics.Color.BLACK);
+
+            // Fondo: reducir y volver a ampliar produce un difuminado barato.
+            Bitmap tiny = Bitmap.createScaledBitmap(src, 24, 14, true);
+            Bitmap blurred = Bitmap.createScaledBitmap(tiny, w, h, true);
+            canvas.drawBitmap(blurred, 0, 0, null);
+            canvas.drawColor(android.graphics.Color.argb(110, 0, 0, 0));
+
+            // Primer plano: la imagen completa, sin recortar.
+            float scale = Math.min((float) w / src.getWidth(), (float) h / src.getHeight());
+            int dw = Math.round(src.getWidth() * scale);
+            int dh = Math.round(src.getHeight() * scale);
+            android.graphics.Rect dst = new android.graphics.Rect(
+                    (w - dw) / 2, (h - dh) / 2, (w + dw) / 2, (h + dh) / 2);
+            canvas.drawBitmap(src, null, dst,
+                    new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG));
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            out.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            return stream.toByteArray();
+        } catch (RuntimeException e) {
+            return new byte[0];
+        }
     }
 
     private byte[] getApplicationIcon(String packageName) {
