@@ -84,7 +84,7 @@ jobs:
           printf "%s\n" "$badging" | grep -qF "package: name='com.clicktv.launcher' " || { echo "ERROR: el paquete de la APK no es com.clicktv.launcher"; printf "%s\n" "$badging" | grep -F "package:"; exit 1; }
           version_code=$(printf "%s\n" "$badging" | sed -n "s/.*versionCode='\([0-9][0-9]*\)'.*/\1/p")
           test -n "$version_code"
-          test "$version_code" = 8113
+          test "$version_code" = 8114
           printf "OK: versionCode=%s\n" "$version_code"
           cp "$apk" build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
           sha256sum build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
