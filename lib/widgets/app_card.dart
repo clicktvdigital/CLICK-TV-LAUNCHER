@@ -538,46 +538,47 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
             // centrado sobre fondo negro, sin depender del tamaño natural de la imagen.
             return SizedBox.expand(
               child: ColoredBox(
-                color: Colors.black,
-                child: Image(
-                  image: record.$2,
-                  fit: BoxFit.contain,
-                  alignment: Alignment.center,
-                  errorBuilder: (context, error, stack) {
-                    debugPrint('AppCard banner image error: $error');
-                    return const SizedBox.shrink();
-                  },
+                color: Colors.black.withOpacity(0.45),
+                child: Opacity(
+                  opacity: 0.9,
+                  child: Image(
+                    image: record.$2,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                    errorBuilder: (context, error, stack) {
+                      debugPrint('AppCard banner image error: $error');
+                      return const SizedBox.shrink();
+                    },
+                  ),
                 ),
               ),
             );
           }
           else {
-            return Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
+            // Sin banner de TV: el icono se muestra completo y centrado en la
+            // tarjeta, con el nombre debajo. Nada se recorta.
+            return Container(
+              color: Colors.black.withOpacity(0.45),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              child: Column(
                 children: [
                   Expanded(
-                    flex: 2,
-                    child: Ink.image(
+                    child: Image(
                       image: record.$2,
-                      // El icono se ajusta completo dentro de su espacio, sin recortar
-                      // logos como el de Alerta EC o el reloj.
                       fit: BoxFit.contain,
-                      height: double.maxFinite,
-                      onImageError: (e, s) => debugPrint('AppCard icon image error: $e'),
+                      errorBuilder: (context, error, stack) {
+                        debugPrint('AppCard icon image error: $error');
+                        return const SizedBox.shrink();
+                      },
                     ),
                   ),
-                  Flexible(
-                    flex: 3,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        app.name,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 3,
-                      ),
-                    ),
+                  const SizedBox(height: 6),
+                  Text(
+                    app.name,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

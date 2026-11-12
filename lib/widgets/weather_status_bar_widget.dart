@@ -154,8 +154,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                               if (city.isNotEmpty)
                                 Text(
                                   city,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 3,
                                   style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -164,8 +163,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                                 ),
                               Text(
                                 displayText,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                maxLines: 3,
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w400,

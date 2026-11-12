@@ -62,15 +62,15 @@ String ecuadorAssetFor(DateTime now) {
 
 /// Subtítulo de cada foto de Ecuador, por nombre de archivo.
 const Map<String, String> ecuadorCaptions = {
-  'manana-1-chimborazo.jpg': 'Chimborazo · Mañana',
-  'manana-2-mitad-del-mundo.jpg': 'Mitad del Mundo · Mañana',
-  'manana-3-cotopaxi-quilotoa.jpg': 'Cotopaxi y Quilotoa · Mañana',
-  'tarde-1-piquero-galapagos.jpg': 'Piquero de Galápagos · Tarde',
-  'tarde-2-albatros.jpg': 'Albatros de Galápagos · Tarde',
-  'tarde-3-paisaje-ecuador.jpg': 'Paisaje de Ecuador · Tarde',
-  'noche-1-rana.jpg': 'Rana del Bosque Guardián · Noche',
-  'noche-2-san-francisco.jpg': 'San Francisco · Noche',
-  'noche-3-la-compania.jpg': 'La Compañía · Noche',
+  'manana-1-chimborazo.jpg': 'Chimborazo',
+  'manana-2-mitad-del-mundo.jpg': 'Mitad del Mundo',
+  'manana-3-cotopaxi-quilotoa.jpg': 'Cotopaxi y Quilotoa',
+  'tarde-1-piquero-galapagos.jpg': 'Piquero de Galápagos',
+  'tarde-2-albatros.jpg': 'Albatros de Galápagos',
+  'tarde-3-paisaje-ecuador.jpg': 'Paisaje de Ecuador',
+  'noche-1-rana.jpg': 'Rana del Bosque Guardián',
+  'noche-2-san-francisco.jpg': 'San Francisco',
+  'noche-3-la-compania.jpg': 'La Compañía',
 };
 
 class WallpaperService extends ChangeNotifier {

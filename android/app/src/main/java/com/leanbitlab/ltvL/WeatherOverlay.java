@@ -155,7 +155,8 @@ final class WeatherOverlay {
         titleView.setText(title);
         titleView.setTextColor(Color.WHITE);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
-        titleView.setSingleLine(true);
+        titleView.setSingleLine(false);
+        titleView.setMaxLines(2);
         card.addView(titleView);
 
         if (!detail.isEmpty()) {
@@ -163,7 +164,8 @@ final class WeatherOverlay {
             detailView.setText(detail);
             detailView.setTextColor(Color.argb(230, 255, 255, 255));
             detailView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            detailView.setSingleLine(true);
+            detailView.setSingleLine(false);
+            detailView.setMaxLines(4);
             card.addView(detailView);
         }
 
