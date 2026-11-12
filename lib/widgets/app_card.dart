@@ -551,6 +551,9 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
                     flex: 2,
                     child: Ink.image(
                       image: record.$2,
+                      // El icono se ajusta completo dentro de su espacio, sin recortar
+                      // logos como el de Alerta EC o el reloj.
+                      fit: BoxFit.contain,
                       height: double.maxFinite,
                       onImageError: (e, s) => debugPrint('AppCard icon image error: $e'),
                     ),
