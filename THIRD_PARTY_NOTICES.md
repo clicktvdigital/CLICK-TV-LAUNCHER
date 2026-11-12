@@ -34,3 +34,12 @@ SOFTWARE.
 ## FLauncher (GPLv3)
 
 Este proyecto está basado en FLauncher, creado por etienn01 y distribuido bajo GPLv3. Ver `LICENSE`.
+
+## Fotografías de Ecuador (Wikimedia Commons)
+
+Los fondos de `assets/fondos/ecuador/` son adaptaciones de fotografías de Wikimedia Commons. Cada una conserva su licencia original (CC BY-SA 3.0/4.0 o CC0 1.0). Autores, archivos originales y cambios realizados están en `assets/fondos/ecuador/CREDITOS.md`.
+
+- Diego Delso, CC BY-SA 4.0 (Mitad del Mundo, Santo Domingo, Piquero, Iglesias de San Francisco y La Compañía).
+- Dabit100 / David Torres Costales, CC BY-SA 3.0 (Vicuña, Chimborazo).
+- Guillermo Carlos Gómez, CC BY-SA 4.0 (Phyllomedusa tomopterna).
+- E. Bailey, CC0 1.0 (Albatros).
