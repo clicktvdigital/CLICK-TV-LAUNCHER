@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 /*
  * FLauncher
  * Copyright (C) 2021  Étienne Fesser
@@ -207,7 +208,7 @@ class _FLauncherState extends State<FLauncher> {
         ),
         key: Key("background_${wallpaperService.version}"),
         fit: BoxFit.cover,
-        filterQuality: FilterQuality.high,
+        filterQuality: ui.FilterQuality.high,
         height: physicalSize.height,
         width: physicalSize.width
       );
