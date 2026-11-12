@@ -64,7 +64,7 @@ String ecuadorAssetFor(DateTime now) {
 const Map<String, String> ecuadorCaptions = {
   'manana-1-chimborazo.jpg': 'Chimborazo',
   'manana-2-mitad-del-mundo.jpg': 'Mitad del Mundo',
-  'manana-3-cotopaxi-quilotoa.jpg': 'Cotopaxi y Quilotoa',
+  'manana-3-cotopaxi-quilotoa.jpg': 'Quilotoa',
   'tarde-1-piquero-galapagos.jpg': 'Piquero de Galápagos',
   'tarde-2-albatros.jpg': 'Albatros de Galápagos',
   'tarde-3-paisaje-ecuador.jpg': 'Paisaje de Ecuador',
