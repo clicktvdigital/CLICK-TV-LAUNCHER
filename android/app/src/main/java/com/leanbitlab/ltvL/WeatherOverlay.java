@@ -64,11 +64,53 @@ final class WeatherOverlay {
                     detail.append("Lluvia hoy ").append(rain).append("%");
                 }
             }
+            String rainNext = nextHoursRain(json.optJSONArray("hourly"));
+            if (rainNext != null) {
+                if (detail.length() > 0) detail.append("\n");
+                detail.append(rainNext);
+            }
             if (title.equals("Clima") && detail.length() == 0) return null;
             return new String[] {title, detail.toString()};
         } catch (Exception e) {
             return null;
         }
+    }
+
+
+    /**
+     * Lluvia de las próximas 6 horas: la probabilidad más alta y a qué hora.
+     * Devuelve null si no hay datos horarios o si la lluvia es baja (menos de 30 %).
+     */
+    static String nextHoursRain(JSONArray hourly) {
+        if (hourly == null) return null;
+        long nowMillis = System.currentTimeMillis();
+        int best = -1;
+        long bestMillis = 0L;
+        int checked = 0;
+        for (int i = 0; i < hourly.length() && checked < 6; i++) {
+            JSONObject hour = hourly.optJSONObject(i);
+            if (hour == null) continue;
+            long millis = toMillis(hour.opt("timestamp"));
+            Integer rain = parseInt(hour.opt("precipProbability"));
+            if (millis <= 0L || rain == null || millis < nowMillis - 3_600_000L) continue;
+            checked++;
+            if (rain > best) {
+                best = rain;
+                bestMillis = millis;
+            }
+        }
+        if (best < 30) return null;
+        String time = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                .format(new java.util.Date(bestMillis));
+        return "Lluvia próximas 6 h: " + best + "% hacia las " + time;
+    }
+
+    // El timestamp puede venir en segundos o en milisegundos.
+    private static long toMillis(Object value) {
+        Double n = toNumber(value);
+        if (n == null) return 0L;
+        long v = n.longValue();
+        return v < 100_000_000_000L ? v * 1000L : v;
     }
 
     // Mismas reglas que lib/models/weather_data.dart: valores mayores de 100 son Kelvin.
