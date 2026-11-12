@@ -176,15 +176,18 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                                     color: Colors.white,
                                   ),
                                 ),
-                              Text(
-                                displayText,
-                                maxLines: 4,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white,
+                              // Cada dato en su propia línea: nada se corta al final.
+                              for (final line in details)
+                                Text(
+                                  line,
+                                  maxLines: 2,
+                                  softWrap: true,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
