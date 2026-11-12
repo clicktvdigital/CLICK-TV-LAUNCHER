@@ -534,12 +534,21 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
           if (record == null) return const SizedBox();
 
           if (record.$1 == AppImageType.Banner) {
-            // contain: muestra el banner completo sin recortar sus bordes en TV.
-            // Las imágenes que no son 16:9 se centran con la franja de fondo.
-            return Ink.image(
-              image: record.$2,
-              fit: BoxFit.contain,
-              onImageError: (e, s) => debugPrint('AppCard banner image error: $e'),
+            // El banner ocupa exactamente el área de la tarjeta y se muestra completo,
+            // centrado sobre fondo negro, sin depender del tamaño natural de la imagen.
+            return SizedBox.expand(
+              child: ColoredBox(
+                color: Colors.black,
+                child: Image(
+                  image: record.$2,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  errorBuilder: (context, error, stack) {
+                    debugPrint('AppCard banner image error: $error');
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
             );
           }
           else {
