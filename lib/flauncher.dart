@@ -232,6 +232,20 @@ class _FLauncherState extends State<FLauncher> {
             ),
           ),
         ),
+        if (wallpaperService.caption != null)
+          Positioned(
+            left: 48,
+            bottom: 24,
+            child: Text(
+              wallpaperService.caption!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                letterSpacing: 0.5,
+                shadows: [Shadow(blurRadius: 8, color: Colors.black87)],
+              ),
+            ),
+          ),
       ],
     );
   }

@@ -60,6 +60,19 @@ String ecuadorAssetFor(DateTime now) {
   return list[index];
 }
 
+/// Subtítulo de cada foto de Ecuador, por nombre de archivo.
+const Map<String, String> ecuadorCaptions = {
+  'manana-1-chimborazo.jpg': 'Chimborazo · Mañana',
+  'manana-2-mitad-del-mundo.jpg': 'Mitad del Mundo · Mañana',
+  'manana-3-santo-domingo.jpg': 'Santo Domingo · Mañana',
+  'tarde-1-piquero-galapagos.jpg': 'Piquero de Galápagos · Tarde',
+  'tarde-2-albatros.jpg': 'Albatros de Galápagos · Tarde',
+  'tarde-3-san-francisco.jpg': 'San Francisco · Tarde',
+  'noche-1-rana.jpg': 'Rana del Bosque Guardián · Noche',
+  'noche-2-san-francisco.jpg': 'San Francisco · Noche',
+  'noche-3-la-compania.jpg': 'La Compañía · Noche',
+};
+
 class WallpaperService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
   final SettingsService _settingsService;
@@ -75,6 +88,10 @@ class WallpaperService extends ChangeNotifier {
 
   ImageProvider?  get wallpaper     => _wallpaper;
   int             get version       => _version;
+
+  String? _caption;
+  /// Subtítulo de la foto actual; null si el fondo no es del set de Ecuador.
+  String? get caption => _caption;
 
   FLauncherGradient get gradient => FLauncherGradients.all.firstWhere(
         (gradient) => gradient.uuid == _settingsService.gradientUuid,
@@ -138,9 +155,12 @@ class WallpaperService extends ChangeNotifier {
     final enabled = _settingsService.timeBasedWallpaperEnabled;
 
     ImageProvider? newWallpaper;
+    String? newCaption;
 
     if (_settingsService.ecuadorWallpaperEnabled) {
-      newWallpaper = AssetImage(ecuadorAssetFor(now));
+      final assetPath = ecuadorAssetFor(now);
+      newWallpaper = AssetImage(assetPath);
+      newCaption = ecuadorCaptions[assetPath.split('/').last];
     } else if (enabled) {
       if (isDay && await _wallpaperDayFile.exists()) {
         newWallpaper = FileImage(_wallpaperDayFile);
@@ -156,8 +176,9 @@ class WallpaperService extends ChangeNotifier {
     }
 
     if (callId == _updateWallpaperCallCount) {
-      if (_wallpaper != newWallpaper || force) {
+      if (_wallpaper != newWallpaper || _caption != newCaption || force) {
         _wallpaper = newWallpaper;
+        _caption = newCaption;
         notifyListeners();
       }
     }
