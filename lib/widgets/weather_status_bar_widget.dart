@@ -171,7 +171,8 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                                   city,
                                   maxLines: 3,
                                   style: const TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 14,
+                                    height: 1.0,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
                                   ),
@@ -183,7 +184,8 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                                   maxLines: 2,
                                   softWrap: true,
                                   style: const TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 14,
+                                    height: 1.0,
                                     fontWeight: FontWeight.w400,
                                     color: Colors.white,
                                   ),
