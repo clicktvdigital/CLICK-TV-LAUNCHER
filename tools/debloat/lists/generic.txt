@@ -1,0 +1,41 @@
+# CLICK TV LAUNCHER - lista genérica de desactivación (Google TV / Android TV).
+#
+# Criterio: paquetes que aparecen en muchos modelos de la lista de referencia de Clean Your TV
+# (468 modelos) y que son telemetría, feedback, demos o promoción. Todo se DESACTIVA, no se desinstala.
+# Lo que se desactiva con "apply" se reactiva con "restore".
+#
+# Las líneas sin comentar son la lista activa. Las marcadas con "# opcional" pueden usarse si no
+# necesitas esa función; quita el # para activarlas.
+#
+# Uso:
+#   TV_HOST=<ip> tools/debloat/debloat.sh plan    tools/debloat/lists/generic.txt
+#   TV_HOST=<ip> tools/debloat/debloat.sh apply   tools/debloat/lists/generic.txt
+#   TV_HOST=<ip> tools/debloat/debloat.sh restore tools/debloat/lists/generic.txt
+#
+# NO aparecen aquí a propósito (el script también los rechaza):
+#   com.google.android.tungsten.setupwraith  guarda tu Wi-Fi; desactivarlo deja el TV sin red.
+#   com.google.android.marvin.talkback       accesibilidad; no tocar.
+#   com.google.android.apps.tv.launcherx / com.google.android.tvlauncher   launcher de fábrica;
+#                                            lo reemplaza CLICK TV LAUNCHER como inicio.
+#   com.android.adservices.api, onetimeinitializer   servicios del sistema con dependencias.
+
+# --- Feedback y telemetría ---
+com.google.android.feedback
+com.google.android.tv.bugreportsender
+com.android.tv.feedbackconsent
+com.google.android.tvrecommendations
+
+# --- Contenido y promoción de Google TV ---
+com.google.android.katniss
+com.google.android.partnersetup
+com.google.android.videos
+fusion.android.tv.demo
+
+# --- Opcionales (quita el # si no los usas) ---
+# com.google.android.play.games           # juegos de Play Games
+# com.google.android.youtube.tvmusic      # YouTube Music en TV
+# com.google.android.backdrop             # fondos de pantalla animados del salvapantallas
+# com.google.android.apps.mediashell     # pantalla de medios
+# com.google.android.syncadapters.calendar # sincronización de calendario en TV
+# com.android.printspooler               # impresión
+# com.amazon.amazonvideo.livingroom     # Prime Video (solo si no lo usas)
