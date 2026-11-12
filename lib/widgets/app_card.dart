@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'dart:ui' as ui;
+import 'dart:typed_data';
 import 'dart:async';
 
 import 'package:flauncher/actions.dart';
@@ -511,7 +511,7 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
 
   Future<(AppImageType, ImageProvider)> _loadAppBannerOrIcon(AppsService service) async {
     final Uint8List banner = await service.getAppBanner(widget.application.packageName);
-    if (banner.isNotEmpty && await _isTvBannerShape(banner)) {
+    if (banner.isNotEmpty && _isTvBannerShape(banner)) {
       return (AppImageType.Banner, MemoryImage(banner));
     }
     // Sin banner 16:9: se muestra el icono completo dentro de la misma tarjeta.
@@ -519,17 +519,19 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
     return (AppImageType.Icon, MemoryImage(icon));
   }
 
-  /// true si la imagen tiene proporción 16:9 (con una tolerancia pequeña).
-  Future<bool> _isTvBannerShape(Uint8List bytes) async {
-    try {
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      final double ratio = frame.image.width / frame.image.height;
-      frame.image.dispose();
-      return (ratio - 16 / 9).abs() < 0.12;
-    } catch (_) {
-      return false;
+  /// true si el PNG tiene proporción 16:9 (con tolerancia). Lee solo la cabecera
+  /// del archivo, sin decodificarlo, así que es síncrono y no depende del motor gráfico.
+  bool _isTvBannerShape(Uint8List bytes) {
+    const pngSignature = [0x89, 0x50, 0x4E, 0x47];
+    if (bytes.length < 24) return false;
+    for (var i = 0; i < pngSignature.length; i++) {
+      if (bytes[i] != pngSignature[i]) return false;
     }
+    final data = ByteData.sublistView(bytes);
+    final width = data.getUint32(16, Endian.big);
+    final height = data.getUint32(20, Endian.big);
+    if (width == 0 || height == 0) return false;
+    return (width / height - 16 / 9).abs() < 0.12;
   }
 
   Widget _appImage()
