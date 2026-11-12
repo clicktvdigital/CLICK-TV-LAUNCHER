@@ -546,16 +546,19 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
           if (record == null) return const SizedBox();
 
           if (record.$1 == AppImageType.Banner) {
-            // Banner 16:9: ocupa toda la tarjeta, completo.
-            return Image(
-              image: record.$2,
-              fit: BoxFit.fill,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (context, error, stack) {
-                debugPrint('AppCard banner image error: $error');
-                return const SizedBox.shrink();
-              },
+            // Banner 16:9: ocupa toda la tarjeta, completo, sobre fondo negro.
+            return ColoredBox(
+              color: Colors.black,
+              child: Image(
+                image: record.$2,
+                fit: BoxFit.fill,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stack) {
+                  debugPrint('AppCard banner image error: $error');
+                  return const SizedBox.shrink();
+                },
+              ),
             );
           }
           else {
