@@ -1,6 +1,6 @@
 # Créditos de los fondos de Ecuador
 
-Las fotografías son de Wikimedia Commons o de Pxhere. Cada una conserva su licencia original. Las versiones de este directorio están recortadas a 16:9 (3840×2160), oscurecidas y recomprimidas en JPEG. Son adaptaciones y mantienen la misma licencia que el original.
+Las fotografías son de Wikimedia Commons o de Pxhere. Cada una conserva su licencia original. Las versiones de este directorio están recortadas a 16:9 (1920×1080), oscurecidas y recomprimidas en JPEG. Son adaptaciones y mantienen la misma licencia que el original.
 
 | Archivo | Lugar | Autor | Licencia | Original |
 | --- | --- | --- | --- | --- |
