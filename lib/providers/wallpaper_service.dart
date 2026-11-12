@@ -32,12 +32,12 @@ const Map<String, List<String>> ecuadorWallpaperSets = {
   'manana': [
     'assets/fondos/ecuador/manana-1-chimborazo.jpg',
     'assets/fondos/ecuador/manana-2-mitad-del-mundo.jpg',
-    'assets/fondos/ecuador/manana-3-santo-domingo.jpg',
+    'assets/fondos/ecuador/manana-3-cotopaxi-quilotoa.jpg',
   ],
   'tarde': [
     'assets/fondos/ecuador/tarde-1-piquero-galapagos.jpg',
     'assets/fondos/ecuador/tarde-2-albatros.jpg',
-    'assets/fondos/ecuador/tarde-3-san-francisco.jpg',
+    'assets/fondos/ecuador/tarde-3-paisaje-ecuador.jpg',
   ],
   'noche': [
     'assets/fondos/ecuador/noche-1-rana.jpg',
@@ -64,10 +64,10 @@ String ecuadorAssetFor(DateTime now) {
 const Map<String, String> ecuadorCaptions = {
   'manana-1-chimborazo.jpg': 'Chimborazo · Mañana',
   'manana-2-mitad-del-mundo.jpg': 'Mitad del Mundo · Mañana',
-  'manana-3-santo-domingo.jpg': 'Santo Domingo · Mañana',
+  'manana-3-cotopaxi-quilotoa.jpg': 'Cotopaxi y Quilotoa · Mañana',
   'tarde-1-piquero-galapagos.jpg': 'Piquero de Galápagos · Tarde',
   'tarde-2-albatros.jpg': 'Albatros de Galápagos · Tarde',
-  'tarde-3-san-francisco.jpg': 'San Francisco · Tarde',
+  'tarde-3-paisaje-ecuador.jpg': 'Paisaje de Ecuador · Tarde',
   'noche-1-rana.jpg': 'Rana del Bosque Guardián · Noche',
   'noche-2-san-francisco.jpg': 'San Francisco · Noche',
   'noche-3-la-compania.jpg': 'La Compañía · Noche',

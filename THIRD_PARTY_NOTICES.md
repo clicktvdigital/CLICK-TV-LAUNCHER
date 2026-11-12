@@ -43,3 +43,5 @@ Los fondos de `assets/fondos/ecuador/` son adaptaciones de fotografías de Wikim
 - Dabit100 / David Torres Costales, CC BY-SA 3.0 (Vicuña, Chimborazo).
 - Guillermo Carlos Gómez, CC BY-SA 4.0 (Phyllomedusa tomopterna).
 - E. Bailey, CC0 1.0 (Albatros).
+- Simon Matzinger, CC BY 2.0 (cotopaxi y quilotoa, Ecuador).
+- Pxhere, CC0 1.0 (paisaje de hierba, ubicación indicada por el mantenedor).
