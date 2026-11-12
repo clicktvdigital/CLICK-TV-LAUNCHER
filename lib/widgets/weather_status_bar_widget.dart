@@ -42,7 +42,20 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
             final tempText = weather.formatTemperature(useFahrenheit: useFahrenheit);
 
             String displayText;
-            if (isWarning && weather.warningText != null) {
+            if (weather.rainStart != null) {
+              final rs = weather.rainStart!;
+              final isEsRain = Localizations.localeOf(context).languageCode == "es";
+              final h12 = rs.hour % 12 == 0 ? 12 : rs.hour % 12;
+              final ampm = rs.hour < 12 ? (isEsRain ? "a. m." : "AM") : (isEsRain ? "p. m." : "PM");
+              final mm = rs.minute.toString().padLeft(2, '0');
+              final now = DateTime.now();
+              final sameDay = rs.year == now.year && rs.month == now.month && rs.day == now.day;
+              final dayWord = sameDay ? "" : (isEsRain ? "mañana " : "tomorrow ");
+              final rainLabel = isEsRain
+                  ? "Lluvia ${dayWord}desde las $h12:$mm $ampm (${weather.rainStartPercent}%)"
+                  : "Rain ${dayWord}from $h12:$mm $ampm (${weather.rainStartPercent}%)";
+              displayText = "$tempText • $rainLabel";
+            } else if (isWarning && weather.warningText != null) {
               if (Localizations.localeOf(context).languageCode == "es") {
                 final warningName = weather.warningType.name == "rain"
                     ? "Lluvia"
