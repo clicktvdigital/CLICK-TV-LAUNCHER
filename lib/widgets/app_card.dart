@@ -534,9 +534,11 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
           if (record == null) return const SizedBox();
 
           if (record.$1 == AppImageType.Banner) {
+            // contain: muestra el banner completo sin recortar sus bordes en TV.
+            // Las imágenes que no son 16:9 se centran con la franja de fondo.
             return Ink.image(
               image: record.$2,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
               onImageError: (e, s) => debugPrint('AppCard banner image error: $e'),
             );
           }
