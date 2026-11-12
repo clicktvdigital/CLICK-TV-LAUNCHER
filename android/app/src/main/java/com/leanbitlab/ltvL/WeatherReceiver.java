@@ -58,6 +58,8 @@ public class WeatherReceiver extends BroadcastReceiver {
             if (!isValidWeatherJson(weatherJson)) return;
             SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             prefs.edit().putString(KEY_WEATHER_JSON, weatherJson).apply();
+            // Dato nuevo: mostrar la tarjeta encima de la app que se esté viendo.
+            WeatherOverlay.showFromJson(context, weatherJson);
         } else {
             SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             weatherJson = prefs.getString(KEY_WEATHER_JSON, null);
