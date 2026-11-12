@@ -623,6 +623,7 @@ WallpaperService mkWallpaperService([bool wallpaper = true]) {
   when(wallpaperService.gradient).thenReturn(FLauncherGradients.greatWhale);
   when(wallpaperService.wallpaper).thenReturn(wallpaper ? Image.asset('assets/icon.png').image : null);
   when(wallpaperService.version).thenReturn(0);
+  when(wallpaperService.caption).thenReturn(null);
   return wallpaperService;
 }
 
