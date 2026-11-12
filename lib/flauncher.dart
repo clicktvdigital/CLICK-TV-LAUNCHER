@@ -207,6 +207,7 @@ class _FLauncherState extends State<FLauncher> {
         ),
         key: Key("background_${wallpaperService.version}"),
         fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
         height: physicalSize.height,
         width: physicalSize.width
       );
