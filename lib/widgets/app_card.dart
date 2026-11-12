@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:ui' as ui;
 import 'dart:async';
 
 import 'package:flauncher/actions.dart';
@@ -509,17 +510,26 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
   }
 
   Future<(AppImageType, ImageProvider)> _loadAppBannerOrIcon(AppsService service) async {
-    Uint8List bytes = Uint8List(0);
-
-    bytes = await service.getAppBanner(widget.application.packageName);
-    AppImageType type = AppImageType.Banner;
-
-    if (bytes.isEmpty) {
-      type = AppImageType.Icon;
-      bytes = await service.getAppIcon(widget.application.packageName);
+    final Uint8List banner = await service.getAppBanner(widget.application.packageName);
+    if (banner.isNotEmpty && await _isTvBannerShape(banner)) {
+      return (AppImageType.Banner, MemoryImage(banner));
     }
+    // Sin banner 16:9: se muestra el icono completo dentro de la misma tarjeta.
+    final Uint8List icon = await service.getAppIcon(widget.application.packageName);
+    return (AppImageType.Icon, MemoryImage(icon));
+  }
 
-    return (type, MemoryImage(bytes));
+  /// true si la imagen tiene proporción 16:9 (con una tolerancia pequeña).
+  Future<bool> _isTvBannerShape(Uint8List bytes) async {
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final double ratio = frame.image.width / frame.image.height;
+      frame.image.dispose();
+      return (ratio - 16 / 9).abs() < 0.12;
+    } catch (_) {
+      return false;
+    }
   }
 
   Widget _appImage()
@@ -534,24 +544,16 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
           if (record == null) return const SizedBox();
 
           if (record.$1 == AppImageType.Banner) {
-            // El banner ocupa exactamente el área de la tarjeta y se muestra completo,
-            // centrado sobre fondo negro, sin depender del tamaño natural de la imagen.
-            return SizedBox.expand(
-              child: ColoredBox(
-                color: Colors.black.withOpacity(0.45),
-                child: Opacity(
-                  opacity: 0.9,
-                  child: Image(
-                    image: record.$2,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.center,
-                    errorBuilder: (context, error, stack) {
-                      debugPrint('AppCard banner image error: $error');
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ),
-              ),
+            // Banner 16:9: ocupa toda la tarjeta, completo.
+            return Image(
+              image: record.$2,
+              fit: BoxFit.fill,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (context, error, stack) {
+                debugPrint('AppCard banner image error: $error');
+                return const SizedBox.shrink();
+              },
             );
           }
           else {

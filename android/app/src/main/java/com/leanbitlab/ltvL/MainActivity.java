@@ -490,7 +490,7 @@ public class MainActivity extends FlutterActivity {
             Drawable drawable = info.loadBanner(packageManager);
 
             if (drawable != null) {
-                imageBytes = composeTvBanner(drawable);
+                imageBytes = drawableToByteArray(drawable);
             }
         } catch (PackageManager.NameNotFoundException ignored) {
         }
