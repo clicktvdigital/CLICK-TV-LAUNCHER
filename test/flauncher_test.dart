@@ -590,6 +590,8 @@ SettingsService mkSettingsService() {
   final settingsService = MockSettingsService();
   when(settingsService.dateFormat).thenReturn(SettingsService.defaultDateFormat);
   when(settingsService.timeFormat).thenReturn(SettingsService.defaultTimeFormat);
+  when(settingsService.ecuadorWallpaperEnabled).thenReturn(false);
+  when(settingsService.wallpaperExtraDim).thenReturn(0);
   when(settingsService.appHighlightAnimationEnabled).thenReturn(true);
   when(settingsService.showCategoryTitles).thenReturn(true);
   when(settingsService.showCategoryAppCount).thenReturn(false);

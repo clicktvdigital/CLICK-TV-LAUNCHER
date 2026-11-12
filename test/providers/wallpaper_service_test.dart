@@ -44,6 +44,8 @@ void main() {
       final fLauncherChannel = MockFLauncherChannel();
       final settingsService = MockSettingsService();
       when(settingsService.timeBasedWallpaperEnabled).thenReturn(false);
+      when(settingsService.ecuadorWallpaperEnabled).thenReturn(false);
+      when(settingsService.wallpaperExtraDim).thenReturn(0);
       when(imagePicker.pickImage(source: ImageSource.gallery)).thenAnswer((_) => Future.value(pickedFile));
       when(fLauncherChannel.checkForGetContentAvailability()).thenAnswer((_) => Future.value(true));
       final wallpaperService = WallpaperService(fLauncherChannel, settingsService);
@@ -62,6 +64,8 @@ void main() {
       when(fLauncherChannel.checkForGetContentAvailability()).thenAnswer((_) => Future.value(false));
       final settingsService = MockSettingsService();
       when(settingsService.timeBasedWallpaperEnabled).thenReturn(false);
+      when(settingsService.ecuadorWallpaperEnabled).thenReturn(false);
+      when(settingsService.wallpaperExtraDim).thenReturn(0);
       final wallpaperService = WallpaperService(fLauncherChannel, settingsService);
       await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 
@@ -74,6 +78,8 @@ void main() {
     final fLauncherChannel = MockFLauncherChannel();
     final settingsService = MockSettingsService();
       when(settingsService.timeBasedWallpaperEnabled).thenReturn(false);
+      when(settingsService.ecuadorWallpaperEnabled).thenReturn(false);
+      when(settingsService.wallpaperExtraDim).thenReturn(0);
     final wallpaperService = WallpaperService(fLauncherChannel, settingsService);
 
     await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
@@ -88,6 +94,8 @@ void main() {
       final fLauncherChannel = MockFLauncherChannel();
       final settingsService = MockSettingsService();
       when(settingsService.timeBasedWallpaperEnabled).thenReturn(false);
+      when(settingsService.ecuadorWallpaperEnabled).thenReturn(false);
+      when(settingsService.wallpaperExtraDim).thenReturn(0);
       final wallpaperService = WallpaperService(fLauncherChannel, settingsService);
       when(settingsService.gradientUuid).thenReturn(null);
 
@@ -101,6 +109,8 @@ void main() {
       final fLauncherChannel = MockFLauncherChannel();
       final settingsService = MockSettingsService();
       when(settingsService.timeBasedWallpaperEnabled).thenReturn(false);
+      when(settingsService.ecuadorWallpaperEnabled).thenReturn(false);
+      when(settingsService.wallpaperExtraDim).thenReturn(0);
       final wallpaperService = WallpaperService(fLauncherChannel, settingsService);
       when(settingsService.gradientUuid).thenReturn(FLauncherGradients.grassShampoo.uuid);
       await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
