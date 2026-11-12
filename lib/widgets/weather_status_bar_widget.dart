@@ -80,7 +80,9 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
             if (weather.todayMaxTemp != null && weather.todayMinTemp != null) {
               final high = displayDegrees(weather.todayMaxTemp!);
               final low = displayDegrees(weather.todayMinTemp!);
-              details.add("↑ " + high.toString() + "° ↓ " + low.toString() + "°");
+              details.add(Localizations.localeOf(context).languageCode == "es"
+                  ? "↑ $high° máx  ↓ $low° mín"
+                  : "↑ $high° max  ↓ $low° min");
             }
             if (dataStale) {
               details.add(Localizations.localeOf(context).languageCode == "es"
@@ -111,7 +113,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.sizeOf(context).width * 0.28,
+                      maxWidth: MediaQuery.sizeOf(context).width * 0.40,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
@@ -163,7 +165,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                                 ),
                               Text(
                                 displayText,
-                                maxLines: 3,
+                                maxLines: 4,
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w400,

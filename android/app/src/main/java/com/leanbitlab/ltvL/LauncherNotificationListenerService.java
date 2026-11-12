@@ -90,6 +90,14 @@ public class LauncherNotificationListenerService extends NotificationListenerSer
             return;
         }
 
+        // Las notificaciones de Alerta EC ya se muestran en su propia notificación:
+        // el launcher no las repite como pop-up.
+        String sourcePackage = sbn.getPackageName();
+        if ("com.clicktvdigital.alertaec".equals(sourcePackage)
+                || "com.clicktvdigital.alertaec.debug".equals(sourcePackage)) {
+            return;
+        }
+
         android.content.SharedPreferences prefs = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE);
         boolean enabled = prefs.getBoolean("flutter.system_notifications_popup", false);
         if (!enabled) {
