@@ -44,6 +44,7 @@ const String _showNetworkIndicatorInStatusBarKey = "show_network_indicator_in_st
 const String _accentColorKey = "accent_color";
 const String _screensaverClockStyleKey = "screensaver_clock_style";
 const String _timeBasedWallpaperEnabledKey = "time_based_wallpaper_enabled";
+const String _ecuadorWallpaperEnabledKey = "ecuador_wallpaper_enabled";
 const String _showInputsWidgetInStatusBarKey = "show_inputs_widget_in_status_bar";
 const String _showContinueWatchingKey = "show_continue_watching";
 const String _continueWatchingCardSizeKey = "continue_watching_card_size";
@@ -113,6 +114,7 @@ class SettingsService extends ChangeNotifier {
   late String _accentColorHex;
   late String _screensaverClockStyle;
   late bool _timeBasedWallpaperEnabled;
+  late bool _ecuadorWallpaperEnabled;
   late bool _showInputsWidgetInStatusBar;
   late bool _showContinueWatching;
   late String _continueWatchingCardSize;
@@ -230,6 +232,7 @@ class SettingsService extends ChangeNotifier {
     _accentColorHex = _sharedPreferences.getString(_accentColorKey) ?? ACCENT_COLOR_PURPLE;
     _screensaverClockStyle = _sharedPreferences.getString(_screensaverClockStyleKey) ?? "minimal";
     _timeBasedWallpaperEnabled = _sharedPreferences.getBool(_timeBasedWallpaperEnabledKey) ?? false;
+    _ecuadorWallpaperEnabled = _sharedPreferences.getBool(_ecuadorWallpaperEnabledKey) ?? false;
     _showInputsWidgetInStatusBar = _sharedPreferences.getBool(_showInputsWidgetInStatusBarKey) ?? true;
     _showContinueWatching = _sharedPreferences.getBool(_showContinueWatchingKey) ?? false;
     _continueWatchingCardSize = _sharedPreferences.getString(_continueWatchingCardSizeKey) ?? "normal";
@@ -274,6 +277,7 @@ class SettingsService extends ChangeNotifier {
       _accentColorKey: _accentColorHex,
       _screensaverClockStyleKey: _screensaverClockStyle,
       _timeBasedWallpaperEnabledKey: _timeBasedWallpaperEnabled,
+      _ecuadorWallpaperEnabledKey: _ecuadorWallpaperEnabled,
       _showInputsWidgetInStatusBarKey: _showInputsWidgetInStatusBar,
       _showContinueWatchingKey: _showContinueWatching,
       _continueWatchingCardSizeKey: _continueWatchingCardSize,
@@ -442,6 +446,14 @@ class SettingsService extends ChangeNotifier {
   Future<void> setTimeBasedWallpaperEnabled(bool enabled) async {
     await _sharedPreferences.setBool(_timeBasedWallpaperEnabledKey, enabled);
     _timeBasedWallpaperEnabled = enabled;
+    notifyListeners();
+  }
+
+  bool get ecuadorWallpaperEnabled => _ecuadorWallpaperEnabled;
+
+  Future<void> setEcuadorWallpaperEnabled(bool enabled) async {
+    await _sharedPreferences.setBool(_ecuadorWallpaperEnabledKey, enabled);
+    _ecuadorWallpaperEnabled = enabled;
     notifyListeners();
   }
 

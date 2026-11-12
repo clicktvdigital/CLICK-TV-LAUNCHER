@@ -49,6 +49,16 @@ class WallpaperPanelPage extends StatelessWidget {
           ),
           Consumer<SettingsService>(
             builder: (_, settings, __) {
+              return RoundedSwitchListTile(
+                title: Text(localizations.ecuadorWallpaper),
+                secondary: Icon(Icons.landscape),
+                value: settings.ecuadorWallpaperEnabled,
+                onChanged: (value) => settings.setEcuadorWallpaperEnabled(value),
+              );
+            }
+          ),
+          Consumer<SettingsService>(
+            builder: (_, settings, __) {
               if (settings.timeBasedWallpaperEnabled) {
                 return Column(
                   children: [

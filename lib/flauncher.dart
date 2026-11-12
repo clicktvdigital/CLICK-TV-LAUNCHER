@@ -196,8 +196,15 @@ class _FLauncherState extends State<FLauncher> {
     Widget background;
     if (wallpaperService.wallpaper != null) {
       final physicalSize = MediaQuery.sizeOf(context);
+      final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
       background = Image(
-        image: wallpaperService.wallpaper!,
+        // Decodifica a la resolución física de la pantalla: 4K en TV 4K y
+        // 1080p en TV Box, sin reservar memoria de más en equipos antiguos.
+        image: ResizeImage.resizeIfNeeded(
+          (physicalSize.width * devicePixelRatio).round(),
+          null,
+          wallpaperService.wallpaper!,
+        ),
         key: Key("background_${wallpaperService.version}"),
         fit: BoxFit.cover,
         height: physicalSize.height,
