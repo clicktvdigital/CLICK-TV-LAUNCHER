@@ -109,6 +109,8 @@ Las compilaciones firmadas y las actualizaciones de una instalación existente d
 
 El documento maestro de continuidad está en [`docs/CONTINUAR_AQUI.md`](docs/CONTINUAR_AQUI.md). Allí se separan las pruebas de CI, las revisiones estáticas y las comprobaciones físicas en TV.
 
+El entorno de trabajo de pruebas puede ser **Termux** en Android con **fish** como shell, conectado al televisor por **adb** (depuración inalámbrica) y a GitHub mediante `gh` o SSH. Los pasos completos, con notas de emparejamiento y autenticación, están en la sección «Entorno de trabajo: Termux + fish + adb» y «GitHub desde Termux» de `docs/CONTINUAR_AQUI.md`.
+
 ## Licencia y créditos
 
 Este proyecto se distribuye bajo [GNU GPLv3](LICENSE). Se conservan los créditos, avisos y licencias de FLauncher/LeanBitLab y de las dependencias utilizadas. CLICK TV DIGITAL mantiene su identidad y sus modificaciones, sin atribuirse la autoría exclusiva del código original de terceros.

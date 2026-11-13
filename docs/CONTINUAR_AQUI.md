@@ -77,6 +77,59 @@ flutter test
 
 Antes de un commit, ejecutar `git diff --check` y revisar que no se incluyan informes locales, APK, respaldos, secretos ni datos de pago. Antes de instalar, comprobar package, versión, ABI, firma y respaldo. No cambiar `main` ni modificar un televisor durante las validaciones de documentación.
 
+### Entorno de trabajo: Termux + fish + adb
+
+El trabajo de instalación y pruebas se hace desde **Termux** en Android, usando **fish** como shell y **adb** para hablar con el televisor. Los comandos de esta sección son orientativos: confirmar cada uno en el dispositivo antes de depender de él.
+
+Instalación de herramientas en Termux (una sola vez):
+
+```bash
+pkg update && pkg upgrade
+pkg install git gh openssh android-tools fish
+```
+
+Abrir fish dentro de Termux (en Termux no se cambia el shell por defecto con `chsh`):
+
+```bash
+fish
+```
+
+Conexión adb al televisor por depuración inalámbrica. Activar en el TV: Ajustes → Preferencias del dispositivo → Opciones de desarrollador → Depuración inalámbrica (o Depuración ADB). El teléfono y el TV deben estar en la misma red Wi-Fi.
+
+```bash
+adb pair IP_DEL_TV:PUERTO_DE_EMPAREJAMIENTO
+adb connect IP_DEL_TV:PUERTO_DE_CONEXION
+adb devices
+```
+
+Notas:
+- `adb pair` pide un código de seis dígitos que muestra el TV; el puerto de emparejamiento y el de conexión suelen ser distintos.
+- Si `adb devices` no muestra el TV como `device`, revisar la red y repetir el emparejamiento.
+- No copiar IP, códigos ni números de serie del televisor a este documento ni a los commits.
+
+### GitHub desde Termux
+
+Autenticación con `gh` desde Termux:
+
+```bash
+gh auth login
+gh auth setup-git
+gh auth status
+```
+
+Recomendación: no pegar tokens en el chat ni en archivos del repositorio. Si se usa un token, guardarlo en un archivo local fuera del repo y pasarlo con `gh auth login --with-token < RUTA_DEL_ARCHIVO`. El token debe tener solo los permisos necesarios y no debe aparecer en `git diff`, README ni logs.
+
+Alternativa con SSH: generar una clave con `ssh-keygen -t ed25519`, registrar la parte pública en GitHub y usar la URL `git@github.com:clicktvdigital/CLICK-TV-LAUNCHER.git`.
+
+Flujo básico de trabajo en la rama de desarrollo:
+
+```bash
+git switch claude/vigilant-shannon-xvf76q
+git pull --ff-only
+git status --short --branch
+git push -u origin claude/vigilant-shannon-xvf76q
+```
+
 ## Recursos públicos
 
 Se reutilizan el logo `assets/icon.png`, el banner `assets/banner.png`, el splash `assets/click_tv_splash.png` y las capturas auténticas en `docs/images/`. Los banners SVG históricos que contienen la marca LTvLauncher no se usan como cabecera de CLICK TV; se conservan solo para no eliminar recursos de terceros sin una decisión de licencia.
