@@ -60,7 +60,7 @@ Estas cantidades son orientativas. No habilitan cobros recurrentes ni prometen b
 
 1. Completar la validación de CI del commit actual y distinguir fallos históricos de regresiones.
 2. Observar el splash en un arranque frío del TV sin introducir demoras artificiales.
-3. Escanear físicamente un QR ampliado y documentar solo el resultado, sin publicar el payload.
+3. Escanear físicamente un QR ampliado y documentar solo el resultado, sin publicar el payload. **Verificado (confirmado por el usuario, 13-11-2026):** los códigos QR ampliados se leyeron con la cámara de un teléfono frente al TV. Sin payload publicado.
 4. Diagnosticar la fuente de clima y su relación real —si existe— con Alerta EC.
 5. Indicador ligero de tráfico de red, sin pruebas de velocidad ni polling permanente. Ya existe `DailyDataUsageWidget` con uso diario, semanal y mensual; se quitó el `Timer` de 5 minutos de `NetworkService`, que hacía polling. Falta comprobarlo en TV y ejecutar `flutter test`, que no se pudo correr en el entorno de Claude.
 6. Revisar orden inteligente de aplicaciones únicamente con fixtures y requisitos confirmados.
