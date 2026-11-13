@@ -95,7 +95,8 @@ void main() {
 
         // Sin polling: pasar el tiempo no provoca nuevas consultas.
         async.elapse(const Duration(minutes: 15));
-        verify(mockChannel.getDailyDataUsage()).called(1);
+        // verify() consume las llamadas ya comprobadas: aquí solo se exige que no haya nuevas.
+        verifyNever(mockChannel.getDailyDataUsage());
       });
     });
 
@@ -139,7 +140,7 @@ void main() {
 
         // Ni a los 5 ni a los 10 minutos debe haber consultas automáticas.
         async.elapse(const Duration(minutes: 10));
-        verify(mockChannel.getDailyDataUsage()).called(2);
+        verifyNever(mockChannel.getDailyDataUsage());
       });
     });
   });
