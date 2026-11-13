@@ -62,7 +62,7 @@ Estas cantidades son orientativas. No habilitan cobros recurrentes ni prometen b
 2. Observar el splash en un arranque frío del TV sin introducir demoras artificiales.
 3. Escanear físicamente un QR ampliado y documentar solo el resultado, sin publicar el payload.
 4. Diagnosticar la fuente de clima y su relación real —si existe— con Alerta EC.
-5. Diseñar un indicador ligero de tráfico de red, sin pruebas de velocidad ni polling permanente.
+5. Indicador ligero de tráfico de red, sin pruebas de velocidad ni polling permanente. Ya existe `DailyDataUsageWidget` con uso diario, semanal y mensual; se quitó el `Timer` de 5 minutos de `NetworkService`, que hacía polling. Falta comprobarlo en TV y ejecutar `flutter test`, que no se pudo correr en el entorno de Claude.
 6. Revisar orden inteligente de aplicaciones únicamente con fixtures y requisitos confirmados.
 
 ## Cómo continuar
@@ -106,6 +106,46 @@ Notas:
 - `adb pair` pide un código de seis dígitos que muestra el TV; el puerto de emparejamiento y el de conexión suelen ser distintos.
 - Si `adb devices` no muestra el TV como `device`, revisar la red y repetir el emparejamiento.
 - No copiar IP, códigos ni números de serie del televisor a este documento ni a los commits.
+
+### Verificar conexión adb y rama desde Termux
+
+Comprobar en este orden. Ninguno de estos comandos instala, borra ni cambia nada en el televisor.
+
+```bash
+# 1. Conexión adb: debe aparecer el TV con estado "device"
+adb devices -l
+
+# 2. Identificar el TV conectado (modelo y versión de Android)
+adb shell getprop ro.product.model
+adb shell getprop ro.build.version.release
+
+# 3. Versión instalada del launcher (paquete de la compilación de pruebas)
+adb shell dumpsys package com.clicktv.launcher.test.parallel.debug | grep -E "versionName|versionCode"
+```
+
+Si el paquete instalado es el de depuración local, el sufijo es `.local.debug` en lugar de `.test.parallel.debug`. Confirmar cuál corresponde a la compilación que se está probando.
+
+```bash
+# 4. Rama y commit locales
+cd ~/CLICK-TV-LAUNCHER
+git rev-parse --abbrev-ref HEAD
+git log -1 --oneline
+
+# 5. Diferencias con el remoto (sin modificar nada)
+git fetch origin
+git status -sb
+```
+
+Lectura esperada: la rama debe ser `claude/vigilant-shannon-xvf76q`, `git status -sb` no debe mostrar `ahead` ni `behind`, y los archivos modificados deben ser solo los que se esperan.
+
+Estado de CI de la rama (desde Termux con `gh`):
+
+```bash
+gh run list --branch claude/vigilant-shannon-xvf76q --limit 5
+gh run view ID_DEL_RUN --json status,conclusion,headSha
+```
+
+Un run solo cuenta como válido si su `headSha` coincide con `git rev-parse HEAD`.
 
 ### GitHub desde Termux
 
