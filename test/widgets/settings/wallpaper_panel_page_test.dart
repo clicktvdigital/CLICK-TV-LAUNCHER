@@ -83,6 +83,8 @@ Future<void> _pumpWidgetWithProviders(
   WallpaperService wallpaperService,
 ) async {
   when(settingsService.timeBasedWallpaperEnabled).thenReturn(false);
+  when(settingsService.ecuadorWallpaperEnabled).thenReturn(false);
+  when(settingsService.wallpaperExtraDim).thenReturn(0);
   await tester.pumpWidget(
     MultiProvider(
       providers: [

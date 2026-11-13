@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:typed_data';
 import 'dart:async';
 
 import 'package:flauncher/actions.dart';
@@ -509,17 +510,28 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
   }
 
   Future<(AppImageType, ImageProvider)> _loadAppBannerOrIcon(AppsService service) async {
-    Uint8List bytes = Uint8List(0);
-
-    bytes = await service.getAppBanner(widget.application.packageName);
-    AppImageType type = AppImageType.Banner;
-
-    if (bytes.isEmpty) {
-      type = AppImageType.Icon;
-      bytes = await service.getAppIcon(widget.application.packageName);
+    final Uint8List banner = await service.getAppBanner(widget.application.packageName);
+    if (banner.isNotEmpty && _isTvBannerShape(banner)) {
+      return (AppImageType.Banner, MemoryImage(banner));
     }
+    // Sin banner 16:9: se muestra el icono completo dentro de la misma tarjeta.
+    final Uint8List icon = await service.getAppIcon(widget.application.packageName);
+    return (AppImageType.Icon, MemoryImage(icon));
+  }
 
-    return (type, MemoryImage(bytes));
+  /// true si el PNG tiene proporción 16:9 (con tolerancia). Lee solo la cabecera
+  /// del archivo, sin decodificarlo, así que es síncrono y no depende del motor gráfico.
+  bool _isTvBannerShape(Uint8List bytes) {
+    const pngSignature = [0x89, 0x50, 0x4E, 0x47];
+    if (bytes.length < 24) return false;
+    for (var i = 0; i < pngSignature.length; i++) {
+      if (bytes[i] != pngSignature[i]) return false;
+    }
+    final data = ByteData.sublistView(bytes);
+    final width = data.getUint32(16, Endian.big);
+    final height = data.getUint32(20, Endian.big);
+    if (width == 0 || height == 0) return false;
+    return (width / height - 16 / 9).abs() < 0.12;
   }
 
   Widget _appImage()
@@ -534,36 +546,46 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
           if (record == null) return const SizedBox();
 
           if (record.$1 == AppImageType.Banner) {
-            return Ink.image(
-              image: record.$2,
-              fit: BoxFit.cover,
-              onImageError: (e, s) => debugPrint('AppCard banner image error: $e'),
+            // Banner 16:9: ocupa toda la tarjeta, completo, sobre fondo negro.
+            return ColoredBox(
+              color: Colors.black,
+              child: Image(
+                image: record.$2,
+                fit: BoxFit.fill,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stack) {
+                  debugPrint('AppCard banner image error: $error');
+                  return const SizedBox.shrink();
+                },
+              ),
             );
           }
           else {
-            return Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
+            // Sin banner de TV: el icono se muestra completo y centrado en la
+            // tarjeta, con el nombre debajo. Nada se recorta.
+            return Container(
+              color: Colors.black.withOpacity(0.45),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              child: Column(
                 children: [
                   Expanded(
-                    flex: 2,
-                    child: Ink.image(
+                    child: Image(
                       image: record.$2,
-                      height: double.maxFinite,
-                      onImageError: (e, s) => debugPrint('AppCard icon image error: $e'),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stack) {
+                        debugPrint('AppCard icon image error: $error');
+                        return const SizedBox.shrink();
+                      },
                     ),
                   ),
-                  Flexible(
-                    flex: 3,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        app.name,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 3,
-                      ),
-                    ),
+                  const SizedBox(height: 6),
+                  Text(
+                    app.name,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

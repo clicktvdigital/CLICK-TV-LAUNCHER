@@ -42,7 +42,20 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
             final tempText = weather.formatTemperature(useFahrenheit: useFahrenheit);
 
             String displayText;
-            if (isWarning && weather.warningText != null) {
+            if (weather.rainStart != null) {
+              final rs = weather.rainStart!;
+              final isEsRain = Localizations.localeOf(context).languageCode == "es";
+              final h12 = rs.hour % 12 == 0 ? 12 : rs.hour % 12;
+              final ampm = rs.hour < 12 ? (isEsRain ? "a. m." : "AM") : (isEsRain ? "p. m." : "PM");
+              final mm = rs.minute.toString().padLeft(2, '0');
+              final now = DateTime.now();
+              final sameDay = rs.year == now.year && rs.month == now.month && rs.day == now.day;
+              final dayWord = sameDay ? "" : (isEsRain ? "mañana " : "tomorrow ");
+              final rainLabel = isEsRain
+                  ? "Lluvia ${dayWord}desde las $h12:$mm $ampm (${weather.rainStartPercent}%)"
+                  : "Rain ${dayWord}from $h12:$mm $ampm (${weather.rainStartPercent}%)";
+              displayText = "$tempText • $rainLabel";
+            } else if (isWarning && weather.warningText != null) {
               if (Localizations.localeOf(context).languageCode == "es") {
                 final warningName = weather.warningType.name == "rain"
                     ? "Lluvia"
@@ -80,7 +93,9 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
             if (weather.todayMaxTemp != null && weather.todayMinTemp != null) {
               final high = displayDegrees(weather.todayMaxTemp!);
               final low = displayDegrees(weather.todayMinTemp!);
-              details.add("↑ " + high.toString() + "° ↓ " + low.toString() + "°");
+              details.add(Localizations.localeOf(context).languageCode == "es"
+                  ? "↑ $high° máx  ↓ $low° mín"
+                  : "↑ $high° max  ↓ $low° min");
             }
             if (dataStale) {
               details.add(Localizations.localeOf(context).languageCode == "es"
@@ -111,7 +126,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.sizeOf(context).width * 0.28,
+                      maxWidth: MediaQuery.sizeOf(context).width * 0.40,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
@@ -154,24 +169,27 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                               if (city.isNotEmpty)
                                 Text(
                                   city,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 3,
                                   style: const TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 14,
+                                    height: 1.0,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
                                   ),
                                 ),
-                              Text(
-                                displayText,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white,
+                              // Cada dato en su propia línea: nada se corta al final.
+                              for (final line in details)
+                                Text(
+                                  line,
+                                  maxLines: 2,
+                                  softWrap: true,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    height: 1.0,
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

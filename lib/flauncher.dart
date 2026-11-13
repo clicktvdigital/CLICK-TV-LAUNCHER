@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 /*
  * FLauncher
  * Copyright (C) 2021  Étienne Fesser
@@ -196,10 +197,18 @@ class _FLauncherState extends State<FLauncher> {
     Widget background;
     if (wallpaperService.wallpaper != null) {
       final physicalSize = MediaQuery.sizeOf(context);
+      final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
       background = Image(
-        image: wallpaperService.wallpaper!,
+        // Decodifica a la resolución física de la pantalla: 4K en TV 4K y
+        // 1080p en TV Box, sin reservar memoria de más en equipos antiguos.
+        image: ResizeImage.resizeIfNeeded(
+          (physicalSize.width * devicePixelRatio).round(),
+          null,
+          wallpaperService.wallpaper!,
+        ),
         key: Key("background_${wallpaperService.version}"),
         fit: BoxFit.cover,
+        filterQuality: ui.FilterQuality.high,
         height: physicalSize.height,
         width: physicalSize.width
       );
@@ -225,6 +234,25 @@ class _FLauncherState extends State<FLauncher> {
             ),
           ),
         ),
+        Consumer<SettingsService>(
+          builder: (_, settings, __) => settings.wallpaperExtraDim == 0
+              ? const SizedBox.shrink()
+              : Container(color: Colors.black.withOpacity(settings.wallpaperExtraDim / 100)),
+        ),
+        if (wallpaperService.caption != null)
+          Positioned(
+            left: 48,
+            bottom: 24,
+            child: Text(
+              wallpaperService.caption!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                letterSpacing: 0.5,
+                shadows: [Shadow(blurRadius: 8, color: Colors.black87)],
+              ),
+            ),
+          ),
       ],
     );
   }
