@@ -75,7 +75,7 @@ void main() {
   });
 
   group('refreshPermissionAndUsage', () {
-    test('when permission granted, fetches usage and notifies listeners periodically', () {
+    test('when permission granted, fetches usage once and notifies listeners', () {
       fakeAsync((async) {
         when(mockChannel.checkUsageStatsPermission()).thenAnswer((_) async => true);
         when(mockChannel.getDailyDataUsage()).thenAnswer((_) async => 100);
@@ -85,9 +85,7 @@ void main() {
           listenerCallCount++;
         });
 
-        // initial call starts timer
         networkService.refreshPermissionAndUsage();
-
         async.flushMicrotasks();
 
         expect(networkService.hasUsageStatsPermission, isTrue);
@@ -95,29 +93,16 @@ void main() {
         expect(listenerCallCount, greaterThanOrEqualTo(2));
         verify(mockChannel.getDailyDataUsage()).called(1);
 
-        // advance 5 minutes
-        async.elapse(const Duration(minutes: 5));
-
-        // Timer should have fired, calling _fetchUsage again
+        // Sin polling: pasar el tiempo no provoca nuevas consultas.
+        async.elapse(const Duration(minutes: 15));
         verify(mockChannel.getDailyDataUsage()).called(1);
       });
     });
 
-    test('when permission denied, cancels timer and notifies listeners', () {
+    test('when permission denied, does not fetch usage and notifies listeners', () {
       fakeAsync((async) {
-        // First, simulate permission granted to start timer
-        when(mockChannel.checkUsageStatsPermission()).thenAnswer((_) async => true);
-        when(mockChannel.getDailyDataUsage()).thenAnswer((_) async => 100);
-        networkService.refreshPermissionAndUsage();
-        async.flushMicrotasks();
-        expect(networkService.hasUsageStatsPermission, isTrue);
-
-        // Advance 5 minutes to verify timer is active
-        async.elapse(const Duration(minutes: 5));
-        verify(mockChannel.getDailyDataUsage()).called(2);
-
-        // Now deny it
         when(mockChannel.checkUsageStatsPermission()).thenAnswer((_) async => false);
+        when(mockChannel.getDailyDataUsage()).thenAnswer((_) async => 100);
 
         int listenerCallCount = 0;
         networkService.addListener(() {
@@ -130,42 +115,31 @@ void main() {
         expect(networkService.hasUsageStatsPermission, isFalse);
         expect(listenerCallCount, 1);
 
-        // Advance 5 minutes, timer should NOT fire anymore
-        async.elapse(const Duration(minutes: 5));
-
-        // Shouldn't have any more calls to getDailyDataUsage since timer was cancelled
+        async.elapse(const Duration(minutes: 15));
         verifyNever(mockChannel.getDailyDataUsage());
       });
     });
 
-    test('when permission granted and timer is already active, does not start a new timer but fetches usage', () {
+    test('each refresh fetches usage on demand and does not add periodic fetches', () {
       fakeAsync((async) {
         when(mockChannel.checkUsageStatsPermission()).thenAnswer((_) async => true);
         when(mockChannel.getDailyDataUsage()).thenAnswer((_) async => 100);
 
-        // First call starts the timer
         networkService.refreshPermissionAndUsage();
         async.flushMicrotasks();
-
-        // Advance 4 minutes, timer hasn't fired yet
         async.elapse(const Duration(minutes: 4));
 
         when(mockChannel.getDailyDataUsage()).thenAnswer((_) async => 200);
 
-        // Second call should fetch usage but reuse the timer
         networkService.refreshPermissionAndUsage();
         async.flushMicrotasks();
 
         expect(networkService.dailyDataUsage, 200);
         verify(mockChannel.getDailyDataUsage()).called(2);
 
-        // Advance another 1 minute (total 5 mins since first call)
-        // If a new timer was started, it would fire 5 mins from the second call.
-        // If the old timer was kept, it should fire now.
-        async.elapse(const Duration(minutes: 1));
-
-        // Timer fired!
-        verify(mockChannel.getDailyDataUsage()).called(1);
+        // Ni a los 5 ni a los 10 minutos debe haber consultas automáticas.
+        async.elapse(const Duration(minutes: 10));
+        verify(mockChannel.getDailyDataUsage()).called(2);
       });
     });
   });
