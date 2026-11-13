@@ -80,10 +80,17 @@ jobs:
             exit 1
           fi
           badging=$("$aapt" dump badging "$apk")
-          printf "%s\n" "$badging" | grep -F "package: name='com.clicktv.launcher.test'"
+          # El build de release no añade sufijo: el paquete es com.clicktv.launcher (ver applicationId en android/app/build.gradle).
+          printf "%s\n" "$badging" | grep -qF "package: name='com.clicktv.launcher' " || { echo "ERROR: el paquete de la APK no es com.clicktv.launcher"; printf "%s\n" "$badging" | grep -F "package:"; exit 1; }
           version_code=$(printf "%s\n" "$badging" | sed -n "s/.*versionCode='\([0-9][0-9]*\)'.*/\1/p")
           test -n "$version_code"
-          test "$version_code" = 8113
+          # El versionCode esperado sale del pubspec (version: NOMBRE+CODIGO), no de un número fijo.
+          expected_version_code=$(sed -n 's/^version: .*+\([0-9][0-9]*\)[[:space:]]*$/\1/p' pubspec.yaml)
+          test -n "$expected_version_code"
+          if [ "$version_code" != "$expected_version_code" ]; then
+            echo "ERROR: versionCode de la APK ($version_code) no coincide con pubspec ($expected_version_code)"
+            exit 1
+          fi
           printf "OK: versionCode=%s\n" "$version_code"
           cp "$apk" build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
           sha256sum build/CLICK-TV-LAUNCHER-PRUEBA-FIRMADA.apk
