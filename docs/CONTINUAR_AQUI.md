@@ -173,3 +173,23 @@ git push -u origin claude/vigilant-shannon-xvf76q
 ## Recursos públicos
 
 Se reutilizan el logo `assets/icon.png`, el banner `assets/banner.png`, el splash `assets/click_tv_splash.png` y las capturas auténticas en `docs/images/`. Los banners SVG históricos que contienen la marca LTvLauncher no se usan como cabecera de CLICK TV; se conservan solo para no eliminar recursos de terceros sin una decisión de licencia.
+
+## Pantalla de inicio del TV (opcional, cambia el sistema)
+
+`tools/debloat/set-home.sh` deja CLICK TV como pantalla de inicio por ADB. Desactiva el launcher de fábrica y, si la comprobación final no ve CLICK TV como Home, lo reactiva y sale con error. Es un cambio del sistema del televisor: hazlo solo después de confirmar la instalación y tener el respaldo de la APK.
+
+Antes de ejecutarlo, confirma el nombre del launcher de fábrica de tu TV:
+
+```bash
+adb -s 192.168.100.11:5555 shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+```
+
+Después, desde Termux, en la carpeta del repositorio:
+
+```bash
+TV_HOST=192.168.100.11 STOCK_LAUNCHER=NOMBRE_DEL_LAUNCHER_DE_FABRICA tools/debloat/set-home.sh
+```
+
+Códigos de salida: `0` CLICK TV es Home; `1` no se pudo y el launcher de fábrica se reactivó; `2` uso incorrecto o TV no conectado. Para volver atrás a mano: `adb -s 192.168.100.11:5555 shell pm enable NOMBRE_DEL_LAUNCHER_DE_FABRICA`.
+
+Los banners personalizados se guardan por nombre de paquete (`custom_banner_<paquete>`) y se conservan al actualizar con `install -r`. Se pierden solo si se desinstala la app.
