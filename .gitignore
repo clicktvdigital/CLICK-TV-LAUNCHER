@@ -124,3 +124,6 @@ CLAUDE.original.md
 .windsurf/
 .cody/
 .copilot/
+
+# Salida generada por graphify (grafo, caché y reporte locales)
+graphify-out/
