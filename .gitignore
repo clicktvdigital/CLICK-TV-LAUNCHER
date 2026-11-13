@@ -126,4 +126,6 @@ CLAUDE.original.md
 .copilot/
 
 # Salida generada por graphify (grafo, caché y reporte locales)
-graphify-out/
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
+!graphify-out/graph.html
