@@ -85,7 +85,12 @@ jobs:
             badging=$($aapt dump badging "$apk")
             printf '%s\n' "$badging" | grep -F "package: name='com.clicktv.launcher'"
             version_code=$(printf '%s\n' "$badging" | sed -n "s/.*versionCode='\([0-9][0-9]*\)'.*/\1/p")
-            test "$version_code" = 8114
+            expected_version_code=$(sed -n 's/^version: .*+\([0-9][0-9]*\)[[:space:]]*$/\1/p' pubspec.yaml)
+            test -n "$expected_version_code"
+            if [ "$version_code" != "$expected_version_code" ]; then
+              echo "ERROR: versionCode de la APK ($version_code) no coincide con pubspec ($expected_version_code)"
+              exit 1
+            fi
           done
           find build/app/outputs -type f -name '*release.apk' -exec sha256sum {} \;
 
