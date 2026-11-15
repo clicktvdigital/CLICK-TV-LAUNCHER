@@ -113,8 +113,9 @@ QWEN.md
 AGENTS.md
 AGENTS.original.md
 .pi/
-.claude/
-CLAUDE.md
+.claude/*
+!.claude/skills/
+.claude/settings.local.json
 CLAUDE.original.md
 .cursor/
 .cursorrules
@@ -124,3 +125,7 @@ CLAUDE.original.md
 .windsurf/
 .cody/
 .copilot/
+
+# Salidas locales de skills (graphify)
+graphify-out/
+.graphify_*
