@@ -21,11 +21,6 @@ void main() {
     Map<String, Category>? _categoriesByNameCache;
     Category? _fallbackCategoryCache;
 
-    void _invalidateCategoryCache() {
-      _categoriesByNameCache = null;
-      _fallbackCategoryCache = null;
-    }
-
     Category? _findTargetCategoryForNewAppOptimized(bool isSideloaded) {
       if (_categoriesById.isEmpty) return null;
 

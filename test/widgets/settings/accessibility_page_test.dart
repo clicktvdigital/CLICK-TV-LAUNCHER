@@ -19,7 +19,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    _methodChannel.setMockMethodCallHandler((call) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_methodChannel, (call) async {
       switch (call.method) {
         case 'checkAccessibilityPermission':
           return false;
@@ -34,7 +34,7 @@ void main() {
   });
 
   tearDown(() {
-    _methodChannel.setMockMethodCallHandler(null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_methodChannel, null);
   });
 
   for (final size in const [Size(1280, 720), Size(1920, 1080)]) {

@@ -26,12 +26,12 @@ void main() {
   });
 
   tearDown(() {
-    _methodChannel.setMockMethodCallHandler(null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_methodChannel, null);
   });
 
   testWidgets('shows the four official links and opens their exact URLs', (tester) async {
     final openedUrls = <String>[];
-    _methodChannel.setMockMethodCallHandler((call) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_methodChannel, (call) async {
       if (call.method == 'openUrl') {
         openedUrls.add(call.arguments as String);
         return true;
@@ -64,7 +64,7 @@ void main() {
 
   testWidgets('moves focus with the remote and activates the focused link', (tester) async {
     String? openedUrl;
-    _methodChannel.setMockMethodCallHandler((call) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_methodChannel, (call) async {
       if (call.method == 'openUrl') {
         openedUrl = call.arguments as String;
         return true;
@@ -81,7 +81,7 @@ void main() {
   });
 
   testWidgets('keeps the dialog open and reports an unavailable URL handler', (tester) async {
-    _methodChannel.setMockMethodCallHandler((call) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_methodChannel, (call) async {
       if (call.method == 'openUrl') return false;
       fail('Unhandled method: ${call.method}');
     });
