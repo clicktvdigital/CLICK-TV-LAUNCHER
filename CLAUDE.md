@@ -67,6 +67,30 @@ Limitaciones de la instalación actual:
 - **Graphify**: el skill necesita el CLI. Para usarlo localmente: `pip install graphifyy` (el paquete se llama `graphifyy` temporalmente). No se instaló en el entorno de esta sesión.
 - Las salidas de Graphify (`graphify-out/`, `.graphify_*`) están en `.gitignore`.
 
+## Estado de herramientas (revisar al iniciar sesión)
+
+Los plugins se activan por cuenta, no por repo: este archivo solo registra qué falta.
+
+**Plugins a activar en la cuenta (pendientes):**
+- Dart and Flutter (oficial, `plugin_01YDaEFPGsRoFQj4zBhuw7fn`): pruebas de widgets, arquitectura, layouts responsivos, integración.
+- Flutter Skills (`plugin_01ASc3bFGmz44EnftMaomCJ5`): Clean Architecture, widget composition, testing, CI/CD y Riverpod.
+- clean-architecture (`plugin_019brWQHvTfrt2tZY1xRJE8P`): capas y regla de dependencias.
+
+Si la sesión no muestra estos plugins, pedir las tarjetas de instalación con esos IDs.
+
+**Skills en el repo (`.claude/skills/`), activos:** impeccable, graphify, emil-design-eng, review-animations, pick-ui-library, taste-skill (solo SKILL.md y dos referencias).
+
+**Pendientes de instalación en el repo:**
+- impeccable: motor `scripts/impeccable` y hook (`npx impeccable install --providers=claude --scope=project`, revisando el hook).
+- graphify: CLI (`pip install graphifyy`).
+- taste-skill: faltan sus sub-archivos; la ruta del repo no se localizó.
+
+**Skills no encontrados** (no inventar rutas): `flutter-building-layouts`, `flutter-tizen-tv-remote-input`, `android-dev`, `mobile-toolchain-unifier`. Pedir enlace al repo al usuario.
+
+**Riverpod:** `flutter_riverpod` 2.6.1 instalado, sin migrar código (la app usa `provider`).
+
+**Compilar APK local:** requiere Android SDK en `/opt/android-sdk` (API 35, build-tools 35.0.0, platform-tools) y el flag `--android-project-arg localDebug=true`, porque el build debug normal exige la keystore paralela. El SDK no persiste entre sesiones: reinstalar con `sdkmanager` o añadir un setup script al entorno.
+
 ## Cómo mantener esta memoria
 
 Actualizar este archivo cuando cambien: el repo de release, la rama de trabajo, el estado de CI de una versión, o las skills instaladas. No guardar aquí credenciales ni datos personales.
