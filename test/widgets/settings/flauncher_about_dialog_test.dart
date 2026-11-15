@@ -135,8 +135,8 @@ class _FakePackageInfoPlatform with MockPlatformInterfaceMixin implements Packag
   Future<PackageInfoData> getAll({String? baseUrl}) async => PackageInfoData(
         appName: 'CLICK TV LAUNCHER',
         packageName: 'com.clicktv.launcher',
-        version: '2026.10.31',
-        buildNumber: '8113',
+        version: '2026.11.13',
+        buildNumber: '8114',
         buildSignature: '',
       );
 }
