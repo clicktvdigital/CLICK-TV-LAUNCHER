@@ -6,7 +6,8 @@ Documento maestro para continuar el trabajo sin mezclar validaciones de CI con o
 
 - Proyecto: **CLICK TV LAUNCHER by CLICK TV DIGITAL**.
 - Repositorio: `clicktvdigital/CLICK-TV-LAUNCHER`.
-- Rama de desarrollo: `test/click-tv-launcher-paralelo`.
+- Repositorio de release: `clicktvdigital/CLICK-TV-LAUNCHER` (público). El repositorio `CLICK-TV-LAUNCHER-REBUILD` fue eliminado el 2026-11-15 y no es fuente de nada.
+- Rama de trabajo actual: `claude/bold-newton-2h6b1j`. La antigua `test/click-tv-launcher-paralelo` ya está fusionada en `main`.
 - Paquete de producción documentado: `com.clicktv.launcher`.
 - Licencia: GNU GPLv3, con créditos y avisos de FLauncher/LeanBitLab conservados.
 - Compatibilidad objetivo: Android API 21+, Android TV/Google TV, `armeabi-v7a` y `arm64-v8a`.
@@ -68,7 +69,7 @@ Estas cantidades son orientativas. No habilitan cobros recurrentes ni prometen b
 ## Cómo continuar
 
 ```bash
-git switch test/click-tv-launcher-paralelo
+git switch claude/bold-newton-2h6b1j
 git status --short --branch
 flutter pub get
 flutter gen-l10n

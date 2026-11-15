@@ -13,7 +13,8 @@ Este archivo se carga al iniciar cada sesión en este repositorio. Mantenlo cort
 
 - **Repositorio oficial de release: `clicktvdigital/CLICK-TV-LAUNCHER`** (público). Tiene los tags `v2026.11.12` y `v2026.11.13`, y el workflow `.github/workflows/release.yml` se dispara con tags `v*`.
 - `clicktvdigital/CLICK-TV-LAUNCHER-REBUILD` (privado, último push 2026-10-17) **fue eliminado por el responsable el 2026-11-15**. El respaldo local previo a su borrado no se completó: no hay copia del historial en esta sesión. Si se necesita recuperarlo, la vía es buscar clones locales o pedir restauración a GitHub Support. No era el repo de release.
-- Antes de cualquier release: verificar que `pubspec.yaml` (`version: 2026.10.31+8113` al cierre de esta nota) coincide con el tag que se va a publicar. Hoy el tag más reciente es `v2026.11.13`, así que la versión del pubspec está desfasada y debe revisarse.
+- Antes de cualquier release: verificar que `pubspec.yaml` coincide con el tag que se va a publicar. Hoy `pubspec.yaml` dice `2026.10.31+8113` y el tag más reciente es `v2026.11.13`: **desfasado**.
+- Cambiar la versión no es solo editar `pubspec.yaml`. `.github/workflows/release.yml` (línea 88) exige `versionCode = 8113` en el APK; si se sube el `+N` hay que actualizar también ese valor. El `versionCode` debe ser siempre mayor que el de la última APK publicada. Decisión pendiente del responsable: qué `versionName`/`versionCode` usar para el próximo release.
 
 ## Ramas
 
