@@ -12,7 +12,7 @@ Este archivo se carga al iniciar cada sesión en este repositorio. Mantenlo cort
 ## Repositorio de release (decisión)
 
 - **Repositorio oficial de release: `clicktvdigital/CLICK-TV-LAUNCHER`** (público). Tiene los tags `v2026.11.12` y `v2026.11.13`, y el workflow `.github/workflows/release.yml` se dispara con tags `v*`.
-- Existe también `clicktvdigital/CLICK-TV-LAUNCHER-REBUILD` (privado, último push 2026-10-17). **No es el repo de release.** No se debe publicar desde allí ni usarlo como fuente. Su eliminación o archivo requiere confirmación explícita del responsable.
+- `clicktvdigital/CLICK-TV-LAUNCHER-REBUILD` (privado, último push 2026-10-17) **fue eliminado por el responsable el 2026-11-15**. El respaldo local previo a su borrado no se completó: no hay copia del historial en esta sesión. Si se necesita recuperarlo, la vía es buscar clones locales o pedir restauración a GitHub Support. No era el repo de release.
 - Antes de cualquier release: verificar que `pubspec.yaml` (`version: 2026.10.31+8113` al cierre de esta nota) coincide con el tag que se va a publicar. Hoy el tag más reciente es `v2026.11.13`, así que la versión del pubspec está desfasada y debe revisarse.
 
 ## Ramas
