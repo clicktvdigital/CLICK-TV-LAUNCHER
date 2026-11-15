@@ -122,7 +122,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutFlauncher.
   ///
   /// In en, this message translates to:
-  /// **'About LTvLauncher'**
+  /// **'About CLICK TV LAUNCHER'**
   String get aboutFlauncher;
 
   /// No description provided for @addCategory.
@@ -857,6 +857,24 @@ abstract class AppLocalizations {
   /// **'Start on boot (Google TV / Fire TV)'**
   String get startOnBoot;
 
+  /// No description provided for @accessibilityGoogleTvHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If you use Google TV, enable \"Home Button Fix\" in Accessibility settings so the Home button opens this launcher.'**
+  String get accessibilityGoogleTvHint;
+
+  /// No description provided for @accessibilityPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility permission'**
+  String get accessibilityPermissionTitle;
+
+  /// No description provided for @accessibilityPermissionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This device could not open the Accessibility settings automatically. To enable Home Button Fix, grant permission manually with the following ADB command from a computer connected to the TV:'**
+  String get accessibilityPermissionUnavailable;
+
   /// No description provided for @appLanguage.
   ///
   /// In en, this message translates to:
@@ -1037,7 +1055,10 @@ abstract class AppLocalizations {
   /// **'Install Alerta EC and enable \'Local data sharing\' / \'Gadgetbridge\' in its settings to see weather and rain warnings.'**
   String get breezyWeatherSetupHint;
 
-  /// Mensaje para Alerta EC instalada sin datos meteorologicos.
+  /// No description provided for @alertaEcWeatherDataHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Alerta EC and enable weather data sharing with CLICK TV LAUNCHER in its settings.'**
   String get alertaEcWeatherDataHint;
 
   /// No description provided for @displayAndScreensaver.

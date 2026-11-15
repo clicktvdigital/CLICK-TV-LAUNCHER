@@ -394,6 +394,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get startOnBoot => 'Запускати після завантаження (Google TV / Fire TV)';
 
   @override
+  String get accessibilityGoogleTvHint => 'If you use Google TV, enable \"Home Button Fix\" in Accessibility settings so the Home button opens this launcher.';
+
+  @override
+  String get accessibilityPermissionTitle => 'Accessibility permission';
+
+  @override
+  String get accessibilityPermissionUnavailable => 'This device could not open the Accessibility settings automatically. To enable Home Button Fix, grant permission manually with the following ADB command from a computer connected to the TV:';
+
+  @override
   String get appLanguage => 'Мова';
 
   @override
@@ -481,10 +490,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fahrenheit => 'Фаренгейт (°F)';
 
   @override
-  String get breezyWeatherSetupHint => "Встановіть Alerta EC та увімкніть 'Локальний обмін даними' / 'Gadgetbridge' у налаштуваннях для перегляду погоди та попереджень про дощ.";
+  String get breezyWeatherSetupHint => 'Встановіть Alerta EC та увімкніть \'Локальний обмін даними\' / \'Gadgetbridge\' у налаштуваннях для перегляду погоди та попереджень про дощ.';
 
   @override
-  String get alertaEcWeatherDataHint => "Відкрийте Alerta EC та увімкніть у налаштуваннях передачу даних про погоду до CLICK TV LAUNCHER.";
+  String get alertaEcWeatherDataHint => 'Відкрийте Alerta EC та увімкніть у налаштуваннях передачу даних про погоду до CLICK TV LAUNCHER.';
 
   @override
   String get displayAndScreensaver => 'Екран та заставка';
