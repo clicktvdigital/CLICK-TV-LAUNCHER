@@ -394,6 +394,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get startOnBoot => 'Iniciar ao ligar (Google TV / Fire TV)';
 
   @override
+  String get accessibilityGoogleTvHint => 'If you use Google TV, enable \"Home Button Fix\" in Accessibility settings so the Home button opens this launcher.';
+
+  @override
+  String get accessibilityPermissionTitle => 'Accessibility permission';
+
+  @override
+  String get accessibilityPermissionUnavailable => 'This device could not open the Accessibility settings automatically. To enable Home Button Fix, grant permission manually with the following ADB command from a computer connected to the TV:';
+
+  @override
   String get appLanguage => 'Idioma';
 
   @override
@@ -481,10 +490,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fahrenheit => 'Fahrenheit (°F)';
 
   @override
-  String get breezyWeatherSetupHint => "Instale o Alerta EC e ative o 'Compartilhamento local de dados' / 'Gadgetbridge' nas configurações para ver o clima e alertas de chuva.";
+  String get breezyWeatherSetupHint => 'Instale o Alerta EC e ative o \'Compartilhamento local de dados\' / \'Gadgetbridge\' nas configurações para ver o clima e alertas de chuva.';
 
   @override
-  String get alertaEcWeatherDataHint => "Abra o Alerta EC e ative nas configurações o compartilhamento de dados meteorológicos com o CLICK TV LAUNCHER.";
+  String get alertaEcWeatherDataHint => 'Abra o Alerta EC e ative nas configurações o compartilhamento de dados meteorológicos com o CLICK TV LAUNCHER.';
 
   @override
   String get displayAndScreensaver => 'Tela e protetor de tela';

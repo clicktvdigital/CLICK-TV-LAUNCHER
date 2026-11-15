@@ -31,7 +31,16 @@ class RowByRowTraversalPolicy extends FocusTraversalPolicy with DirectionalFocus
       return _fallbackPolicy.inDirection(currentNode, direction) || super.inDirection(currentNode, direction);
     }
     FocusNode nextNode = searcher.findBestFocusNode(candidates, currentNode);
-    nextNode.requestFocus();
+    // WHY: requestFocus() directo no desplaza los Scrollable padres. Si la
+    // fila destino está fuera del viewport vertical, el foco llegaba invisible
+    // y parecía que la tecla abajo no respondía. El callback por defecto de
+    // Flutter pide el foco y hace Scrollable.ensureVisible sobre el nodo.
+    requestFocusCallback(
+      nextNode,
+      alignment: 0.3,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+    );
     return true;
   }
 }
