@@ -124,3 +124,7 @@ CLAUDE.original.md
 .windsurf/
 .cody/
 .copilot/
+
+# Generated tooling output (Graphify index, skills lock)
+graphify-out/
+skills-lock.json
