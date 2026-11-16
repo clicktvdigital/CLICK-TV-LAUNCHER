@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'package:dpad/dpad.dart';
 import 'package:flauncher/actions.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
@@ -30,6 +31,14 @@ import 'flauncher.dart';
 
 class FLauncherApp extends StatelessWidget
 {
+  static const DpadKeySet _dpadTraversalOnly = DpadKeySet(
+    up: [],
+    down: [],
+    left: [],
+    right: [],
+    back: [],
+    menu: [],
+  );
   static const PrioritizedIntents _backIntents = PrioritizedIntents(orderedIntents: [
     DismissIntent(),
     BackIntent()
@@ -50,6 +59,11 @@ class FLauncherApp extends StatelessWidget
         final appLocale = tuple.$2;
 
         return MaterialApp(
+      // dpad provides TV-correct directional traversal (region memory) and
+      // focus restoration. Its own key mapping is disabled on purpose: arrow
+      // keys, back and menu keep flowing through FLauncher's existing actions
+      // (sound feedback, BackAction, PopScope) so behaviour stays the same.
+      builder: Dpad.wrap(keySet: _dpadTraversalOnly),
       locale: appLocale,
       debugShowCheckedModeBanner: false,
       scrollBehavior: const MaterialScrollBehavior().copyWith(
