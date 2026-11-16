@@ -38,7 +38,7 @@ class AlternativeLauncherView extends StatelessWidget {
             textStyle: Theme.of(context).textTheme.headlineLarge!.copyWith(
               fontSize: 56,
               fontWeight: FontWeight.w300,
-              shadows: const [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 12)],
+              shadows: const [Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 4)],
             )
           )
         ],
@@ -95,7 +95,7 @@ class AlternativeLauncherView extends StatelessWidget {
       fontWeight: fontWeight,
       letterSpacing: letterSpacing,
       fontFamily: fontFamily,
-      shadows: const [Shadow(color: Colors.black54, offset: Offset(2, 2), blurRadius: 16)],
+      shadows: const [Shadow(color: Colors.black54, offset: Offset(2, 2), blurRadius: 4)],
     );
 
     // Check if format has AM/PM (contains 'a')

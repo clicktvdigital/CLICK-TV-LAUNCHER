@@ -99,7 +99,7 @@ class AppsGrid extends StatelessWidget
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge!
-                          .copyWith(shadows: [const Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 8)])
+                          .copyWith(shadows: [const Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 4)])
                     ),
                     if (showCategoryAppCount) ...[
                       const SizedBox(width: 8),

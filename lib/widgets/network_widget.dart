@@ -72,7 +72,7 @@ class NetworkWidget extends StatelessWidget
             Shadow(
               color: Colors.black54,
               offset: Offset(0, 2),
-              blurRadius: 8
+              blurRadius: 4
             )
           ]
         );
@@ -106,7 +106,7 @@ class NetworkWidget extends StatelessWidget
                   Shadow(
                     color: Colors.black54,
                     offset: Offset(0, 2),
-                    blurRadius: 8,
+                    blurRadius: 4,
                   )
                 ],
               ),
@@ -161,7 +161,7 @@ class _NetworkIconButtonState extends State<_NetworkIconButton> {
                 width: 2,
               ),
               boxShadow: _focused
-                  ? const [BoxShadow(color: Colors.black54, blurRadius: 8, spreadRadius: 1)]
+                  ? const [BoxShadow(color: Colors.black54, blurRadius: 4, spreadRadius: 1)]
                   : null,
             ),
             child: widget.child,

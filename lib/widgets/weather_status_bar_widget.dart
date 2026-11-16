@@ -127,7 +127,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                           ? const [
                               BoxShadow(
                                 color: Colors.black54,
-                                blurRadius: 8,
+                                blurRadius: 4,
                                 spreadRadius: 1,
                               )
                             ]

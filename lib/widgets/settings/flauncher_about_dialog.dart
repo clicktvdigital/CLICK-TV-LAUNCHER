@@ -70,7 +70,7 @@ class LTvLauncherAboutDialog extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withOpacity(.14)),
             boxShadow: const [
-              BoxShadow(color: Colors.black54, blurRadius: 24, spreadRadius: 2),
+              BoxShadow(color: Colors.black54, blurRadius: 4, spreadRadius: 2),
             ],
           ),
           child: SingleChildScrollView(

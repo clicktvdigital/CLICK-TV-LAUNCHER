@@ -196,8 +196,13 @@ class _FLauncherState extends State<FLauncher> {
     Widget background;
     if (wallpaperService.wallpaper != null) {
       final physicalSize = MediaQuery.sizeOf(context);
+      final dpr = MediaQuery.devicePixelRatioOf(context);
       background = Image(
-        image: wallpaperService.wallpaper!,
+        image: ResizeImage(
+          wallpaperService.wallpaper!,
+          width: (physicalSize.width * dpr).round(),
+          allowUpscaling: false,
+        ),
         key: Key("background_${wallpaperService.version}"),
         fit: BoxFit.cover,
         height: physicalSize.height,

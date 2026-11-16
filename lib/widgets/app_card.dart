@@ -241,7 +241,7 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           return AnimatedContainer(
-                            duration: appSelectorTransitionAnimationEnabled ? const Duration(milliseconds: 200) : Duration.zero,
+                            duration: appSelectorTransitionAnimationEnabled ? const Duration(milliseconds: 120) : Duration.zero,
                             curve: Curves.easeOutBack,
                             transformAlignment: Alignment.center,
                             transform: _scaleTransform(context, themes, constraints.maxWidth),
@@ -329,7 +329,7 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
                               if (_moving) ..._arrows(),
                               IgnorePointer(
                                 child: AnimatedOpacity(
-                                  duration: appSelectorTransitionAnimationEnabled ? const Duration(milliseconds: 200) : Duration.zero,
+                                  duration: appSelectorTransitionAnimationEnabled ? const Duration(milliseconds: 120) : Duration.zero,
                                   curve: Curves.easeInOut,
                                   opacity: shouldHighlight ? 0 : 0.10,
                                   child: Container(color: Colors.black),
@@ -519,7 +519,14 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
       bytes = await service.getAppIcon(widget.application.packageName);
     }
 
-    return (type, MemoryImage(bytes));
+    return (
+      type,
+      ResizeImage(
+        MemoryImage(bytes),
+        width: type == AppImageType.Banner ? 480 : 256,
+        allowUpscaling: false,
+      ),
+    );
   }
 
   Widget _appImage()

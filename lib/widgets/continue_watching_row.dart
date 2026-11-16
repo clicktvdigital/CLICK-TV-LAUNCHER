@@ -93,7 +93,7 @@ class ContinueWatchingRow extends StatelessWidget {
                                 const Shadow(
                                   color: Colors.black54,
                                   offset: Offset(1, 1),
-                                  blurRadius: 8,
+                                  blurRadius: 4,
                                 )
                               ],
                             ),
@@ -549,7 +549,7 @@ class _WatchNextCardState extends State<WatchNextCard> with TickerProviderStateM
                 duration: const Duration(milliseconds: 150),
                 child: AnimatedContainer(
                   duration: appSelectorTransitionAnimationEnabled
-                      ? const Duration(milliseconds: 200)
+                      ? const Duration(milliseconds: 120)
                       : Duration.zero,
                   curve: Curves.easeOutBack,
                   width: cardWidth,
@@ -600,6 +600,8 @@ class _WatchNextCardState extends State<WatchNextCard> with TickerProviderStateM
                                           _appIconBytes!,
                                           fit: BoxFit.contain,
                                           filterQuality: FilterQuality.low,
+                                          cacheWidth: 48,
+                                          cacheHeight: 48,
                                         ),
                                       ),
                                     ),
@@ -669,7 +671,7 @@ class _WatchNextCardState extends State<WatchNextCard> with TickerProviderStateM
                         IgnorePointer(
                           child: AnimatedOpacity(
                             duration: appSelectorTransitionAnimationEnabled
-                                ? const Duration(milliseconds: 200)
+                                ? const Duration(milliseconds: 120)
                                 : Duration.zero,
                             curve: Curves.easeInOut,
                             opacity: shouldHighlight ? 0 : 0.10,

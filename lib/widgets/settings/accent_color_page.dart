@@ -178,7 +178,7 @@ class _ColorTileState extends State<_ColorTile> {
                 width: _focused ? 2.5 : (widget.isSelected ? 2 : 0),
               ),
               boxShadow: _focused
-                  ? [BoxShadow(color: widget.color.withOpacity(0.5), blurRadius: 8)]
+                  ? [BoxShadow(color: widget.color.withOpacity(0.5), blurRadius: 4)]
                   : null,
             ),
             child: Row(

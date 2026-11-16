@@ -345,7 +345,7 @@ class _FocusableIconButtonState extends State<_FocusableIconButton> {
                 width: 2,
               ),
               boxShadow: _focused
-                ? const [BoxShadow(color: Colors.black54, blurRadius: 8, spreadRadius: 1)]
+                ? const [BoxShadow(color: Colors.black54, blurRadius: 4, spreadRadius: 1)]
                 : null,
             ),
             child: widget.badgeCount > 0
@@ -354,13 +354,13 @@ class _FocusableIconButtonState extends State<_FocusableIconButton> {
                   backgroundColor: Colors.red,
                   child: Icon(widget.icon,
                     shadows: const [
-                      Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 2))
+                      Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 2))
                     ],
                   ),
                 )
               : Icon(widget.icon,
                   shadows: const [
-                    Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 2))
+                    Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 2))
                   ],
                 ),
           ),
