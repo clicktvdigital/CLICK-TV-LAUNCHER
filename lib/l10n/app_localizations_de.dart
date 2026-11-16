@@ -239,6 +239,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get timeBasedWallpaper => 'Zeitbasiertes Hintergrundbild';
 
   @override
+  String get ecuadorWallpaper => 'Ecuador wallpapers';
+
+  @override
+  String get wallpaperDimming => 'Extra wallpaper dimming';
+
+  @override
   String get pickDayWallpaper => 'Tag-Hintergrundbild auswählen';
 
   @override

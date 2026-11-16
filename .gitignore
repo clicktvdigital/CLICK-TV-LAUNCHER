@@ -125,6 +125,8 @@ CLAUDE.original.md
 .cody/
 .copilot/
 
-# Generated tooling output (Graphify index, skills lock)
-graphify-out/
+# Salida generada por graphify (grafo, caché y reporte locales)
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
+!graphify-out/graph.html
 skills-lock.json

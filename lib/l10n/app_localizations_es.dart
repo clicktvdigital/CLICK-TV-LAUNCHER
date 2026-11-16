@@ -239,6 +239,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get timeBasedWallpaper => 'Fondo de pantalla según hora';
 
   @override
+  String get ecuadorWallpaper => 'Fondos de Ecuador';
+
+  @override
+  String get wallpaperDimming => 'Oscurecimiento adicional del fondo';
+
+  @override
   String get pickDayWallpaper => 'Elegir fondo de pantalla diurno';
 
   @override

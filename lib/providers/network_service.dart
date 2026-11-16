@@ -68,7 +68,6 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
   int                 _dailyDataUsage; // In bytes
   bool                _hasUsageStatsPermission;
   bool                _vpnActive;
-  Timer?              _usageTimer;
   int                 _callCount = 0;
   int                 _usageCallCount = 0;
 
@@ -112,14 +111,10 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
     if (localCallCount != _callCount) return;
 
     _hasUsageStatsPermission = allowed;
+    // Sin polling permanente: el uso se consulta al obtener el permiso y al
+    // volver a la aplicación (refreshPermissionAndUsage), no cada pocos minutos.
     if (_hasUsageStatsPermission) {
       _fetchUsage();
-      if (_usageTimer == null || !_usageTimer!.isActive) {
-        _usageTimer = Timer.periodic(const Duration(minutes: 5), (_) => _fetchUsage());
-      }
-    } else {
-      _usageTimer?.cancel();
-      _usageTimer = null;
     }
     notifyListeners();
   }
@@ -168,7 +163,6 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _usageTimer?.cancel();
     super.dispose();
   }
 

@@ -55,6 +55,10 @@ class WeatherData {
   final int? warningPrecipProbability;
   final int? warningDayIndex; // 0 = today, 1 = tomorrow, 2+ = upcoming days
 
+  // Primera hora de lluvia (próximas 24 h) según el pronóstico por horas.
+  final DateTime? rainStart;
+  final int? rainStartPercent;
+
   const WeatherData({
     this.timestamp,
     this.location,
@@ -72,6 +76,8 @@ class WeatherData {
     this.warningConditionCode,
     this.warningPrecipProbability,
     this.warningDayIndex,
+    this.rainStart,
+    this.rainStartPercent,
   });
 
   static const rainCodes = {500, 501, 502, 503, 504, 511, 520, 521, 522, 531};
@@ -203,6 +209,8 @@ class WeatherData {
       }
     }
 
+    final rainHour = _firstRainHour(json['hourly']);
+
     return WeatherData(
       timestamp: (json['timestamp'] as num?)?.toInt(),
       location: json['location'] as String?,
@@ -220,7 +228,27 @@ class WeatherData {
       warningConditionCode: warningConditionCode,
       warningPrecipProbability: warningPrecipProbability,
       warningDayIndex: warningDayIndex,
+      rainStart: rainHour?.$1,
+      rainStartPercent: rainHour?.$2,
     );
+  }
+
+  /// Primera hora de las próximas 24 h con probabilidad de lluvia de 30 % o más.
+  static (DateTime, int)? _firstRainHour(dynamic rawHourly) {
+    if (rawHourly is! List) return null;
+    final now = DateTime.now();
+    final limit = now.add(const Duration(hours: 24));
+    for (final item in rawHourly) {
+      if (item is! Map) continue;
+      final ts = parseInt(item['timestamp']);
+      final prob = parseInt(item['precipProbability']);
+      if (ts == null || prob == null) continue;
+      // El timestamp puede venir en segundos o en milisegundos.
+      final time = DateTime.fromMillisecondsSinceEpoch(ts < 100000000000 ? ts * 1000 : ts).toLocal();
+      if (time.isBefore(now.subtract(const Duration(hours: 1))) || time.isAfter(limit)) continue;
+      if (prob >= 30) return (time, prob);
+    }
+    return null;
   }
 
   IconData getConditionIcon({bool isWarning = false}) {

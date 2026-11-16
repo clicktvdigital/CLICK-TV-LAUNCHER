@@ -239,6 +239,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get timeBasedWallpaper => '시간 기반 배경화면';
 
   @override
+  String get ecuadorWallpaper => 'Ecuador wallpapers';
+
+  @override
+  String get wallpaperDimming => 'Extra wallpaper dimming';
+
+  @override
   String get pickDayWallpaper => '주간 배경화면 선택';
 
   @override

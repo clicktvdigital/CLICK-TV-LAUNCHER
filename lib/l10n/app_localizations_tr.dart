@@ -239,6 +239,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get timeBasedWallpaper => 'Zamana dayalı duvar kağıdı';
 
   @override
+  String get ecuadorWallpaper => 'Ecuador wallpapers';
+
+  @override
+  String get wallpaperDimming => 'Extra wallpaper dimming';
+
+  @override
   String get pickDayWallpaper => 'Gündüz duvar kağıdını seç';
 
   @override

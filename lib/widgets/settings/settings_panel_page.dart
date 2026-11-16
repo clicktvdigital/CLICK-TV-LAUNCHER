@@ -18,6 +18,7 @@
 
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/settings/accessibility_page.dart';
+import 'package:flauncher/widgets/settings/tv_assistant_page.dart';
 import 'package:flauncher/widgets/settings/applications_panel_page.dart';
 import 'package:flauncher/widgets/settings/donate_dialog.dart';
 import 'package:flauncher/widgets/settings/flauncher_about_dialog.dart';
@@ -79,6 +80,11 @@ class SettingsPanelPage extends StatelessWidget {
                   leading: const Icon(Icons.accessibility_new),
                   title: Text(localizations.accessibility, style: Theme.of(context).textTheme.bodyMedium),
                   onPressed: () => Navigator.of(context).pushNamed(AccessibilityPage.routeName),
+                ),
+                FocusableSettingsTile(
+                  leading: const Icon(Icons.tips_and_updates_outlined),
+                  title: Text("Asistente de CLICK TV", style: Theme.of(context).textTheme.bodyMedium),
+                  onPressed: () => Navigator.of(context).pushNamed(TvAssistantPage.routeName),
                 ),
                 FocusableSettingsTile(
                   leading: const Icon(Icons.favorite_rounded),

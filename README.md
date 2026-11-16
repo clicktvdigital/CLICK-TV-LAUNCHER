@@ -109,6 +109,26 @@ Las compilaciones firmadas y las actualizaciones de una instalación existente d
 
 El documento maestro de continuidad está en [`docs/CONTINUAR_AQUI.md`](docs/CONTINUAR_AQUI.md). Allí se separan las pruebas de CI, las revisiones estáticas y las comprobaciones físicas en TV.
 
+El entorno de trabajo de pruebas puede ser **Termux** en Android con **fish** como shell, conectado al televisor por **adb** (depuración inalámbrica) y a GitHub mediante `gh` o SSH. Los pasos completos, con notas de emparejamiento y autenticación, están en la sección «Entorno de trabajo: Termux + fish + adb» y «GitHub desde Termux» de `docs/CONTINUAR_AQUI.md`.
+
 ## Licencia y créditos
 
 Este proyecto se distribuye bajo [GNU GPLv3](LICENSE). Se conservan los créditos, avisos y licencias de FLauncher/LeanBitLab y de las dependencias utilizadas. CLICK TV DIGITAL mantiene su identidad y sus modificaciones, sin atribuirse la autoría exclusiva del código original de terceros.
+
+## Instalación
+
+1. Descarga el APK de la última versión de prueba desde la pestaña **Actions** del repositorio (artefacto `CLICK-TV-LAUNCHER-PRUEBA-FIRMADA`).
+2. Instálalo en el televisor o en el TV box. Sirve el mismo archivo para ambos (armeabi-v7a y arm64-v8a, Android 5 en adelante).
+3. Abre **Configuración → Asistente de CLICK TV** y sigue los pasos:
+   - Elige CLICK TV como inicio del TV.
+   - Decide si quieres que el botón Inicio del control abra CLICK TV (corrección del botón Inicio). Tú eliges si queda activada o desactivada.
+   - Si quieres quitar apps de fábrica que sólo aportan telemetría, mira la lista en **Apps de fábrica** y copia los comandos. Se desactivan, no se desinstalan.
+   - Antes de cambiar algo grande, guarda una copia de seguridad.
+
+## Novedades de la versión 2026.11.12 (8114)
+
+- Asistente de CLICK TV en Configuración, con el estado que la app puede leer.
+- Lista de apps de fábrica con comandos copiables para desactivarlas o restaurarlas.
+- Fondos de Ecuador en 1920×1080: la app pesa 4.4 MB en fondos en lugar de 13.5 MB, sin diferencia visible en el televisor.
+- Escala de intensidad de lluvia (Torrencial, Moderada, Ligera) a la izquierda del gráfico.
+- Navegación con el control remoto pensada para Android TV.

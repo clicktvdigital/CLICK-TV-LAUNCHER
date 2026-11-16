@@ -239,6 +239,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get timeBasedWallpaper => 'Шпалери залежно від часу';
 
   @override
+  String get ecuadorWallpaper => 'Ecuador wallpapers';
+
+  @override
+  String get wallpaperDimming => 'Extra wallpaper dimming';
+
+  @override
   String get pickDayWallpaper => 'Вибрати денні шпалери';
 
   @override

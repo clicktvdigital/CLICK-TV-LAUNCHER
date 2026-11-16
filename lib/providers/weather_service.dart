@@ -28,7 +28,7 @@ class WeatherService extends ChangeNotifier with WidgetsBindingObserver {
   WeatherData? get weatherData => _weatherData;
   bool get isBreezyInstalled => _isBreezyInstalled;
   bool get initialized => _initialized;
-  bool get hasWeather => _isBreezyInstalled && _weatherData != null;
+  bool get hasWeather => _weatherData != null;
 
   Future<void> _init() async {
     try {
@@ -82,17 +82,10 @@ class WeatherService extends ChangeNotifier with WidgetsBindingObserver {
     try {
       final wasInstalled = _isBreezyInstalled;
       _isBreezyInstalled = await _channel.isBreezyWeatherInstalled();
+      if (_isBreezyInstalled != wasInstalled) notifyListeners();
 
-      if (!_isBreezyInstalled) {
-        // Do not show cached weather from an app that is no longer installed.
-        final hadWeather = _weatherData != null;
-        _weatherData = null;
-        _lastJson = null;
-        if (wasInstalled || hadWeather) notifyListeners();
-        return;
-      }
-
-      if (!wasInstalled) notifyListeners();
+      // El dato llega por broadcast desde cualquier app compatible (Alerta EC
+      // o Breezy Weather). Se muestra si existe, sin exigir Breezy instalada.
       final latestJson = await _channel.getLatestWeatherData();
       if (latestJson != null && latestJson.isNotEmpty) {
         _processWeatherJson(latestJson);

@@ -239,6 +239,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timeBasedWallpaper => '按时间切换壁纸';
 
   @override
+  String get ecuadorWallpaper => 'Ecuador wallpapers';
+
+  @override
+  String get wallpaperDimming => 'Extra wallpaper dimming';
+
+  @override
   String get pickDayWallpaper => '选择日间壁纸';
 
   @override

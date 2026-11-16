@@ -239,6 +239,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get timeBasedWallpaper => 'Обои в зависимости от времени';
 
   @override
+  String get ecuadorWallpaper => 'Ecuador wallpapers';
+
+  @override
+  String get wallpaperDimming => 'Extra wallpaper dimming';
+
+  @override
   String get pickDayWallpaper => 'Выбрать дневные обои';
 
   @override

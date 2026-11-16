@@ -563,6 +563,18 @@ abstract class AppLocalizations {
   /// **'Time based wallpaper'**
   String get timeBasedWallpaper;
 
+  /// No description provided for @ecuadorWallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Ecuador wallpapers'**
+  String get ecuadorWallpaper;
+
+  /// No description provided for @wallpaperDimming.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra wallpaper dimming'**
+  String get wallpaperDimming;
+
   /// No description provided for @pickDayWallpaper.
   ///
   /// In en, this message translates to:

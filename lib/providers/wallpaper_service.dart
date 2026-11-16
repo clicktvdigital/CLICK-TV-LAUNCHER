@@ -26,6 +26,53 @@ import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
+/// Fondos de Ecuador (Wikimedia Commons, 3840x2160). Créditos en
+/// assets/fondos/ecuador/CREDITOS.md. Se agrupan por momento del día.
+const Map<String, List<String>> ecuadorWallpaperSets = {
+  'manana': [
+    'assets/fondos/ecuador/manana-1-chimborazo.jpg',
+    'assets/fondos/ecuador/manana-2-mitad-del-mundo.jpg',
+    'assets/fondos/ecuador/manana-3-cotopaxi-quilotoa.jpg',
+  ],
+  'tarde': [
+    'assets/fondos/ecuador/tarde-1-piquero-galapagos.jpg',
+    'assets/fondos/ecuador/tarde-2-albatros.jpg',
+    'assets/fondos/ecuador/tarde-3-paisaje-ecuador.jpg',
+  ],
+  'noche': [
+    'assets/fondos/ecuador/noche-1-rana.jpg',
+    'assets/fondos/ecuador/noche-2-san-francisco.jpg',
+    'assets/fondos/ecuador/noche-3-la-compania.jpg',
+  ],
+};
+
+/// Momento del día: mañana 06-12, tarde 12-18, noche 18-06.
+String ecuadorMoodFor(DateTime now) {
+  if (now.hour >= 6 && now.hour < 12) return 'manana';
+  if (now.hour >= 12 && now.hour < 18) return 'tarde';
+  return 'noche';
+}
+
+/// Imagen del momento actual. Cambia cada hora dentro del mismo momento.
+String ecuadorAssetFor(DateTime now) {
+  final list = ecuadorWallpaperSets[ecuadorMoodFor(now)]!;
+  final index = (now.millisecondsSinceEpoch ~/ Duration.millisecondsPerHour) % list.length;
+  return list[index];
+}
+
+/// Subtítulo de cada foto de Ecuador, por nombre de archivo.
+const Map<String, String> ecuadorCaptions = {
+  'manana-1-chimborazo.jpg': 'Chimborazo',
+  'manana-2-mitad-del-mundo.jpg': 'Mitad del Mundo',
+  'manana-3-cotopaxi-quilotoa.jpg': 'Quilotoa',
+  'tarde-1-piquero-galapagos.jpg': 'Piquero de Galápagos',
+  'tarde-2-albatros.jpg': 'Albatros de Galápagos',
+  'tarde-3-paisaje-ecuador.jpg': 'Paisaje de Ecuador',
+  'noche-1-rana.jpg': 'Rana del Bosque Guardián',
+  'noche-2-san-francisco.jpg': 'San Francisco',
+  'noche-3-la-compania.jpg': 'La Compañía',
+};
+
 class WallpaperService extends ChangeNotifier {
   final FLauncherChannel _fLauncherChannel;
   final SettingsService _settingsService;
@@ -42,6 +89,10 @@ class WallpaperService extends ChangeNotifier {
   ImageProvider?  get wallpaper     => _wallpaper;
   int             get version       => _version;
 
+  String? _caption;
+  /// Subtítulo de la foto actual; null si el fondo no es del set de Ecuador.
+  String? get caption => _caption;
+
   FLauncherGradient get gradient => FLauncherGradients.all.firstWhere(
         (gradient) => gradient.uuid == _settingsService.gradientUuid,
         orElse: () => FLauncherGradients.pitchBlack,
@@ -54,15 +105,19 @@ class WallpaperService extends ChangeNotifier {
     _init();
   }
 
-  bool _lastTimeBasedEnabled = false;
+  bool _lastRotating = false;
+
+  /// Hay que refrescar cada minuto si el fondo depende de la hora.
+  bool get _isRotatingEnabled =>
+      _settingsService.timeBasedWallpaperEnabled || _settingsService.ecuadorWallpaperEnabled;
 
   void _onSettingsChanged() {
-    final enabled = _settingsService.timeBasedWallpaperEnabled;
-    if (enabled != _lastTimeBasedEnabled) {
-      _lastTimeBasedEnabled = enabled;
+    final rotating = _isRotatingEnabled;
+    if (rotating != _lastRotating) {
+      _lastRotating = rotating;
       _updateTimerState();
-      _updateWallpaper();
     }
+    _updateWallpaper();
   }
 
   @override
@@ -78,13 +133,13 @@ class WallpaperService extends ChangeNotifier {
     _wallpaperDayFile = File("${directory.path}/wallpaper_day");
     _wallpaperNightFile = File("${directory.path}/wallpaper_night");
 
-    _lastTimeBasedEnabled = _settingsService.timeBasedWallpaperEnabled;
+    _lastRotating = _isRotatingEnabled;
     await _updateWallpaper();
     _updateTimerState();
   }
 
   void _updateTimerState() {
-    final enabled = _settingsService.timeBasedWallpaperEnabled;
+    final enabled = _isRotatingEnabled;
     if (enabled && (_timer == null || !_timer!.isActive)) {
       _timer = Timer.periodic(const Duration(minutes: 1), (_) => _updateWallpaper());
     } else if (!enabled && _timer != null) {
@@ -100,8 +155,13 @@ class WallpaperService extends ChangeNotifier {
     final enabled = _settingsService.timeBasedWallpaperEnabled;
 
     ImageProvider? newWallpaper;
+    String? newCaption;
 
-    if (enabled) {
+    if (_settingsService.ecuadorWallpaperEnabled) {
+      final assetPath = ecuadorAssetFor(now);
+      newWallpaper = AssetImage(assetPath);
+      newCaption = ecuadorCaptions[assetPath.split('/').last];
+    } else if (enabled) {
       if (isDay && await _wallpaperDayFile.exists()) {
         newWallpaper = FileImage(_wallpaperDayFile);
       } else if (!isDay && await _wallpaperNightFile.exists()) {
@@ -116,8 +176,9 @@ class WallpaperService extends ChangeNotifier {
     }
 
     if (callId == _updateWallpaperCallCount) {
-      if (_wallpaper != newWallpaper || force) {
+      if (_wallpaper != newWallpaper || _caption != newCaption || force) {
         _wallpaper = newWallpaper;
+        _caption = newCaption;
         notifyListeners();
       }
     }

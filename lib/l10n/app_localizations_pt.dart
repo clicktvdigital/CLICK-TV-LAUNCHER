@@ -239,6 +239,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get timeBasedWallpaper => 'Papel de parede baseado no tempo';
 
   @override
+  String get ecuadorWallpaper => 'Ecuador wallpapers';
+
+  @override
+  String get wallpaperDimming => 'Extra wallpaper dimming';
+
+  @override
   String get pickDayWallpaper => 'Escolher papel de parede diurno';
 
   @override
