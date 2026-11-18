@@ -126,6 +126,7 @@ public class MainActivity extends FlutterActivity {
                 case "checkForGetContentAvailability" -> result.success(checkForGetContentAvailability());
                 case "startAmbientMode" -> result.success(startAmbientMode());
                 case "getActiveNetworkInformation" -> result.success(getActiveNetworkInformation());
+                case "getTrafficTotals" -> result.success(getTrafficTotals());
                 case "getDailyDataUsage" -> {
                     long usage = getDailyDataUsage();
                     if (usage == -1) {
@@ -817,6 +818,20 @@ public class MainActivity extends FlutterActivity {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    // Bytes totales recibidos/enviados desde el arranque (todas las interfaces).
+    // TrafficStats es una lectura barata del kernel, sin permisos, desde API 8.
+    private List<Long> getTrafficTotals() {
+        long rx = android.net.TrafficStats.getTotalRxBytes();
+        long tx = android.net.TrafficStats.getTotalTxBytes();
+        if (rx == android.net.TrafficStats.UNSUPPORTED || tx == android.net.TrafficStats.UNSUPPORTED) {
+            return null;
+        }
+        List<Long> totals = new ArrayList<>();
+        totals.add(rx);
+        totals.add(tx);
+        return totals;
     }
 
     private long getDailyDataUsage() {

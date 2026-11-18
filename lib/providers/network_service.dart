@@ -147,6 +147,9 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
      }
   }
 
+  /// [bytes recibidos, bytes enviados] totales, para calcular la velocidad.
+  Future<List<int>?> getTrafficTotals() => _channel.getTrafficTotals();
+
   Future<int> getDataUsageForPeriod(String period) async {
     switch (period) {
       case 'daily':

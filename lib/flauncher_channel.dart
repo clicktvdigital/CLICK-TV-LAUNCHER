@@ -82,6 +82,20 @@ class FLauncherChannel {
     return map.cast<String, dynamic>();
   }
 
+  /// [bytes recibidos, bytes enviados] totales desde el arranque, o null si
+  /// el equipo no expone contadores de tráfico.
+  Future<List<int>?> getTrafficTotals() async {
+    try {
+      final List<dynamic>? totals = await _methodChannel.invokeMethod("getTrafficTotals");
+      if (totals == null || totals.length < 2) return null;
+      return [(totals[0] as num).toInt(), (totals[1] as num).toInt()];
+    } on PlatformException catch (_) {
+      return null;
+    } on MissingPluginException catch (_) {
+      return null;
+    }
+  }
+
   Future<int> getDailyDataUsage() async {
     try {
       final int usage = await _methodChannel.invokeMethod("getDailyDataUsage");

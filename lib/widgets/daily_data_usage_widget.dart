@@ -4,16 +4,30 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class DailyDataUsageWidget extends StatelessWidget {
-  const DailyDataUsageWidget({super.key});
+  /// Versión de una línea a 14 px para la barra de estado (con la velocidad
+  /// encima, ver NetworkTrafficIndicator).
+  final bool compact;
+
+  const DailyDataUsageWidget({super.key, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     return Consumer2<NetworkService, SettingsService>(
       builder: (context, networkService, settingsService, _) {
+        final isEs = Localizations.localeOf(context).languageCode == 'es';
         if (!networkService.hasUsageStatsPermission) {
           return TextButton.icon(
-             icon: const Icon(Icons.data_usage, size: 20),
-             label: const Text("Grant Usage Permission"),
+             style: compact
+                 ? TextButton.styleFrom(
+                     padding: EdgeInsets.zero,
+                     minimumSize: const Size(0, 14),
+                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                     visualDensity: VisualDensity.compact,
+                     textStyle: const TextStyle(fontSize: 13, height: 1.0),
+                   )
+                 : null,
+             icon: Icon(Icons.data_usage, size: compact ? 14 : 20),
+             label: Text(isEs ? "Permitir ver consumo" : "Grant Usage Permission"),
              onPressed: () => networkService.requestPermission(),
           );
         }
@@ -22,14 +36,14 @@ class DailyDataUsageWidget extends StatelessWidget {
         String label;
         switch (period) {
           case 'weekly':
-            label = 'Weekly: ';
+            label = isEs ? 'Semana: ' : 'Weekly: ';
             break;
           case 'monthly':
-            label = 'Monthly: ';
+            label = isEs ? 'Mes: ' : 'Monthly: ';
             break;
           case 'daily':
           default:
-            label = 'Daily: ';
+            label = isEs ? 'Hoy: ' : 'Daily: ';
             break;
         }
 
@@ -41,8 +55,9 @@ class DailyDataUsageWidget extends StatelessWidget {
 
             return RichText(
               text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 20,
+                style: TextStyle(
+                  fontSize: compact ? 14 : 20,
+                  height: compact ? 1.0 : null,
                   fontWeight: FontWeight.w400,
                   color: Colors.white,
                   shadows: [

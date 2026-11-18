@@ -8,7 +8,7 @@ import 'package:flauncher/providers/weather_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'daily_data_usage_widget.dart';
+import 'network_traffic_indicator.dart';
 import 'date_time_widget.dart';
 import 'network_widget.dart';
 import 'weather_status_bar_widget.dart';
@@ -178,23 +178,16 @@ class FocusAwareAppBarState extends State<FocusAwareAppBar>
                     )
                   : const SizedBox.shrink(),
               ),
-              // Data usage widget
-              Selector<SettingsService, bool>(
-                selector: (_, settings) => settings.showDataWidgetInStatusBar,
-                builder: (context, showData, _) => showData
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.12),
-                          width: 1,
-                        ),
-                      ),
-                      child: const DailyDataUsageWidget(),
-                    )
-                  : const SizedBox.shrink(),
+              // Indicador de red: Wi-Fi/cable, ↓/↑ en tiempo real y consumo.
+              // Flexible: si el clima necesita ancho, el indicador se reduce
+              // (FittedBox) en lugar de solaparse o recortar el clima.
+              Flexible(
+                child: Selector<SettingsService, bool>(
+                  selector: (_, settings) => settings.showDataWidgetInStatusBar,
+                  builder: (context, showData, _) => showData
+                    ? const NetworkTrafficIndicator()
+                    : const SizedBox.shrink(),
+                ),
               ),
             ],
           ),
