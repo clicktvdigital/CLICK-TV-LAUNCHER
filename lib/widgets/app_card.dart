@@ -512,17 +512,12 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
   Future<(AppImageType, ImageProvider)> _loadAppBannerOrIcon(AppsService service) async {
     final Uint8List banner = await service.getAppBanner(widget.application.packageName);
     if (banner.isNotEmpty && _isTvBannerShape(banner)) {
-      return (
-        AppImageType.Banner,
-        ResizeImage(MemoryImage(banner), width: 640, allowUpscaling: false),
-      );
+      // Se decodifica al tamaño físico de la tarjeta en _sizedImage.
+      return (AppImageType.Banner, MemoryImage(banner));
     }
     // Sin banner 16:9: se muestra el icono completo dentro de la misma tarjeta.
     final Uint8List icon = await service.getAppIcon(widget.application.packageName);
-    return (
-      AppImageType.Icon,
-      ResizeImage(MemoryImage(icon), width: 256, allowUpscaling: false),
-    );
+    return (AppImageType.Icon, MemoryImage(icon));
   }
 
   /// true si el PNG tiene proporción 16:9 (con tolerancia). Lee solo la cabecera
@@ -540,6 +535,20 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
     return (width / height - 16 / 9).abs() < 0.12;
   }
 
+  /// Decodifica la imagen al ancho físico con que se dibuja (dp × densidad),
+  /// en pasos de 32 px para no multiplicar variantes en la caché. Así la GPU
+  /// no la reduce 2-4× en cada frame (más nitidez) y ocupa menos memoria
+  /// (caché de 5 imágenes / 25 MB en TV box de 1 GB).
+  ImageProvider _sizedImage(BuildContext context, ImageProvider image, double logicalWidth,
+      {required int maxPixels}) {
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    if (!logicalWidth.isFinite || logicalWidth <= 0) {
+      return ResizeImage(image, width: maxPixels, allowUpscaling: false);
+    }
+    final physical = (logicalWidth * dpr / 32).ceil() * 32;
+    return ResizeImage(image, width: physical.clamp(64, maxPixels), allowUpscaling: false);
+  }
+
   Widget _appImage()
   {
     App app = widget.application;
@@ -555,8 +564,8 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
             // Banner 16:9: ocupa toda la tarjeta, completo, sobre fondo negro.
             return ColoredBox(
               color: Colors.black,
-              child: Image(
-                image: record.$2,
+              child: LayoutBuilder(builder: (context, constraints) => Image(
+                image: _sizedImage(context, record.$2, constraints.maxWidth, maxPixels: 640),
                 fit: BoxFit.fill,
                 width: double.infinity,
                 height: double.infinity,
@@ -564,7 +573,7 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
                   debugPrint('AppCard banner image error: $error');
                   return const SizedBox.shrink();
                 },
-              ),
+              )),
             );
           }
           else {
@@ -576,14 +585,19 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
               child: Column(
                 children: [
                   Expanded(
-                    child: Image(
-                      image: record.$2,
+                    child: LayoutBuilder(builder: (context, constraints) => Image(
+                      image: _sizedImage(
+                        context,
+                        record.$2,
+                        constraints.maxWidth < constraints.maxHeight ? constraints.maxWidth : constraints.maxHeight,
+                        maxPixels: 256,
+                      ),
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stack) {
                         debugPrint('AppCard icon image error: $error');
                         return const SizedBox.shrink();
                       },
-                    ),
+                    )),
                   ),
                   const SizedBox(height: 6),
                   Text(

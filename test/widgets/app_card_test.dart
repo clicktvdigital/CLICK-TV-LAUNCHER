@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flauncher/models/app.dart';
 import 'package:flauncher/models/category.dart';
 import 'package:flauncher/providers/apps_service.dart';
@@ -255,5 +256,28 @@ void main() {
     expect(find.byType(ApplicationInfoPanel), findsNothing);
     await tester.pump(const Duration(seconds: 6));
     expect(find.byType(ApplicationInfoPanel), findsNothing);
+  });
+
+  testWidgets('decodes the banner at the card physical width (multiple of 32, max 640)', (WidgetTester tester) async {
+    // Cabecera PNG con IHDR de 1600x900 (16:9): basta para elegir el banner.
+    final banner = Uint8List.fromList([
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+      0x00, 0x00, 0x06, 0x40, 0x00, 0x00, 0x03, 0x84,
+      0x08, 0x06, 0x00, 0x00, 0x00,
+    ]);
+    when(mockAppsService.getAppBanner(any)).thenAnswer((_) async => banner);
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pump();
+    await tester.pump();
+
+    final images = tester.widgetList<Image>(find.byType(Image)).where((i) => i.image is ResizeImage);
+    expect(images, isNotEmpty);
+    final resize = images.first.image as ResizeImage;
+    expect(resize.width, isNotNull);
+    expect(resize.width! % 32, 0);
+    expect(resize.width, lessThanOrEqualTo(640));
+    expect(resize.width, greaterThanOrEqualTo(64));
   });
 }
