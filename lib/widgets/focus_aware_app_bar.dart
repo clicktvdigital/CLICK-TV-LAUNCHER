@@ -13,6 +13,10 @@ import 'date_time_widget.dart';
 import 'network_widget.dart';
 import 'weather_status_bar_widget.dart';
 
+/// Alto de la barra de estado. 72 dp (antes 56): caben las 4 líneas del clima
+/// (ciudad, temperatura • estado, lluvia, máx/mín) a 14 px sin recortes.
+const double clickTvStatusBarHeight = 72;
+
 class FocusAwareAppBar extends StatefulWidget implements PreferredSizeWidget
 {
   const FocusAwareAppBar({Key? key}) : super(key: key);
@@ -23,7 +27,7 @@ class FocusAwareAppBar extends StatefulWidget implements PreferredSizeWidget
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(clickTvStatusBarHeight);
 }
 
 class FocusAwareAppBarState extends State<FocusAwareAppBar>
@@ -72,7 +76,7 @@ class FocusAwareAppBarState extends State<FocusAwareAppBar>
             child: AnimatedContainer(
               curve: Curves.decelerate,
               duration: Duration(milliseconds: 150),
-              height: focused ? kToolbarHeight : 0,
+              height: focused ? clickTvStatusBarHeight : 0,
               child: widget!
             ),
             onFocusChange: (hasFocus) {
@@ -87,6 +91,7 @@ class FocusAwareAppBarState extends State<FocusAwareAppBar>
       },
       child: RepaintBoundary(
         child: AppBar(
+          toolbarHeight: clickTvStatusBarHeight,
           // Line the settings glyph up with the left edge of the app tiles below
           // (sections indent 16 + 8 card margin + 8 tile inset = 32dp; the icon
           // button adds 4 padding + 2 border + 2 glyph inset, so start at 24).

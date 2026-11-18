@@ -11,7 +11,7 @@ import 'daily_data_usage_widget.dart';
 /// velocidad de bajada y subida en tiempo real y consumo del periodo.
 ///
 /// Velocidad en 2 líneas de 14 px y el consumo a la derecha, centrado en
-/// vertical (28 px de alto dentro de la barra de 56 dp). El botón de permiso,
+/// vertical (30 px de texto dentro de la barra de 72 dp). El botón de permiso,
 /// si aparece, queda en la misma fila que el resto de la barra: así la flecha
 /// abajo desde Ajustes vuelve a las apps y no se desvía hacia él. Si falta ancho
 /// (por ejemplo con el clima visible), el bloque se reduce proporcionalmente
@@ -20,7 +20,7 @@ class NetworkTrafficIndicator extends StatelessWidget {
   const NetworkTrafficIndicator({super.key});
 
   static const TextStyle lineStyle = TextStyle(
-    fontSize: 14,
+    fontSize: 15,
     height: 1.0,
     fontWeight: FontWeight.w400,
     color: Colors.white,
@@ -42,7 +42,7 @@ class NetworkTrafficIndicator extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.3),
         borderRadius: BorderRadius.circular(14),
@@ -59,7 +59,7 @@ class NetworkTrafficIndicator extends StatelessWidget {
             children: [
               Semantics(
                 label: label,
-                child: Icon(icon, size: 20, color: Colors.white),
+                child: Icon(icon, size: 22, color: Colors.white),
               ),
               const SizedBox(width: 8),
               const LiveTrafficRates(),
@@ -166,7 +166,7 @@ class _LiveTrafficRatesState extends State<LiveTrafficRates> with WidgetsBinding
     if (_unsupported) return const SizedBox.shrink();
     return ConstrainedBox(
       // Ancho de "↓ 999 KB/s": evita que el bloque cambie de tamaño cada 2 s.
-      constraints: const BoxConstraints(minWidth: 92),
+      constraints: const BoxConstraints(minWidth: 100),
       child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,

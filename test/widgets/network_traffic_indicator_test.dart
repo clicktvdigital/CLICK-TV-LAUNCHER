@@ -1,5 +1,6 @@
 import 'package:flauncher/providers/network_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
+import 'package:flauncher/widgets/focus_aware_app_bar.dart';
 import 'package:flauncher/widgets/network_traffic_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,7 +34,7 @@ void main() {
             alignment: Alignment.topLeft,
             child: SizedBox(
               width: width,
-              height: kToolbarHeight,
+              height: clickTvStatusBarHeight,
               child: MultiProvider(
                 providers: [
                   ChangeNotifierProvider<NetworkService>.value(value: networkService),
@@ -107,7 +108,7 @@ void main() {
     expect(calls, greaterThan(before));
   });
 
-  testWidgets('fits a narrow 56 dp slot without overflowing (scales down)', (tester) async {
+  testWidgets('fits a narrow status bar slot without overflowing (scales down)', (tester) async {
     when(networkService.getTrafficTotals()).thenAnswer((_) async => [0, 0]);
 
     await tester.pumpWidget(host(width: 90));
@@ -116,7 +117,7 @@ void main() {
     expect(tester.takeException(), isNull);
     final size = tester.getSize(find.byType(NetworkTrafficIndicator));
     expect(size.width, lessThanOrEqualTo(90));
-    expect(size.height, lessThanOrEqualTo(kToolbarHeight));
+    expect(size.height, lessThanOrEqualTo(clickTvStatusBarHeight));
   });
 
   testWidgets('hides the speed when the device has no traffic counters', (tester) async {

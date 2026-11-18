@@ -41,22 +41,28 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
             final icon = weather.getConditionIcon();
             final tempText = weather.formatTemperature(useFahrenheit: useFahrenheit);
 
-            String displayText;
+            final isEs = Localizations.localeOf(context).languageCode == "es";
+
+            // Línea de lluvia o aviso (opcional).
+            String? alertLine;
             if (weather.rainStart != null) {
               final rs = weather.rainStart!;
-              final isEsRain = Localizations.localeOf(context).languageCode == "es";
               final h12 = rs.hour % 12 == 0 ? 12 : rs.hour % 12;
-              final ampm = rs.hour < 12 ? (isEsRain ? "a. m." : "AM") : (isEsRain ? "p. m." : "PM");
+              final ampm = rs.hour < 12 ? (isEs ? "a. m." : "AM") : (isEs ? "p. m." : "PM");
               final mm = rs.minute.toString().padLeft(2, '0');
               final now = DateTime.now();
               final sameDay = rs.year == now.year && rs.month == now.month && rs.day == now.day;
-              final dayWord = sameDay ? "" : (isEsRain ? "mañana " : "tomorrow ");
-              final rainLabel = isEsRain
-                  ? "Lluvia ${dayWord}desde las $h12:$mm $ampm (${weather.rainStartPercent}%)"
+              final dayWord = sameDay ? "" : (isEs ? "mañana " : "tomorrow ");
+              alertLine = isEs
+                  ? "Lluvia ${dayWord}desde $h12:$mm $ampm (${weather.rainStartPercent}%)"
                   : "Rain ${dayWord}from $h12:$mm $ampm (${weather.rainStartPercent}%)";
-              displayText = "$tempText • $rainLabel";
-            } else if (isWarning && weather.warningText != null) {
-              if (Localizations.localeOf(context).languageCode == "es") {
+            }
+
+            // Línea principal: temperatura actual • estado (o aviso).
+            String primaryLine;
+            final condition = (weather.currentCondition ?? "").trim();
+            if (weather.rainStart == null && isWarning && weather.warningText != null) {
+              if (isEs) {
                 final warningName = weather.warningType.name == "rain"
                     ? "Lluvia"
                     : weather.warningType.name == "snow"
@@ -74,40 +80,36 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                 final probabilityLabel = probability != null && probability > 0
                     ? " (${probability}%)"
                     : "";
-                displayText = "$tempText • $warningName $dayLabel$probabilityLabel";
+                primaryLine = "$tempText • $warningName $dayLabel$probabilityLabel";
               } else {
-                displayText = "$tempText • ${weather.warningText}";
+                primaryLine = "$tempText • ${weather.warningText}";
               }
             } else {
-              displayText = tempText;
+              primaryLine = condition.isEmpty ? tempText : "$tempText • $condition";
             }
 
             // Datos meteorologicos reales recibidos de Alerta EC.
-            final city = (weather.location ?? "").split(",").first.trim();
-            final condition = (weather.currentCondition ?? "").trim();
+            var city = (weather.location ?? "").split(",").first.trim();
+            if (dataStale) {
+              final staleLabel = isEs ? "sin actualizar" : "not updated";
+              city = city.isEmpty ? staleLabel : "$city • $staleLabel";
+            }
             int displayDegrees(int celsius) =>
                 useFahrenheit ? (celsius * 9 / 5 + 32).round() : celsius;
-            // La barra superior mide kToolbarHeight (56 dp) y la caja tiene
-            // 4 dp de margen arriba y abajo: caben exactamente 3 líneas de
-            // 14 px. Se agrupan los datos en 3 líneas fijas de una sola
-            // línea cada una (con "…" si no entra el ancho):
-            //   1) ciudad  2) temperatura • lluvia/aviso  3) estado • máx/mín
-            final primaryLine = displayText;
-            final details = <String>[];
-            if (!isWarning && condition.isNotEmpty) details.add(condition);
+            String? rangeLine;
             if (weather.todayMaxTemp != null && weather.todayMinTemp != null) {
               final high = displayDegrees(weather.todayMaxTemp!);
               final low = displayDegrees(weather.todayMinTemp!);
-              details.add(Localizations.localeOf(context).languageCode == "es"
-                  ? "↑ $high° máx  ↓ $low° mín"
-                  : "↑ $high° max  ↓ $low° min");
+              rangeLine = isEs ? "↑ $high° máx  ↓ $low° mín" : "↑ $high° max  ↓ $low° min";
             }
-            if (dataStale) {
-              details.add(Localizations.localeOf(context).languageCode == "es"
-                  ? "Datos sin actualizar"
-                  : "Weather not updated");
-            }
-            final secondaryLine = details.join(" • ");
+
+            // Hasta 4 líneas de 14 px (56 px) en la barra de 72 dp:
+            //   1) ciudad  2) temperatura • estado  3) lluvia  4) máx/mín
+            final lines = <String>[
+              primaryLine,
+              if (alertLine != null) alertLine,
+              if (rangeLine != null) rangeLine,
+            ];
 
             final theme = Theme.of(context);
 
@@ -130,10 +132,10 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                   focusColor: Colors.transparent,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    // 28 % del ancho: deja espacio para que el indicador de red
-                    // se vea a tamaño completo; lo que no quepa lleva "…".
+                    // Ancho natural del texto (cada dato en su línea corta),
+                    // con tope del 36 % para no invadir el indicador de red.
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.sizeOf(context).width * 0.28,
+                      maxWidth: MediaQuery.sizeOf(context).width * 0.36,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
@@ -179,9 +181,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                               children: [
                                 if (city.isNotEmpty)
                                   _WeatherLine(city, bold: true),
-                                _WeatherLine(primaryLine),
-                                if (secondaryLine.isNotEmpty)
-                                  _WeatherLine(secondaryLine),
+                                for (final line in lines) _WeatherLine(line),
                               ],
                             ),
                           ),

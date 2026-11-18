@@ -51,12 +51,12 @@ class DailyDataUsageWidget extends StatelessWidget {
           future: networkService.getDataUsageForPeriod(period),
           builder: (context, snapshot) {
             final usage = snapshot.data ?? networkService.dailyDataUsage;
-            final usageString = _formatBytes(usage);
+            final usageString = compact ? _formatBytesCompact(usage) : _formatBytes(usage);
 
             return RichText(
               text: TextSpan(
                 style: TextStyle(
-                  fontSize: compact ? 14 : 20,
+                  fontSize: compact ? 15 : 20,
                   height: compact ? 1.0 : null,
                   fontWeight: FontWeight.w400,
                   color: Colors.white,
@@ -89,5 +89,14 @@ class DailyDataUsageWidget extends StatelessWidget {
       i++;
     }
     return "${d.toStringAsFixed(2)} ${suffixes[i]}";
+  }
+
+  /// Formato corto para la barra: MB sin decimales y GB con dos.
+  String _formatBytesCompact(int bytes) {
+    if (bytes <= 0) return "0 MB";
+    const mb = 1024 * 1024;
+    const gb = mb * 1024;
+    if (bytes >= gb) return "${(bytes / gb).toStringAsFixed(2)} GB";
+    return "${(bytes / mb).round()} MB";
   }
 }
