@@ -144,7 +144,9 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                        children: [
                          const Icon(Icons.add_box_outlined),
                          Container(width: 8),
-                         Text(localizations.withEllipsisAddTo, style: Theme.of(context).textTheme.bodyMedium),
+                         Flexible(
+                           child: Text(localizations.withEllipsisAddTo, style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                         ),
                        ],
                      ),
                      onPressed: () async {
@@ -162,7 +164,9 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                          children: [
                            const Icon(Icons.open_with),
                            Container(width: 8),
-                           Text(localizations.reorder, style: Theme.of(context).textTheme.bodyMedium),
+                           Flexible(
+                             child: Text(localizations.reorder, style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                           ),
                          ],
                        ),
                        onPressed: () => Navigator.of(context).pop(ApplicationInfoPanelResult.reorderApp),
@@ -200,7 +204,9 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                        children: [
                          Icon(widget.application.hidden ? Icons.visibility : Icons.visibility_off_outlined),
                          Container(width: 8),
-                         Text(widget.application.hidden ? localizations.show : localizations.hide, style: Theme.of(context).textTheme.bodyMedium),
+                         Flexible(
+                           child: Text(widget.application.hidden ? localizations.show : localizations.hide, style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                         ),
                        ],
                      ),
                      onPressed: () async {
@@ -249,7 +255,9 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                                children: [
                                  const Icon(Icons.image_search),
                                  Container(width: 8),
-                                 Text('Set Custom Banner', style: Theme.of(context).textTheme.bodyMedium),
+                                 Flexible(
+                                   child: Text('Set Custom Banner', style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                                 ),
                                ],
                              ),
                              onPressed: () async {
@@ -288,7 +296,9 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                                  children: [
                                    const Icon(Icons.hide_image_outlined),
                                    Container(width: 8),
-                                   Text('Clear Custom Banner', style: Theme.of(context).textTheme.bodyMedium),
+                                   Flexible(
+                                     child: Text('Clear Custom Banner', style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                                   ),
                                  ],
                                ),
                                onPressed: () async {
