@@ -128,6 +128,16 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
     _checkPermissionAndStartPolling();
   }
 
+  /// Ajustes de la conexión activa: Wi-Fi si es Wi-Fi; ajustes de red
+  /// generales (Ethernet incluido) si es por cable u otra.
+  Future<void> openActiveNetworkSettings() async {
+    if (_networkType == NetworkType.Wifi) {
+      await _channel.openWifiSettings();
+    } else {
+      await _channel.openNetworkSettings();
+    }
+  }
+
   Future<void> openWifiSettings() async {
     await _channel.openWifiSettings();
   }

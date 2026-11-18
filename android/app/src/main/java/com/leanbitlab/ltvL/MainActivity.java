@@ -169,6 +169,7 @@ public class MainActivity extends FlutterActivity {
                 }
                 case "openDefaultLauncherSettings" -> result.success(openDefaultLauncherSettings());
                 case "openWifiSettings" -> result.success(openWifiSettings());
+                case "openNetworkSettings" -> result.success(openNetworkSettings());
                 case "openVpnSettings" -> result.success(openVpnSettings());
                 case "getTvInputs" -> result.success(getTvInputs());
                 case "launchTvInput" -> result.success(launchTvInput(call.arguments()));
@@ -840,7 +841,13 @@ public class MainActivity extends FlutterActivity {
         } catch (Exception ignored) {
         }
         try {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            // Solo si la red activa es Wi-Fi: con cable Ethernet no se toca el
+            // Wi-Fi (reconectarlo podría cambiar la red activa sin motivo).
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            android.net.NetworkInfo info = cm != null ? cm.getActiveNetworkInfo() : null;
+            boolean activeIsWifi = info != null && info.getType() == ConnectivityManager.TYPE_WIFI;
+            out.put("activeIsWifi", activeIsWifi);
+            if (activeIsWifi && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager)
                         getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                 if (wm != null && wm.isWifiEnabled()) {
@@ -963,6 +970,15 @@ public class MainActivity extends FlutterActivity {
         }
 
         // 3. Fallback to main settings
+        return launchActivityFromAction(Settings.ACTION_SETTINGS);
+    }
+
+    // Ajustes de red generales (en Android TV incluyen Ethernet). Se usa cuando
+    // la conexión es por cable, donde los ajustes de Wi-Fi no sirven.
+    private boolean openNetworkSettings() {
+        if (tryStartActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS))) {
+            return true;
+        }
         return launchActivityFromAction(Settings.ACTION_SETTINGS);
     }
 

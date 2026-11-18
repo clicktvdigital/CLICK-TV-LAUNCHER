@@ -153,4 +153,39 @@ void main() {
       expect(networkService.cellularNetworkType, CellularNetworkType.Unknown);
     });
   });
+
+  group('openActiveNetworkSettings', () {
+    test('opens general network settings (not Wi-Fi) when connected by Ethernet cable', () async {
+      when(mockChannel.openNetworkSettings()).thenAnswer((_) async {});
+      networkListener!(<String, dynamic>{
+        'name': 'NETWORK_AVAILABLE',
+        'arguments': <dynamic, dynamic>{
+          'networkType': NetworkType.Wired.index,
+          'internetAccess': true,
+        },
+      });
+      expect(networkService.networkType, NetworkType.Wired);
+
+      await networkService.openActiveNetworkSettings();
+
+      verify(mockChannel.openNetworkSettings()).called(1);
+      verifyNever(mockChannel.openWifiSettings());
+    });
+
+    test('opens Wi-Fi settings when connected by Wi-Fi', () async {
+      when(mockChannel.openWifiSettings()).thenAnswer((_) async {});
+      networkListener!(<String, dynamic>{
+        'name': 'NETWORK_AVAILABLE',
+        'arguments': <dynamic, dynamic>{
+          'networkType': NetworkType.Wifi.index,
+          'internetAccess': true,
+        },
+      });
+
+      await networkService.openActiveNetworkSettings();
+
+      verify(mockChannel.openWifiSettings()).called(1);
+      verifyNever(mockChannel.openNetworkSettings());
+    });
+  });
 }

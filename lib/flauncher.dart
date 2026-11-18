@@ -220,19 +220,8 @@ class _FLauncherState extends State<FLauncher> {
       fit: StackFit.expand,
       children: [
         background,
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withOpacity(0.35),
-                Colors.black.withOpacity(0.15),
-                Colors.black.withOpacity(0.45),
-              ],
-            ),
-          ),
-        ),
+        // Sin velo oscuro global: el fondo se ve nítido. El contraste se da
+        // localmente en títulos, botones y paneles (fondos translúcidos).
         Consumer<SettingsService>(
           builder: (_, settings, __) => settings.wallpaperExtraDim == 0
               ? const SizedBox.shrink()

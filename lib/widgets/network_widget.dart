@@ -83,7 +83,8 @@ class NetworkWidget extends StatelessWidget
               if (vpnActive || networkType == NetworkType.Vpn) {
                 networkService.openVpnSettings();
               } else {
-                networkService.openWifiSettings();
+                // Con cable no se abren los ajustes de Wi-Fi.
+                networkService.openActiveNetworkSettings();
               }
             },
             child: physicalWidget,
@@ -94,7 +95,7 @@ class NetworkWidget extends StatelessWidget
           mainAxisSize: MainAxisSize.min,
           children: [
             _NetworkIconButton(
-              onTap: () => networkService.openWifiSettings(),
+              onTap: () => networkService.openActiveNetworkSettings(),
               child: physicalWidget,
             ),
             const SizedBox(width: 4),
@@ -153,7 +154,7 @@ class _NetworkIconButtonState extends State<_NetworkIconButton> {
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: _focused ? Colors.black.withOpacity(0.3) : Colors.transparent,
+              color: Colors.black.withOpacity(_focused ? 0.45 : 0.25),
               borderRadius: BorderRadius.circular(8),
               // Constant border width so focus changes never resize the widget.
               border: Border.all(

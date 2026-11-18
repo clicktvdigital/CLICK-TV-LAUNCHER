@@ -194,18 +194,18 @@ void main() {
     expect(find.byIcon(Icons.lan), findsOneWidget);
   });
 
-  testWidgets('tapping the widget opens wifi settings', (WidgetTester tester) async {
+  testWidgets('tapping the widget opens the active network settings', (WidgetTester tester) async {
     when(mockNetworkService.networkType).thenReturn(NetworkType.Unknown);
     when(mockNetworkService.cellularNetworkType).thenReturn(CellularNetworkType.Unknown);
     when(mockNetworkService.wirelessNetworkSignalLevel).thenReturn(0);
-    when(mockNetworkService.openWifiSettings()).thenAnswer((_) => Future.value());
+    when(mockNetworkService.openActiveNetworkSettings()).thenAnswer((_) => Future.value());
 
     await tester.pumpWidget(createWidgetUnderTest());
 
     await tester.tap(find.byType(InkWell));
     await tester.pumpAndSettle();
 
-    verify(mockNetworkService.openWifiSettings()).called(1);
+    verify(mockNetworkService.openActiveNetworkSettings()).called(1);
   });
 
   testWidgets('renders both wifi and vpn_key when wifi is active and vpnActive is true', (WidgetTester tester) async {
@@ -220,19 +220,19 @@ void main() {
     expect(find.byIcon(Icons.vpn_key), findsOneWidget);
   });
 
-  testWidgets('tapping wifi icon when vpn is active opens wifi settings', (WidgetTester tester) async {
+  testWidgets('tapping wifi icon when vpn is active opens the active network settings', (WidgetTester tester) async {
     when(mockNetworkService.networkType).thenReturn(NetworkType.Wifi);
     when(mockNetworkService.cellularNetworkType).thenReturn(CellularNetworkType.Unknown);
     when(mockNetworkService.wirelessNetworkSignalLevel).thenReturn(4);
     when(mockNetworkService.vpnActive).thenReturn(true);
-    when(mockNetworkService.openWifiSettings()).thenAnswer((_) => Future.value());
+    when(mockNetworkService.openActiveNetworkSettings()).thenAnswer((_) => Future.value());
 
     await tester.pumpWidget(createWidgetUnderTest());
 
     await tester.tap(find.byIcon(Icons.signal_wifi_4_bar));
     await tester.pumpAndSettle();
 
-    verify(mockNetworkService.openWifiSettings()).called(1);
+    verify(mockNetworkService.openActiveNetworkSettings()).called(1);
   });
 
   testWidgets('tapping vpn key icon when vpn is active opens vpn settings', (WidgetTester tester) async {

@@ -337,7 +337,8 @@ class _FocusableIconButtonState extends State<_FocusableIconButton> {
           child: Container(
             padding: const EdgeInsets.all(4),  // Match network indicator padding
             decoration: BoxDecoration(
-              color: _focused ? Colors.black.withOpacity(0.3) : Colors.transparent,
+              // Translúcido siempre: legible sobre fotos claras sin velo global.
+              color: Colors.black.withOpacity(_focused ? 0.45 : 0.25),
               borderRadius: BorderRadius.circular(8),
               // Always reserve the border width: a BoxDecoration border adds to the
               // Container's padding, so toggling it between null and 2px would resize

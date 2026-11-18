@@ -43,9 +43,11 @@ import 'widgets/startup_splash.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configure LRU Image Cache bounds to preserve RAM on Android TV devices
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 50 * 1024 * 1024; // 50MB max RAM
-  PaintingBinding.instance.imageCache.maximumSize = 100; // max 100 images
+  // Caché de imágenes acotada para TV box de 1 GB: 5 imágenes y 25 MB.
+  // Las imágenes visibles siguen vivas aunque salgan de la caché; las que se
+  // vuelven a mostrar (banners, fondos) se decodifican de nuevo.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 25 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSize = 5;
 
   // Global Error Boundary & Crash Protection
   FlutterError.onError = (FlutterErrorDetails details) {

@@ -138,6 +138,9 @@ class FLauncherChannel {
   Future<void> requestUsageStatsPermission() async =>
       await _methodChannel.invokeMethod("requestUsageStatsPermission");
 
+  Future<void> openNetworkSettings() async =>
+      await _methodChannel.invokeMethod("openNetworkSettings");
+
   Future<void> openWifiSettings() async =>
       await _methodChannel.invokeMethod("openWifiSettings");
 

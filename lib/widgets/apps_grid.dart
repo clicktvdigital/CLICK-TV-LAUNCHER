@@ -95,21 +95,28 @@ class AppsGrid extends StatelessWidget
                 padding: const EdgeInsets.only(left: 16, bottom: 8),
                 child: Row(
                   children: [
-                    Text(localizedCategoryTitle(AppLocalizations.of(context)!, category.name),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge!
-                          .copyWith(shadows: [const Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 4)])
-                    ),
-                    if (showCategoryAppCount) ...[
-                      const SizedBox(width: 8),
-                      Text('•  ${applications.length}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium!
-                            .copyWith(color: Colors.white54)
+                    CategoryTitleChip(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(localizedCategoryTitle(AppLocalizations.of(context)!, category.name),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge!
+                                .copyWith(shadows: [const Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 4)])
+                          ),
+                          if (showCategoryAppCount) ...[
+                            const SizedBox(width: 8),
+                            Text('•  ${applications.length}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium!
+                                  .copyWith(color: Colors.white70)
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
               );
