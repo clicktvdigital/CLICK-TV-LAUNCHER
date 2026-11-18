@@ -174,6 +174,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     verify(appsService.launchApp(app));
+    // Deja vencer el reinicio visual de la tarjeta (500 ms tras lanzar).
+    await tester.pump(const Duration(milliseconds: 500));
   });
 
   testWidgets("Long pressing on app opens ApplicationInfoPanel", (tester) async {

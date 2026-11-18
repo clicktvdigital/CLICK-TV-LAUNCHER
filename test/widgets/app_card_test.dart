@@ -168,7 +168,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pump(const Duration(milliseconds: 200));
+    // Margen de liberación (150 ms) + animación de pulsación (150 ms).
+    await tester.pump(const Duration(milliseconds: 400));
 
     verify(mockAppsService.launchApp(mockApp)).called(1);
     await tester.pump(const Duration(milliseconds: 600));
@@ -179,7 +180,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.numpadEnter);
-    await tester.pump(const Duration(milliseconds: 200));
+    // Margen de liberación (150 ms) + animación de pulsación (150 ms).
+    await tester.pump(const Duration(milliseconds: 400));
 
     verify(mockAppsService.launchApp(mockApp)).called(1);
     await tester.pump(const Duration(milliseconds: 600));
@@ -190,7 +192,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await tester.pump(const Duration(milliseconds: 200));
+    // Margen de liberación (150 ms) + animación de pulsación (150 ms).
+    await tester.pump(const Duration(milliseconds: 400));
 
     verify(mockAppsService.launchApp(mockApp)).called(1);
     await tester.pump(const Duration(milliseconds: 600));
@@ -201,7 +204,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonA);
-    await tester.pump(const Duration(milliseconds: 200));
+    // Margen de liberación (150 ms) + animación de pulsación (150 ms).
+    await tester.pump(const Duration(milliseconds: 400));
 
     verify(mockAppsService.launchApp(mockApp)).called(1);
     await tester.pump(const Duration(milliseconds: 600));
@@ -244,7 +248,8 @@ void main() {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
     await tester.pump(const Duration(milliseconds: 400));
     await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
-    await tester.pump(const Duration(milliseconds: 200));
+    // Margen de liberación (150 ms) + animación de pulsación (150 ms).
+    await tester.pump(const Duration(milliseconds: 400));
 
     verify(mockAppsService.launchApp(mockApp)).called(1);
     expect(find.byType(ApplicationInfoPanel), findsNothing);

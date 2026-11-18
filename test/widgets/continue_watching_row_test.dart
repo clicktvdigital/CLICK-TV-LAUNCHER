@@ -285,7 +285,8 @@ void main() {
       await tester.pump();
 
       await tester.sendKeyEvent(LogicalKeyboardKey.select);
-      await tester.pump(const Duration(milliseconds: 200));
+      // Margen de liberación (150 ms) + animación de pulsación (150 ms).
+      await tester.pump(const Duration(milliseconds: 400));
 
       verify(watchNextService.launch(program)).called(1);
       await tester.pump(const Duration(milliseconds: 600));
