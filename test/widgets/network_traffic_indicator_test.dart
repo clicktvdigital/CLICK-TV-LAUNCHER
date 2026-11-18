@@ -136,7 +136,7 @@ void main() {
     await tester.pumpWidget(host());
     await tester.pump();
 
-    final button = find.byType(TextButton);
+    final button = find.byWidgetPredicate((w) => w is TextButton);
     expect(button, findsOneWidget);
     final buttonCenter = tester.getCenter(button).dy;
     final indicatorCenter = tester.getCenter(find.byType(NetworkTrafficIndicator)).dy;
