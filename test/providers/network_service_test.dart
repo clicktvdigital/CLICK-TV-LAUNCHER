@@ -17,6 +17,7 @@ void main() {
         .thenAnswer((_) async => <String, dynamic>{});
     when(mockChannel.checkUsageStatsPermission())
         .thenAnswer((_) async => false);
+    when(mockChannel.isUsageStatsSupported()).thenAnswer((_) async => true);
     when(mockChannel.addNetworkChangedListener(any)).thenAnswer((invocation) {
       networkListener = invocation.positionalArguments[0] as void Function(Map<String, dynamic>);
     });

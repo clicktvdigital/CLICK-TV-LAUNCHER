@@ -20,6 +20,9 @@ class MockFlauncherChannel extends Mock implements FLauncherChannel {
   Future<bool> checkUsageStatsPermission() async {
     return false;
   }
+
+  @override
+  Future<bool> isUsageStatsSupported() async => true;
 }
 
 void main() {
