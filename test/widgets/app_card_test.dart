@@ -4,6 +4,7 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
+import 'package:flauncher/widgets/focus_keyboard_listener.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -206,13 +207,16 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
   });
 
-  testWidgets('releasing OK after the 5 s long press opens the menu without launching the app', (WidgetTester tester) async {
+  testWidgets('releasing OK after the long press opens the menu without launching the app', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
     await tester.pump();
 
-    // OK sostenido 5 s con las repeticiones que envía el control.
+    // OK sostenido el tiempo de pulsación larga (3 s), con las repeticiones
+    // que envía el control.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
-    for (var i = 0; i < 10; i++) {
+    final halfSeconds =
+        FocusKeyboardListener.defaultLongPressDelay.inMilliseconds ~/ 500;
+    for (var i = 0; i < halfSeconds; i++) {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
     }

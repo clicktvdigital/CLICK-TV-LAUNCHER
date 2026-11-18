@@ -103,7 +103,7 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
               child: SingleChildScrollView(
                 child: Column(
                  children: [
-                   // Acciones principales del menú de OK largo (5 s), en el
+                   // Acciones principales del menú de OK largo (3 s), en el
                    // orden en que se usan con el D-pad. "Abrir" recibe el foco
                    // al abrir el panel para no tener que buscarlo con flechas.
                    _PanelAction(
@@ -370,7 +370,7 @@ class _PanelAction extends StatelessWidget {
       );
 }
 
-/// El panel se abre mientras OK sigue presionado (5 s). Sin este filtro, las
+/// El panel se abre mientras OK sigue presionado (3 s). Sin este filtro, las
 /// repeticiones de esa misma pulsación activarían el botón con foco ("Abrir")
 /// en cuanto aparece el panel. Se ignoran las teclas de validación hasta el
 /// primer KeyUp, sea cual sea su código lógico: algunos controles de TV box

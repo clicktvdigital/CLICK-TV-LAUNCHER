@@ -51,8 +51,8 @@ void main() {
 
   const hold = FocusKeyboardListener.defaultLongPressDelay;
 
-  testWidgets('long press delay for OK is 5 seconds', (tester) async {
-    expect(hold, const Duration(seconds: 5));
+  testWidgets('long press delay for OK is 3 seconds', (tester) async {
+    expect(hold, const Duration(seconds: 3));
   });
 
   testWidgets('short OK press launches and releases the timer', (tester) async {
@@ -73,19 +73,21 @@ void main() {
     expect(longPressed, isEmpty);
   });
 
-  testWidgets('holding OK opens the menu only after 5 s, once', (tester) async {
+  testWidgets('holding OK opens the menu only after the long-press delay, once', (tester) async {
     await tester.pumpWidget(host());
     await tester.pump();
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
     // Repeticiones del control durante la espera: no adelantan el menú.
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 450));
+    // Repeticiones cada 100 ms hasta 200 ms antes de cumplirse la espera.
+    final repeats = (hold.inMilliseconds - 200) ~/ 100;
+    for (var i = 0; i < repeats; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
     }
     expect(longPressed, isEmpty);
 
-    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(longPressed, [LogicalKeyboardKey.select]);
     expect(pendingLongPress(tester), isFalse);
 
