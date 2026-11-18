@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flauncher/models/app.dart';
 import 'package:flauncher/models/category.dart';
 import 'package:flauncher/providers/apps_service.dart';
