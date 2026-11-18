@@ -3,6 +3,7 @@ import 'package:flauncher/models/category.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/widgets/app_card.dart';
+import 'package:flauncher/widgets/application_info_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -203,5 +204,47 @@ void main() {
 
     verify(mockAppsService.launchApp(mockApp)).called(1);
     await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('releasing OK after the 5 s long press opens the menu without launching the app', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pump();
+
+    // OK sostenido 5 s con las repeticiones que envía el control.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(ApplicationInfoPanel), findsOneWidget);
+
+    // Se suelta OK: el menú sigue abierto y la app no se lanza.
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 500));
+    verifyNever(mockAppsService.launchApp(any));
+    expect(find.byType(ApplicationInfoPanel), findsOneWidget);
+
+    // La primera pulsación nueva de OK en el menú sí activa "Abrir".
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 500));
+    verify(mockAppsService.launchApp(mockApp)).called(1);
+  });
+
+  testWidgets('a short OK press launches without opening the menu', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 200));
+
+    verify(mockAppsService.launchApp(mockApp)).called(1);
+    expect(find.byType(ApplicationInfoPanel), findsNothing);
+    await tester.pump(const Duration(seconds: 6));
+    expect(find.byType(ApplicationInfoPanel), findsNothing);
   });
 }

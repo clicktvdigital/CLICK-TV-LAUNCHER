@@ -64,7 +64,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   // Un solo temporizador por tarjeta, sin trabajo periódico: el hilo principal
   // queda libre durante toda la espera (importante en TV box de 1 GB).
   Timer? _longPressTimer;
-  bool _longPressFired = false;
+  bool _longPressTriggered = false;
   int? _keyDownAt;
   final Set<LogicalKeyboardKey> _handledKeys = {};
 
@@ -97,7 +97,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   // el menú al instante o quedar ignorada.
   void _resetPressState() {
     _cancelLongPressTimer();
-    _longPressFired = false;
+    _longPressTriggered = false;
     _keyDownAt = null;
     _pressedKeys.clear();
     _handledKeys.clear();
@@ -142,7 +142,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       // KeyUp; si no, una repetición podría lanzar la app por accidente.
       // Antes de eso solo comparan la hora (sin trabajo extra) como respaldo
       // por si el temporizador se retrasa en un equipo lento.
-      if (_longPressFired && AppCardKeys.longPressableKeys.contains(key)) {
+      if (_longPressTriggered && AppCardKeys.longPressableKeys.contains(key)) {
         return KeyEventResult.handled;
       }
 
@@ -169,7 +169,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
     // Menu or info key opens options immediately without waiting
     if (AppCardKeys.menuKeys.contains(key)) {
       _cancelLongPressTimer();
-      _longPressFired = false;
+      _longPressTriggered = false;
       _keyDownAt = null;
       return widget.onLongPress?.call(key) ?? KeyEventResult.ignored;
     }
@@ -184,14 +184,14 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
 
     if (_keyDownAt == null) {
       _keyDownAt = DateTime.now().millisecondsSinceEpoch;
-      _longPressFired = false;
+      _longPressTriggered = false;
       _cancelLongPressTimer();
       _longPressTimer = Timer(widget.longPressDelay, () => _fireLongPress(key));
       return KeyEventResult.handled;
-    } else if (_longPress() && !_longPressFired) {
+    } else if (_longPress() && !_longPressTriggered) {
       // Respaldo si el temporizador se retrasó (hilo ocupado en equipos lentos).
       _cancelLongPressTimer();
-      _longPressFired = true;
+      _longPressTriggered = true;
       _keyDownAt = null;
       return widget.onLongPress?.call(key) ?? KeyEventResult.ignored;
     }
@@ -201,7 +201,9 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   void _fireLongPress(LogicalKeyboardKey key) {
     _longPressTimer = null;
     if (!mounted || _keyDownAt == null) return;
-    _longPressFired = true;
+    // Se marca antes de mostrar el diálogo: el KeyUp de esta misma pulsación
+    // solo cierra el ciclo y nunca abre la app (ver _keyUpEvent).
+    _longPressTriggered = true;
     _keyDownAt = null;
     widget.onLongPress?.call(key);
   }
@@ -211,8 +213,9 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
     if (_handledKeys.remove(key)) {
       return KeyEventResult.handled;
     }
-    if (_longPressFired) {
-      _longPressFired = false;
+    if (_longPressTriggered) {
+      // KeyUp de la pulsación larga: se reinicia la bandera y no se lanza la app.
+      _longPressTriggered = false;
       return KeyEventResult.handled;
     }
     if (_keyDownAt != null) {

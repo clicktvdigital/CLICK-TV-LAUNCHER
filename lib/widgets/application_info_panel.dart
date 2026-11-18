@@ -362,9 +362,12 @@ class _PanelAction extends StatelessWidget {
 
 /// El panel se abre mientras OK sigue presionado (5 s). Sin este filtro, las
 /// repeticiones de esa misma pulsación activarían el botón con foco ("Abrir")
-/// en cuanto aparece el panel. Se ignoran las teclas de validación hasta que
-/// se suelta OK; una flecha también desactiva el filtro por si el control
-/// perdió el KeyUp. Si el panel se abrió con Menú/Info o táctil, no filtra.
+/// en cuanto aparece el panel. Se ignoran las teclas de validación hasta el
+/// primer KeyUp, sea cual sea su código lógico: algunos controles de TV box
+/// sueltan OK como Control Right, y esperar un KeyUp de OK se comía la primera
+/// pulsación dentro del menú. Una flecha también desactiva el filtro por si el
+/// control perdió el KeyUp. Si el panel se abrió con Menú/Info o táctil, no
+/// filtra.
 @visibleForTesting
 class HeldOkGuard extends StatefulWidget {
   const HeldOkGuard({super.key, required this.child});
@@ -386,15 +389,16 @@ class _HeldOkGuardState extends State<HeldOkGuard> {
         onKeyEvent: (_, event) {
           if (!_waitingForRelease) return KeyEventResult.ignored;
           final key = event.logicalKey;
+          final isValidation = AppCardKeys.validationKeys.contains(key);
+          if (event is KeyUpEvent) {
+            _waitingForRelease = false;
+            return isValidation ? KeyEventResult.handled : KeyEventResult.ignored;
+          }
           if (AppCardKeys.isArrowKey(key)) {
             _waitingForRelease = false;
             return KeyEventResult.ignored;
           }
-          if (!AppCardKeys.validationKeys.contains(key)) {
-            return KeyEventResult.ignored;
-          }
-          if (event is KeyUpEvent) _waitingForRelease = false;
-          return KeyEventResult.handled;
+          return isValidation ? KeyEventResult.handled : KeyEventResult.ignored;
         },
         child: widget.child,
       );
