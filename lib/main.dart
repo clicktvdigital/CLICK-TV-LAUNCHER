@@ -88,7 +88,38 @@ void main() {
     );
   };
 
+  _deferFirstFrameUntilSplashDecoded();
   runApp(const _BootstrapApp());
+}
+
+/// Retiene el primer frame de Flutter hasta que la imagen del splash está
+/// decodificada. Mientras tanto Android sigue mostrando el splash nativo
+/// (mismo archivo), así no aparece un frame negro ni un segundo salto.
+/// Límite de 1,5 s para no bloquear nunca el arranque.
+void _deferFirstFrameUntilSplashDecoded() {
+  final binding = WidgetsBinding.instance;
+  binding.deferFirstFrame();
+  var released = false;
+  void release() {
+    if (released) return;
+    released = true;
+    binding.allowFirstFrame();
+  }
+
+  final stream = StartupSplash.image.resolve(ImageConfiguration.empty);
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (_, __) {
+      stream.removeListener(listener);
+      release();
+    },
+    onError: (_, __) {
+      stream.removeListener(listener);
+      release();
+    },
+  );
+  stream.addListener(listener);
+  Timer(const Duration(milliseconds: 1500), release);
 }
 
 class _BootstrapData {
@@ -154,9 +185,22 @@ class _BootstrapAppState extends State<_BootstrapApp> {
         }
 
         final bootstrap = snapshot.data!;
+        _releaseSplashImage();
         return _buildLauncher(bootstrap);
       },
     );
+  }
+
+  bool _splashReleased = false;
+
+  // Libera la imagen del splash (~8 MB decodificada) en cuanto se muestra el
+  // launcher; en equipos de 1 GB no conviene mantenerla en la caché.
+  void _releaseSplashImage() {
+    if (_splashReleased) return;
+    _splashReleased = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StartupSplash.image.evict();
+    });
   }
 
   Widget _buildLauncher(_BootstrapData bootstrap) {

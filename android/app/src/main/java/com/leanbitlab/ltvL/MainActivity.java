@@ -25,6 +25,8 @@ import android.content.Intent;
 import android.content.pm.*;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -74,6 +76,16 @@ import android.service.notification.StatusBarNotification;
 import android.content.ComponentName;
 
 public class MainActivity extends FlutterActivity {
+    // El tema normal usa el mismo splash que el de arranque para que no haya
+    // un fondo negro entre el splash nativo y el primer frame de Flutter.
+    // Cuando Flutter ya se ve, el fondo de la ventana vuelve a negro para
+    // liberar el bitmap del splash (equipos de 1 GB).
+    @Override
+    public void onFlutterUiDisplayed() {
+        super.onFlutterUiDisplayed();
+        getWindow().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+    }
+
     private final String METHOD_CHANNEL = "me.efesser.flauncher/method";
     private final String APPS_EVENT_CHANNEL = "me.efesser.flauncher/event_apps";
     private final String NETWORK_EVENT_CHANNEL = "me.efesser.flauncher/event_network";
