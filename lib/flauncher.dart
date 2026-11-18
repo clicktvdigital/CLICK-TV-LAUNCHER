@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 /*
  * FLauncher
  * Copyright (C) 2021  Étienne Fesser
@@ -27,6 +26,7 @@ import 'package:flauncher/widgets/apps_grid.dart';
 import 'package:flauncher/widgets/category_row.dart';
 import 'package:flauncher/widgets/launcher_alternative_view.dart';
 import 'package:flauncher/widgets/focus_aware_app_bar.dart';
+import 'package:flauncher/widgets/crossfade_wallpaper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flauncher/widgets/continue_watching_row.dart';
@@ -198,7 +198,8 @@ class _FLauncherState extends State<FLauncher> {
     if (wallpaperService.wallpaper != null) {
       final physicalSize = MediaQuery.sizeOf(context);
       final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-      background = Image(
+      background = CrossfadeWallpaper(
+        key: const Key("background_image"),
         // Decodifica a la resolución física de la pantalla: 4K en TV 4K y
         // 1080p en TV Box, sin reservar memoria de más en equipos antiguos.
         image: ResizeImage.resizeIfNeeded(
@@ -206,11 +207,9 @@ class _FLauncherState extends State<FLauncher> {
           null,
           wallpaperService.wallpaper!,
         ),
-        key: Key("background_${wallpaperService.version}"),
-        fit: BoxFit.cover,
-        filterQuality: ui.FilterQuality.high,
+        version: wallpaperService.version,
         height: physicalSize.height,
-        width: physicalSize.width
+        width: physicalSize.width,
       );
     }
     else {

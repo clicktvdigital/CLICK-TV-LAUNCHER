@@ -53,10 +53,14 @@ String ecuadorMoodFor(DateTime now) {
   return 'noche';
 }
 
-/// Imagen del momento actual. Cambia cada hora dentro del mismo momento.
+/// Cada cuánto cambia la foto de fondo de Ecuador.
+const Duration ecuadorRotationInterval = Duration(seconds: 10);
+
+/// Imagen del momento actual. Cambia cada [ecuadorRotationInterval] dentro
+/// del mismo momento del día.
 String ecuadorAssetFor(DateTime now) {
   final list = ecuadorWallpaperSets[ecuadorMoodFor(now)]!;
-  final index = (now.millisecondsSinceEpoch ~/ Duration.millisecondsPerHour) % list.length;
+  final index = (now.millisecondsSinceEpoch ~/ ecuadorRotationInterval.inMilliseconds) % list.length;
   return list[index];
 }
 
@@ -141,7 +145,9 @@ class WallpaperService extends ChangeNotifier {
   void _updateTimerState() {
     final enabled = _isRotatingEnabled;
     if (enabled && (_timer == null || !_timer!.isActive)) {
-      _timer = Timer.periodic(const Duration(minutes: 1), (_) => _onRotationTick());
+      // El tick no toca el disco salvo cuando cambia la imagen (ver
+      // _rotationKey), así que cada 10 s es barato.
+      _timer = Timer.periodic(ecuadorRotationInterval, (_) => _onRotationTick());
     } else if (!enabled && _timer != null) {
       _timer?.cancel();
       _timer = null;
@@ -149,8 +155,8 @@ class WallpaperService extends ChangeNotifier {
   }
 
   // Clave del fondo que toca según la hora. Solo cambia al pasar de día a
-  // noche o al cambiar la foto de Ecuador (cada hora); el resto de minutos el
-  // tick no toca el disco. Así el temporizador no despierta E/S cada minuto
+  // noche o al cambiar la foto de Ecuador (cada 10 s); el resto de ticks no
+  // tocan el disco. Así el temporizador no despierta E/S cada minuto
   // mientras otra app pesada (SmartTube) está en primer plano.
   String? _lastRotationKey;
 

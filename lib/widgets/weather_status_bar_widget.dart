@@ -130,8 +130,10 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                   focusColor: Colors.transparent,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
+                    // 28 % del ancho: deja espacio para que el indicador de red
+                    // se vea a tamaño completo; lo que no quepa lleva "…".
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.sizeOf(context).width * 0.40,
+                      maxWidth: MediaQuery.sizeOf(context).width * 0.28,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
