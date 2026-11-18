@@ -17,6 +17,7 @@ void main() {
     mockSettingsService = MockSettingsService();
     // Default fallback mock
     when(mockNetworkService.dailyDataUsage).thenReturn(0);
+    when(mockNetworkService.usageStatsSupported).thenReturn(true);
   });
 
   Widget createWidgetUnderTest() {
@@ -48,7 +49,7 @@ void main() {
 
   testWidgets('calls requestPermission when button is tapped', (WidgetTester tester) async {
     when(mockNetworkService.hasUsageStatsPermission).thenReturn(false);
-    when(mockNetworkService.requestPermission()).thenAnswer((_) async {});
+    when(mockNetworkService.requestPermission()).thenAnswer((_) async => true);
 
     await tester.pumpWidget(createWidgetUnderTest());
 

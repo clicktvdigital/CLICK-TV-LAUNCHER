@@ -95,6 +95,14 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
         });
 
     _checkPermissionAndStartPolling();
+    _channel.isUsageStatsSupported().then((supported) {
+      if (supported != _usageStatsSupported) {
+        _usageStatsSupported = supported;
+        notifyListeners();
+      }
+    }).catchError((Object e) {
+      log("NetworkService: isUsageStatsSupported failed: $e");
+    });
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -119,9 +127,14 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
     notifyListeners();
   }
 
-  Future<void> requestPermission() async {
-    await _channel.requestUsageStatsPermission();
-  }
+  /// Abre la pantalla del sistema para conceder el acceso a datos de uso.
+  /// Devuelve false si el televisor no tiene esa pantalla.
+  Future<bool> requestPermission() => _channel.requestUsageStatsPermission();
+
+  bool _usageStatsSupported = false;
+
+  /// Android 6+: el sistema puede dar el consumo exacto con permiso de uso.
+  bool get usageStatsSupported => _usageStatsSupported;
 
   // Call this when app resumes
   Future<void> refreshPermissionAndUsage() async {

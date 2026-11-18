@@ -153,10 +153,8 @@ public class MainActivity extends FlutterActivity {
                     }
                 }
                 case "checkUsageStatsPermission" -> result.success(checkUsageStatsPermission());
-                case "requestUsageStatsPermission" -> {
-                    requestUsageStatsPermission();
-                    result.success(null);
-                }
+                case "requestUsageStatsPermission" -> result.success(requestUsageStatsPermission());
+                case "isUsageStatsSupported" -> result.success(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M);
                 case "checkWriteSettingsPermission" -> result.success(checkWriteSettingsPermission());
                 case "requestWriteSettingsPermission" -> result.success(requestWriteSettingsPermission());
                 case "setSystemBrightness" -> {
@@ -895,10 +893,20 @@ public class MainActivity extends FlutterActivity {
         return new NetworkUsageApi23(this).checkUsageStatsPermission();
     }
 
-    private void requestUsageStatsPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
-        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-        tryStartActivity(intent);
+    // Abre la pantalla del sistema "Acceso a datos de uso" con un Intent
+    // directo (sin diálogos). Android 10+ admite la página de esta app; si el
+    // televisor no tiene esa pantalla devuelve false para avisar al usuario.
+    private boolean requestUsageStatsPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Intent forApp = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
+                    Uri.fromParts("package", getPackageName(), null))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (tryStartActivity(forApp)) return true;
+        }
+        Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return tryStartActivity(intent);
     }
 
     private boolean checkWriteSettingsPermission() {

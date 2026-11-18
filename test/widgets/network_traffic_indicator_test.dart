@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../mocks.mocks.dart';
 
@@ -15,12 +16,14 @@ void main() {
   late DateTime fakeNow;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     networkService = MockNetworkService();
     settingsService = MockSettingsService();
     fakeNow = DateTime(2026, 11, 18, 12);
     LiveTrafficRates.clock = () => fakeNow;
     when(networkService.networkType).thenReturn(NetworkType.Wired);
     when(networkService.hasUsageStatsPermission).thenReturn(true);
+    when(networkService.usageStatsSupported).thenReturn(true);
     when(networkService.dailyDataUsage).thenReturn(0);
     when(networkService.getDataUsageForPeriod(any)).thenAnswer((_) async => 5 * 1024 * 1024);
     when(settingsService.dataUsagePeriod).thenReturn('daily');
@@ -142,5 +145,40 @@ void main() {
     final buttonCenter = tester.getCenter(button).dy;
     final indicatorCenter = tester.getCenter(find.byType(NetworkTrafficIndicator)).dy;
     expect((buttonCenter - indicatorCenter).abs(), lessThan(4));
+  });
+
+  testWidgets('shows today usage counted in real time from the traffic counters', (tester) async {
+    when(networkService.hasUsageStatsPermission).thenReturn(false);
+    const mb = 1024 * 1024;
+    final samples = [
+      [100 * mb, 10 * mb],
+      [100 * mb, 10 * mb],
+      [105 * mb, 10 * mb], // +5 MB en 2 s
+    ];
+    var call = 0;
+    when(networkService.getTrafficTotals()).thenAnswer((_) async => samples[call < 2 ? call++ : 2]);
+
+    await tester.pumpWidget(host());
+    await tester.pump();
+    for (var i = 0; i < 2; i++) {
+      fakeNow = fakeNow.add(LiveTrafficRates.interval);
+      await tester.pump(LiveTrafficRates.interval);
+      await tester.pump();
+    }
+
+    expect(find.text('Today: 5 MB'), findsOneWidget);
+    expect(find.text('↓ 2.5 MB/s'), findsOneWidget);
+  });
+
+  testWidgets('no usage-access button on Android 5.x (not supported)', (tester) async {
+    when(networkService.hasUsageStatsPermission).thenReturn(false);
+    when(networkService.usageStatsSupported).thenReturn(false);
+    when(networkService.getTrafficTotals()).thenAnswer((_) async => [0, 0]);
+
+    await tester.pumpWidget(host());
+    await tester.pump();
+
+    expect(find.byWidgetPredicate((w) => w is TextButton), findsNothing);
+    expect(find.byKey(const Key('today-usage')), findsOneWidget);
   });
 }

@@ -135,8 +135,25 @@ class FLauncherChannel {
   Future<bool> checkUsageStatsPermission() async =>
       await _methodChannel.invokeMethod("checkUsageStatsPermission");
 
-  Future<void> requestUsageStatsPermission() async =>
-      await _methodChannel.invokeMethod("requestUsageStatsPermission");
+  /// true si se abrió la pantalla del sistema de acceso a datos de uso.
+  Future<bool> requestUsageStatsPermission() async {
+    try {
+      return await _methodChannel.invokeMethod<bool>("requestUsageStatsPermission") ?? false;
+    } on PlatformException catch (_) {
+      return false;
+    }
+  }
+
+  /// El acceso a datos de uso (NetworkStatsManager) existe desde Android 6.
+  Future<bool> isUsageStatsSupported() async {
+    try {
+      return await _methodChannel.invokeMethod<bool>("isUsageStatsSupported") ?? false;
+    } on PlatformException catch (_) {
+      return false;
+    } on MissingPluginException catch (_) {
+      return false;
+    }
+  }
 
   Future<void> openNetworkSettings() async =>
       await _methodChannel.invokeMethod("openNetworkSettings");

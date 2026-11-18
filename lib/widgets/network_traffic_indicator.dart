@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:flauncher/providers/daily_traffic_counter.dart';
 import 'package:flauncher/providers/network_service.dart';
+import 'package:flauncher/providers/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'daily_data_usage_widget.dart';
 
@@ -62,8 +65,6 @@ class NetworkTrafficIndicator extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const LiveTrafficRates(),
-              const SizedBox(width: 12),
-              const DailyDataUsageWidget(compact: true),
             ],
           ),
         ),
@@ -72,9 +73,10 @@ class NetworkTrafficIndicator extends StatelessWidget {
   }
 }
 
-/// Velocidad de bajada y subida, una por línea. Consulta los contadores de
-/// tráfico cada 2 s solo mientras el launcher está en primer plano; con otra
-/// app abierta (SmartTube, etc.) no hace ningún trabajo.
+/// Velocidad de bajada y subida (una por línea) y consumo del día, todo con
+/// la misma lectura de los contadores de tráfico cada 2 s, solo mientras el
+/// launcher está en primer plano; con otra app abierta no hace trabajo (el
+/// tráfico de ese tiempo se suma al volver, ver DailyTrafficCounter).
 class LiveTrafficRates extends StatefulWidget {
   const LiveTrafficRates({super.key});
 
@@ -95,11 +97,21 @@ class _LiveTrafficRatesState extends State<LiveTrafficRates> with WidgetsBinding
   int? _downBytesPerSecond;
   int? _upBytesPerSecond;
   bool _unsupported = false;
+  DailyTrafficCounter? _counter;
+  int? _todayBytes;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    SharedPreferences.getInstance().then((prefs) {
+      if (!mounted) return;
+      _counter = DailyTrafficCounter(prefs, clock: LiveTrafficRates.clock);
+      _seedFromSystem();
+      setState(() => _todayBytes = _counter!.todayBytes);
+    }).catchError((Object _) {
+      // Sin almacenamiento: se muestra solo la velocidad.
+    });
     _start();
   }
 
@@ -107,16 +119,30 @@ class _LiveTrafficRatesState extends State<LiveTrafficRates> with WidgetsBinding
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _stop();
+    _counter?.save();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _seedFromSystem();
       _start();
     } else {
       _stop();
+      _counter?.save();
     }
+  }
+
+  // Con permiso de uso (Android 6+), el consumo exacto del sistema.
+  Future<void> _seedFromSystem() async {
+    final network = context.read<NetworkService>();
+    if (!network.hasUsageStatsPermission) return;
+    final systemToday = await network.getDataUsageForPeriod('daily');
+    if (!mounted || systemToday <= 0) return;
+    _counter?.seedFromSystem(systemToday);
+    final today = _counter?.todayBytes;
+    if (today != null && today != _todayBytes) setState(() => _todayBytes = today);
   }
 
   void _start() {
@@ -142,6 +168,12 @@ class _LiveTrafficRatesState extends State<LiveTrafficRates> with WidgetsBinding
       return;
     }
     final now = LiveTrafficRates.clock();
+    final counter = _counter;
+    if (counter != null) {
+      counter.addSample(totals[0] + totals[1]);
+      final today = counter.todayBytes;
+      if (today != _todayBytes) setState(() => _todayBytes = today);
+    }
     final last = _last;
     final lastAt = _lastAt;
     _last = totals;
@@ -162,18 +194,86 @@ class _LiveTrafficRatesState extends State<LiveTrafficRates> with WidgetsBinding
 
   @override
   Widget build(BuildContext context) {
-    if (_unsupported) return const SizedBox.shrink();
-    return ConstrainedBox(
-      // Ancho de "↓ 999 KB/s": evita que el bloque cambie de tamaño cada 2 s.
-      constraints: const BoxConstraints(minWidth: 100),
-      child: Column(
+    final period = context.select<SettingsService, String>((s) => s.dataUsagePeriod);
+    final network = context.watch<NetworkService>();
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    final showPermission = network.usageStatsSupported && !network.hasUsageStatsPermission;
+
+    // Semana/mes: solo el sistema lo sabe (permiso de uso). Sin contadores de
+    // tráfico tampoco hay contador propio.
+    final Widget usage = (period == 'daily' || period.isEmpty) && !_unsupported
+        ? Text(
+            '${isEs ? 'Hoy' : 'Today'}: ${_todayBytes == null ? '—' : formatDailyBytes(_todayBytes!)}',
+            key: const Key('today-usage'),
+            style: NetworkTrafficIndicator.lineStyle.copyWith(fontWeight: FontWeight.w600),
+          )
+        : const DailyDataUsageWidget(compact: true);
+
+    return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('↓ ${formatRate(_downBytesPerSecond)}', style: NetworkTrafficIndicator.lineStyle),
-        Text('↑ ${formatRate(_upBytesPerSecond)}', style: NetworkTrafficIndicator.lineStyle),
+        if (!_unsupported)
+          ConstrainedBox(
+            // Ancho de "↓ 999 KB/s": evita que el bloque cambie de tamaño cada 2 s.
+            constraints: const BoxConstraints(minWidth: 100),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('↓ ${formatRate(_downBytesPerSecond)}', style: NetworkTrafficIndicator.lineStyle),
+                Text('↑ ${formatRate(_upBytesPerSecond)}', style: NetworkTrafficIndicator.lineStyle),
+              ],
+            ),
+          ),
+        const SizedBox(width: 12),
+        usage,
+        // En la misma fila (centrado): la flecha abajo desde Ajustes no se
+        // desvía hacia el botón.
+        if (showPermission && usage is Text) ...[
+          const SizedBox(width: 10),
+          const UsageAccessButton(),
+        ],
       ],
+    );
+  }
+}
+
+/// Abre "Acceso a datos de uso" del sistema con un Intent directo. Si el
+/// televisor no tiene esa pantalla, explica cómo concederlo por ADB.
+class UsageAccessButton extends StatelessWidget {
+  const UsageAccessButton({super.key});
+
+  static Future<void> request(BuildContext context) async {
+    final network = context.read<NetworkService>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    final opened = await network.requestPermission();
+    if (!opened) {
+      messenger?.showSnackBar(SnackBar(
+        duration: const Duration(seconds: 8),
+        content: Text(isEs
+            ? 'Este televisor no tiene la pantalla "Acceso a datos de uso". '
+                'Desde un PC: adb shell appops set com.clicktv.launcher GET_USAGE_STATS allow'
+            : 'This TV has no "Usage access" screen. '
+                'From a PC: adb shell appops set com.clicktv.launcher GET_USAGE_STATS allow'),
+      ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    return TextButton.icon(
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        minimumSize: const Size(0, 24),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        textStyle: const TextStyle(fontSize: 13, height: 1.0),
       ),
+      icon: const Icon(Icons.data_usage, size: 16),
+      label: Text(isEs ? 'Consumo exacto' : 'Exact usage'),
+      onPressed: () => request(context),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flauncher/providers/network_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
+import 'package:flauncher/widgets/network_traffic_indicator.dart' show UsageAccessButton;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +17,8 @@ class DailyDataUsageWidget extends StatelessWidget {
       builder: (context, networkService, settingsService, _) {
         final isEs = Localizations.localeOf(context).languageCode == 'es';
         if (!networkService.hasUsageStatsPermission) {
+          // Android 5.x no tiene acceso a datos de uso: no se ofrece el botón.
+          if (!networkService.usageStatsSupported) return const SizedBox.shrink();
           return TextButton.icon(
              style: compact
                  ? TextButton.styleFrom(
@@ -28,7 +31,7 @@ class DailyDataUsageWidget extends StatelessWidget {
                  : null,
              icon: Icon(Icons.data_usage, size: compact ? 14 : 20),
              label: Text(isEs ? "Permitir ver consumo" : "Grant Usage Permission"),
-             onPressed: () => networkService.requestPermission(),
+             onPressed: () => UsageAccessButton.request(context),
           );
         }
 
