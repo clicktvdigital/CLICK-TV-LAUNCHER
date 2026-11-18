@@ -57,4 +57,51 @@ void main() {
       await service.requestPermission();
     });
   });
+
+  group('BrightnessService scheduler', () {
+    testWidgets('only rewrites system brightness when the value changes', (tester) async {
+      // Todas las franjas con el mismo valor: el test no depende de la hora.
+      SharedPreferencesStorePlatform.instance = InMemorySharedPreferencesStore.withData({
+        'flutter.brightness_scheduler_enabled': true,
+        'flutter.brightness_morning': 60,
+        'flutter.brightness_day': 60,
+        'flutter.brightness_afternoon': 60,
+        'flutter.brightness_evening': 60,
+        'flutter.brightness_night': 60,
+      });
+      var writes = 0;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        (MethodCall methodCall) async {
+          if (methodCall.method == 'setSystemBrightness') {
+            writes++;
+            return true;
+          }
+          if (methodCall.method == 'checkWriteSettingsPermission') {
+            return true;
+          }
+          return null;
+        },
+      );
+
+      final sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.reload();
+      final service = BrightnessService(sharedPreferences);
+
+      await tester.pump(const Duration(minutes: 1));
+      expect(writes, 1);
+
+      // Con el launcher en segundo plano los ticks siguientes no escriben.
+      await tester.pump(const Duration(minutes: 5));
+      expect(writes, 1);
+
+      // Cambiar la franja actual sí aplica el nuevo valor.
+      await service.setBrightnessForSlot(service.getCurrentTimeSlot(), 30);
+      expect(writes, 2);
+      await tester.pump(const Duration(minutes: 2));
+      expect(writes, 2);
+
+      service.dispose();
+    });
+  });
 }

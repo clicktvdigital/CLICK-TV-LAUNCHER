@@ -613,7 +613,22 @@ public class MainActivity extends FlutterActivity {
             intent = packageManager.getLaunchIntentForPackage(packageName);
         }
 
-        return tryStartActivity(intent);
+        if (intent == null) {
+            return false;
+        }
+
+        // Mismas banderas que el launcher de AOSP: si la app (p. ej. SmartTube)
+        // sigue viva en segundo plano se trae su tarea al frente en vez de
+        // recrearla, lo que evita un arranque en frío en TV box de 1 GB.
+        // El intent ya viene resuelto por PackageManager, así que se omite la
+        // segunda consulta resolveActivity() en el hilo principal.
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        try {
+            startActivity(intent);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private boolean openUrl(String url) {

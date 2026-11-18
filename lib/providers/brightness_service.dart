@@ -77,6 +77,12 @@ class BrightnessService extends ChangeNotifier {
   final SharedPreferences _sharedPreferences;
   Timer? _timer;
 
+  // Último brillo que aplicó el programador. El temporizador corre también
+  // con el launcher en segundo plano (p. ej. mientras SmartTube reproduce);
+  // reescribir el brillo del sistema cada minuto sin cambios provocaba
+  // tirones en TV box lentos. Solo se escribe cuando cambia el valor.
+  int? _lastAppliedBrightness;
+
   bool _hasPermission = true;
   bool get hasPermission => _hasPermission;
 
@@ -197,6 +203,13 @@ class BrightnessService extends ChangeNotifier {
     await _applyBrightness(brightness);
   }
 
+  Future<void> _applyScheduledBrightnessIfChanged() async {
+    if (!isEnabled) return;
+    final brightness = getBrightnessForSlot(getCurrentTimeSlot());
+    if (brightness == _lastAppliedBrightness) return;
+    await _applyBrightness(brightness);
+  }
+
   Future<void> _applyBrightness(int brightnessPct) async {
     try {
       // 1. Try system-wide brightness first (needs WRITE_SETTINGS)
@@ -208,6 +221,8 @@ class BrightnessService extends ChangeNotifier {
         final brightnessValue = brightnessPct / 100.0;
         await ScreenBrightness().setScreenBrightness(brightnessValue);
       }
+      // Solo se recuerda si se aplicó; si falló, el próximo tick reintenta.
+      _lastAppliedBrightness = brightnessPct;
     } catch (e) {
       debugPrint('Error setting brightness ($brightnessPct%): $e');
     }
@@ -217,13 +232,14 @@ class BrightnessService extends ChangeNotifier {
     _stopScheduler();
     // Check every minute
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      applyCurrentSlotBrightness();
+      _applyScheduledBrightnessIfChanged();
     });
   }
 
   void _stopScheduler() {
     _timer?.cancel();
     _timer = null;
+    _lastAppliedBrightness = null;
   }
 
   Future<double> getCurrentBrightness() async {

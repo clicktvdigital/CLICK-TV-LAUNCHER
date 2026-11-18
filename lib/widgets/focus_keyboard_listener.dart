@@ -23,15 +23,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class FocusKeyboardListener extends StatefulWidget {
+  /// Tiempo que hay que mantener OK (D-pad center) para abrir el menú de
+  /// configuración de la tarjeta. Las teclas Menú/Info lo abren al instante.
+  static const Duration defaultLongPressDelay = Duration(seconds: 5);
+
   final WidgetBuilder builder;
   final KeyEventResult Function(LogicalKeyboardKey)? onPressed;
   final KeyEventResult Function(LogicalKeyboardKey)? onLongPress;
+  final Duration longPressDelay;
 
   FocusKeyboardListener({
     Key? key,
     required this.builder,
     this.onPressed,
     this.onLongPress,
+    this.longPressDelay = defaultLongPressDelay,
   }) : super(key: key);
 
   @override
@@ -47,16 +53,16 @@ class _PressedKey {
 }
 
 class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
-  // Tiempo que hay que mantener OK pulsado para abrir el menú lateral.
-  // Antes eran 500 ms; en TV box lentos (o con build debug) una pulsación
-  // normal podía superar ese tiempo y abría el menú en vez de lanzar la app.
-  static const Duration _longPressDelay = Duration(milliseconds: 800);
-
   // Un KeyDown repetido de una tecla de validación antes de este tiempo se
   // considera duplicado del control. Después se trata como pulsación nueva,
-  // para que una tecla cuyo KeyUp se perdió no quede bloqueada.
-  static const Duration _staleKeyDelay = Duration(milliseconds: 2000);
+  // para que una tecla cuyo KeyUp se perdió no quede bloqueada. Debe superar
+  // la espera de la pulsación larga: si fuese menor, un KeyDown duplicado a
+  // mitad de la espera se tomaría como pulsación nueva.
+  Duration get _staleKeyDelay =>
+      widget.longPressDelay + const Duration(seconds: 1);
 
+  // Un solo temporizador por tarjeta, sin trabajo periódico: el hilo principal
+  // queda libre durante toda la espera (importante en TV box de 1 GB).
   Timer? _longPressTimer;
   bool _longPressFired = false;
   int? _keyDownAt;
@@ -68,15 +74,41 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   // usa la tecla lógica registrada en el KeyDown.
   final Map<PhysicalKeyboardKey, _PressedKey> _pressedKeys = {};
 
+  @visibleForTesting
+  bool get hasPendingLongPress => _longPressTimer?.isActive ?? false;
+
   @override
   void dispose() {
-    _longPressTimer?.cancel();
+    _cancelLongPressTimer();
+    _pressedKeys.clear();
+    _handledKeys.clear();
     super.dispose();
+  }
+
+  void _cancelLongPressTimer() {
+    _longPressTimer?.cancel();
+    // Se suelta la referencia para liberar el cierre (tecla y callback).
+    _longPressTimer = null;
+  }
+
+  // Descarta cualquier pulsación en curso. Se usa al perder el foco (por
+  // ejemplo cuando se abre el menú y el KeyUp ya no llega a esta tarjeta) y
+  // cuando un KeyUp se perdió; si no, la siguiente pulsación corta podía abrir
+  // el menú al instante o quedar ignorada.
+  void _resetPressState() {
+    _cancelLongPressTimer();
+    _longPressFired = false;
+    _keyDownAt = null;
+    _pressedKeys.clear();
+    _handledKeys.clear();
   }
 
   @override
   Widget build(BuildContext context) => Focus(
         canRequestFocus: false,
+        onFocusChange: (hasFocus) {
+          if (!hasFocus) _resetPressState();
+        },
         onKeyEvent: (_, keyEvent) => _handleKey(context, keyEvent),
         child: Builder(builder: widget.builder),
       );
@@ -90,10 +122,13 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       // foco puede cambiar entre KeyDown y KeyUp, y el registro quedaría
       // obsoleto en este widget.
       if (tracked != null &&
-          AppCardKeys.longPressableKeys.contains(tracked.logicalKey) &&
-          now.difference(tracked.pressedAt) < _staleKeyDelay) {
-        // KeyDown duplicado sin KeyUp: no reinicia la pulsación.
-        return KeyEventResult.handled;
+          AppCardKeys.longPressableKeys.contains(tracked.logicalKey)) {
+        if (now.difference(tracked.pressedAt) < _staleKeyDelay) {
+          // KeyDown duplicado sin KeyUp: no reinicia la pulsación.
+          return KeyEventResult.handled;
+        }
+        // KeyUp perdido: se empieza de cero en vez de heredar el estado viejo.
+        _resetPressState();
       }
       _pressedKeys[physicalKey] = _PressedKey(keyEvent.logicalKey, now);
       return _keyDownEvent(context, keyEvent.logicalKey);
@@ -103,8 +138,10 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       final key = _pressedKeys[keyEvent.physicalKey]?.logicalKey ??
           keyEvent.logicalKey;
 
-      // Once long press fires, ignore repeats until the key is released.
-      // Otherwise a repeat may start a new short press accidentally.
+      // Una vez abierto el menú, las repeticiones de OK se ignoran hasta el
+      // KeyUp; si no, una repetición podría lanzar la app por accidente.
+      // Antes de eso solo comparan la hora (sin trabajo extra) como respaldo
+      // por si el temporizador se retrasa en un equipo lento.
       if (_longPressFired && AppCardKeys.longPressableKeys.contains(key)) {
         return KeyEventResult.handled;
       }
@@ -131,7 +168,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   KeyEventResult _keyDownEvent(BuildContext context, LogicalKeyboardKey key) {
     // Menu or info key opens options immediately without waiting
     if (AppCardKeys.menuKeys.contains(key)) {
-      _longPressTimer?.cancel();
+      _cancelLongPressTimer();
       _longPressFired = false;
       _keyDownAt = null;
       return widget.onLongPress?.call(key) ?? KeyEventResult.ignored;
@@ -148,18 +185,12 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
     if (_keyDownAt == null) {
       _keyDownAt = DateTime.now().millisecondsSinceEpoch;
       _longPressFired = false;
-      _longPressTimer?.cancel();
-      _longPressTimer = Timer(_longPressDelay, () {
-        if (!mounted) return;
-        if (_keyDownAt != null) {
-          _longPressFired = true;
-          _keyDownAt = null;
-          widget.onLongPress?.call(key);
-        }
-      });
+      _cancelLongPressTimer();
+      _longPressTimer = Timer(widget.longPressDelay, () => _fireLongPress(key));
       return KeyEventResult.handled;
     } else if (_longPress() && !_longPressFired) {
-      _longPressTimer?.cancel();
+      // Respaldo si el temporizador se retrasó (hilo ocupado en equipos lentos).
+      _cancelLongPressTimer();
       _longPressFired = true;
       _keyDownAt = null;
       return widget.onLongPress?.call(key) ?? KeyEventResult.ignored;
@@ -167,8 +198,16 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
     return KeyEventResult.handled;
   }
 
+  void _fireLongPress(LogicalKeyboardKey key) {
+    _longPressTimer = null;
+    if (!mounted || _keyDownAt == null) return;
+    _longPressFired = true;
+    _keyDownAt = null;
+    widget.onLongPress?.call(key);
+  }
+
   KeyEventResult _keyUpEvent(BuildContext context, LogicalKeyboardKey key) {
-    _longPressTimer?.cancel();
+    _cancelLongPressTimer();
     if (_handledKeys.remove(key)) {
       return KeyEventResult.handled;
     }
@@ -186,5 +225,5 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   bool _longPress() =>
       _keyDownAt != null &&
       DateTime.now().millisecondsSinceEpoch - _keyDownAt! >=
-          _longPressDelay.inMilliseconds;
+          widget.longPressDelay.inMilliseconds;
 }

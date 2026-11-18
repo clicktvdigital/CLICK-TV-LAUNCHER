@@ -141,16 +141,36 @@ class WallpaperService extends ChangeNotifier {
   void _updateTimerState() {
     final enabled = _isRotatingEnabled;
     if (enabled && (_timer == null || !_timer!.isActive)) {
-      _timer = Timer.periodic(const Duration(minutes: 1), (_) => _updateWallpaper());
+      _timer = Timer.periodic(const Duration(minutes: 1), (_) => _onRotationTick());
     } else if (!enabled && _timer != null) {
       _timer?.cancel();
       _timer = null;
     }
   }
 
+  // Clave del fondo que toca según la hora. Solo cambia al pasar de día a
+  // noche o al cambiar la foto de Ecuador (cada hora); el resto de minutos el
+  // tick no toca el disco. Así el temporizador no despierta E/S cada minuto
+  // mientras otra app pesada (SmartTube) está en primer plano.
+  String? _lastRotationKey;
+
+  String _rotationKey(DateTime now) {
+    final isDay = now.hour >= 6 && now.hour < 18;
+    final ecuador =
+        _settingsService.ecuadorWallpaperEnabled ? ecuadorAssetFor(now) : '';
+    return '$isDay|$ecuador';
+  }
+
+  void _onRotationTick() {
+    final key = _rotationKey(DateTime.now());
+    if (key == _lastRotationKey) return;
+    _updateWallpaper();
+  }
+
   Future<void> _updateWallpaper({bool force = false}) async {
     final callId = ++_updateWallpaperCallCount;
     final now = DateTime.now();
+    _lastRotationKey = _rotationKey(now);
     final isDay = now.hour >= 6 && now.hour < 18;
     final enabled = _settingsService.timeBasedWallpaperEnabled;
 
