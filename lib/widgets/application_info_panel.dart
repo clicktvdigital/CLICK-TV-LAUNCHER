@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -390,8 +391,26 @@ class HeldOkGuard extends StatefulWidget {
 }
 
 class _HeldOkGuardState extends State<HeldOkGuard> {
+  // KeyUp pendiente de confirmar: con controles que sintetizan pares
+  // KeyUp/KeyDown al mantener OK, el filtro solo se libera si no llega otro
+  // OK dentro de FocusKeyboardListener.releaseGrace.
+  Timer? _releaseTimer;
+
+  @override
+  void dispose() {
+    _releaseTimer?.cancel();
+    super.dispose();
+  }
+
   late bool _waitingForRelease = HardwareKeyboard.instance.logicalKeysPressed
-      .any(AppCardKeys.validationKeys.contains);
+          .any(AppCardKeys.validationKeys.contains) ||
+      _okActivityJustNow();
+
+  static bool _okActivityJustNow() {
+    final last = FocusKeyboardListener.lastValidationKeyEventAt;
+    return last != null &&
+        DateTime.now().difference(last) < const Duration(milliseconds: 300);
+  }
 
   @override
   void initState() {
@@ -413,14 +432,27 @@ class _HeldOkGuardState extends State<HeldOkGuard> {
           final key = event.logicalKey;
           final isValidation = AppCardKeys.validationKeys.contains(key);
           if (event is KeyUpEvent) {
-            _waitingForRelease = false;
+            _releaseTimer?.cancel();
+            _releaseTimer = Timer(FocusKeyboardListener.releaseGrace, () {
+              _releaseTimer = null;
+              _waitingForRelease = false;
+              ctvKeyLog('menú: OK soltado, filtro libre');
+            });
             return isValidation ? KeyEventResult.handled : KeyEventResult.ignored;
           }
           if (AppCardKeys.isArrowKey(key)) {
+            _releaseTimer?.cancel();
+            _releaseTimer = null;
             _waitingForRelease = false;
             return KeyEventResult.ignored;
           }
-          return isValidation ? KeyEventResult.handled : KeyEventResult.ignored;
+          if (isValidation) {
+            // Misma pulsación sostenida (par sintetizado): se sigue filtrando.
+            _releaseTimer?.cancel();
+            _releaseTimer = null;
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
         },
         child: widget.child,
       );

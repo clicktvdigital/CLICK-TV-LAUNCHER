@@ -223,7 +223,8 @@ void main() {
     await tester.pump();
     verify(appsService.reorderApplication(applicationsCategory, 0, 1));
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await tester.pump();
+    // OK se confirma tras FocusKeyboardListener.releaseGrace.
+    await tester.pump(const Duration(milliseconds: 200));
     verify(appsService.saveApplicationOrderInCategory(applicationsCategory));
   });
 
@@ -285,7 +286,8 @@ void main() {
     await tester.pump();
     verify(appsService.reorderApplication(applicationsCategory, 0, 1));
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await tester.pump();
+    // OK se confirma tras FocusKeyboardListener.releaseGrace.
+    await tester.pump(const Duration(milliseconds: 200));
     verify(appsService.saveApplicationOrderInCategory(applicationsCategory));
   });
 

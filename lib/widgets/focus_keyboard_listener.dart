@@ -40,6 +40,19 @@ class FocusKeyboardListener extends StatefulWidget {
   /// configuración de la tarjeta. Las teclas Menú/Info lo abren al instante.
   static const Duration defaultLongPressDelay = Duration(seconds: 1);
 
+  /// Margen para confirmar que OK se soltó de verdad. Algunos controles IR de
+  /// TV box (aml_keypad) envían OK con el código físico de Control Right;
+  /// Flutter lo trata como modificador y en cada repetición de la tecla
+  /// sostenida sintetiza un KeyUp seguido de un KeyDown (~100 ms entre pares,
+  /// 5-20 ms entre el KeyUp y el KeyDown, medido en el TV box). Si llega otro
+  /// KeyDown de la tecla dentro de este margen, es la misma pulsación.
+  static const Duration releaseGrace = Duration(milliseconds: 150);
+
+  /// Momento del último evento de una tecla de validación (OK) visto por
+  /// cualquier tarjeta. El menú lo usa para saber si se abrió con OK todavía
+  /// sostenido aunque Flutter lo reporte suelto entre dos pares sintetizados.
+  static DateTime? lastValidationKeyEventAt;
+
   final WidgetBuilder builder;
   final KeyEventResult Function(LogicalKeyboardKey)? onPressed;
   final KeyEventResult Function(LogicalKeyboardKey)? onLongPress;
@@ -78,6 +91,9 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   // queda libre durante toda la espera (importante en TV box de 1 GB).
   Timer? _longPressTimer;
   bool _longPressTriggered = false;
+
+  // KeyUp de OK pendiente de confirmar (ver FocusKeyboardListener.releaseGrace).
+  Timer? _releaseTimer;
   int? _keyDownAt;
   final Set<LogicalKeyboardKey> _handledKeys = {};
 
@@ -93,9 +109,15 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   @override
   void dispose() {
     _cancelLongPressTimer();
+    _cancelReleaseTimer();
     _pressedKeys.clear();
     _handledKeys.clear();
     super.dispose();
+  }
+
+  void _cancelReleaseTimer() {
+    _releaseTimer?.cancel();
+    _releaseTimer = null;
   }
 
   void _cancelLongPressTimer() {
@@ -110,6 +132,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   // el menú al instante o quedar ignorada.
   void _resetPressState() {
     _cancelLongPressTimer();
+    _cancelReleaseTimer();
     _longPressTriggered = false;
     _keyDownAt = null;
     _pressedKeys.clear();
@@ -132,6 +155,9 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       );
 
   KeyEventResult _handleKey(BuildContext context, KeyEvent keyEvent) {
+    if (AppCardKeys.validationKeys.contains(keyEvent.logicalKey)) {
+      FocusKeyboardListener.lastValidationKeyEventAt = DateTime.now();
+    }
     final result = _handleKeyInner(context, keyEvent);
     final key = keyEvent.logicalKey;
     if (AppCardKeys.longPressableKeys.contains(key) ||
@@ -139,7 +165,7 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
         _pressedKeys.isNotEmpty) {
       ctvKeyLog('card#${identityHashCode(this)} ${keyEvent.runtimeType} '
           'logical=${_keyName(key)} physical=0x${keyEvent.physicalKey.usbHidUsage.toRadixString(16)} '
-          '-> ${result.name} keyDownAt=${_keyDownAt != null} '
+          'synth=${keyEvent.synthesized} -> ${result.name} keyDownAt=${_keyDownAt != null} '
           'triggered=$_longPressTriggered timer=${_longPressTimer?.isActive ?? false}');
     }
     return result;
@@ -214,6 +240,20 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       return result;
     }
 
+    if (_releaseTimer != null) {
+      // KeyDown dentro del margen tras un KeyUp: es la misma pulsación
+      // sostenida (par KeyUp/KeyDown sintetizado). No se reinicia la espera.
+      _cancelReleaseTimer();
+      if (_longPress() && !_longPressTriggered) {
+        ctvKeyLog('card#${identityHashCode(this)} continuación: espera cumplida');
+        _cancelLongPressTimer();
+        _longPressTriggered = true;
+        _keyDownAt = null;
+        widget.onLongPress?.call(key);
+      }
+      return KeyEventResult.handled;
+    }
+
     if (_keyDownAt == null) {
       _keyDownAt = DateTime.now().millisecondsSinceEpoch;
       _longPressTriggered = false;
@@ -235,6 +275,9 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
     ctvKeyLog('card#${identityHashCode(this)} temporizador cumplido '
         'mounted=$mounted keyDownAt=${_keyDownAt != null}');
     if (!mounted || _keyDownAt == null) return;
+    // Si hay un KeyUp sin confirmar, se decide al llegar la continuación
+    // (KeyDown) o al confirmarse la liberación.
+    if (_releaseTimer != null) return;
     // Se marca antes de mostrar el diálogo: el KeyUp de esta misma pulsación
     // solo cierra el ciclo y nunca abre la app (ver _keyUpEvent).
     _longPressTriggered = true;
@@ -243,22 +286,44 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   }
 
   KeyEventResult _keyUpEvent(BuildContext context, LogicalKeyboardKey key) {
-    _cancelLongPressTimer();
     if (_handledKeys.remove(key)) {
+      _cancelLongPressTimer();
       return KeyEventResult.handled;
     }
+    if (AppCardKeys.longPressableKeys.contains(key) &&
+        (_keyDownAt != null || _longPressTriggered)) {
+      // Se espera el margen antes de dar la tecla por soltada.
+      _cancelReleaseTimer();
+      _releaseTimer = Timer(FocusKeyboardListener.releaseGrace, () {
+        _releaseTimer = null;
+        if (mounted) _confirmRelease(key);
+      });
+      return KeyEventResult.handled;
+    }
+    _cancelLongPressTimer();
+    return KeyEventResult.ignored;
+  }
+
+  void _confirmRelease(LogicalKeyboardKey key) {
+    _cancelLongPressTimer();
     if (_longPressTriggered) {
       // KeyUp de la pulsación larga: se reinicia la bandera y no se lanza la app.
       _longPressTriggered = false;
-      return KeyEventResult.handled;
+      return;
     }
     if (_keyDownAt != null) {
       final heldMs = DateTime.now().millisecondsSinceEpoch - _keyDownAt!;
+      if (heldMs >= widget.longPressDelay.inMilliseconds) {
+        // La espera se cumplió durante el margen: es pulsación larga.
+        _keyDownAt = null;
+        ctvKeyLog('card#${identityHashCode(this)} soltada tras $heldMs ms: pulsación larga');
+        widget.onLongPress?.call(key);
+        return;
+      }
       _keyDownAt = null;
-      ctvKeyLog('card#${identityHashCode(this)} KeyUp tras $heldMs ms: pulsación corta');
-      return widget.onPressed?.call(key) ?? KeyEventResult.ignored;
+      ctvKeyLog('card#${identityHashCode(this)} soltada tras $heldMs ms: pulsación corta');
+      widget.onPressed?.call(key);
     }
-    return KeyEventResult.ignored;
   }
 
   bool _longPress() =>

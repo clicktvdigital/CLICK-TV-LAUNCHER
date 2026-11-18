@@ -20,6 +20,7 @@ import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/models/category.dart';
 import 'package:flauncher/models/app.dart';
 import 'package:flauncher/widgets/application_info_panel.dart';
+import 'package:flauncher/widgets/focus_keyboard_listener.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -32,6 +33,8 @@ import '../mocks.dart';
 import '../mocks.mocks.dart';
 
 void main() {
+  setUp(() => FocusKeyboardListener.lastValidationKeyEventAt = null);
+
   setUpAll(() async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
     binding.platformDispatcher.views.first.physicalSize = Size(1280, 720);
@@ -182,8 +185,14 @@ void main() {
     await _pumpWidgetWithProviders(tester, appsService, null, app);
 
     await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+    // Par KeyUp/KeyDown sintetizado (control IR del TV box): sigue sostenido.
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 10));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 100));
     await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
     verifyNever(appsService.launchApp(app));
 

@@ -50,6 +50,8 @@ void main() {
           .hasPendingLongPress as bool;
 
   const hold = FocusKeyboardListener.defaultLongPressDelay;
+  const grace = FocusKeyboardListener.releaseGrace;
+  const afterGrace = Duration(milliseconds: 200);
 
   testWidgets('long press delay for OK is 1 second', (tester) async {
     expect(hold, const Duration(seconds: 1));
@@ -63,6 +65,9 @@ void main() {
     expect(pendingLongPress(tester), isTrue);
     await tester.pump(const Duration(milliseconds: 300));
     await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    // La liberación se confirma tras el margen.
+    expect(pressed, isEmpty);
+    await tester.pump(afterGrace);
 
     expect(pressed, [LogicalKeyboardKey.select]);
     expect(longPressed, isEmpty);
@@ -94,8 +99,50 @@ void main() {
     // Más repeticiones y el KeyUp tras abrir el menú no lanzan la app.
     await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pump(afterGrace);
     expect(longPressed, hasLength(1));
     expect(pressed, isEmpty);
+  });
+
+  // Patrón medido en el TV box (control IR aml_keypad, OK = Control Right
+  // físico): Flutter entrega pares KeyUp/KeyDown cada ~100 ms mientras se
+  // mantiene OK, con 5-20 ms entre el KeyUp y el KeyDown siguiente.
+  Future<void> holdLikeTvBoxRemote(WidgetTester tester, Duration total) async {
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    var elapsed = Duration.zero;
+    const step = Duration(milliseconds: 100);
+    const gap = Duration(milliseconds: 10);
+    while (elapsed + step + gap < total) {
+      await tester.pump(step);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+      await tester.pump(gap);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+      elapsed += step + gap;
+    }
+    await tester.pump(total - elapsed);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pump(afterGrace);
+  }
+
+  testWidgets('TV box remote: synthesized KeyUp/KeyDown pairs while holding OK open the menu, not the app', (tester) async {
+    expect(grace, lessThan(afterGrace));
+    await tester.pumpWidget(host());
+    await tester.pump();
+
+    await holdLikeTvBoxRemote(tester, const Duration(milliseconds: 1900));
+
+    expect(longPressed, [LogicalKeyboardKey.select]);
+    expect(pressed, isEmpty);
+  });
+
+  testWidgets('TV box remote: a short press shorter than the delay still launches once', (tester) async {
+    await tester.pumpWidget(host());
+    await tester.pump();
+
+    await holdLikeTvBoxRemote(tester, const Duration(milliseconds: 450));
+
+    expect(pressed, [LogicalKeyboardKey.select]);
+    expect(longPressed, isEmpty);
   });
 
   testWidgets('losing focus mid-hold cancels the pending long press', (tester) async {
@@ -117,6 +164,7 @@ void main() {
     cardNode.requestFocus();
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pump(afterGrace);
     expect(pressed, [LogicalKeyboardKey.select]);
     expect(longPressed, isEmpty);
   });
