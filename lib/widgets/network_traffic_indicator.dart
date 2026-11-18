@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show FontFeature;
 
 import 'package:flauncher/providers/network_service.dart';
 import 'package:flutter/material.dart';
