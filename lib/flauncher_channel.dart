@@ -82,6 +82,15 @@ class FLauncherChannel {
     return map.cast<String, dynamic>();
   }
 
+  /// Pide al sistema reintentar la conexión (ver MainActivity.reconnectNetwork).
+  Future<void> reconnectNetwork() async {
+    try {
+      await _methodChannel.invokeMethod("reconnectNetwork");
+    } on PlatformException catch (_) {
+    } on MissingPluginException catch (_) {
+    }
+  }
+
   /// [bytes recibidos, bytes enviados] totales desde el arranque, o null si
   /// el equipo no expone contadores de tráfico.
   Future<List<int>?> getTrafficTotals() async {

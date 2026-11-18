@@ -5,6 +5,7 @@ import 'package:flauncher/providers/tv_inputs_service.dart';
 import 'package:flauncher/providers/notifications_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/weather_service.dart';
+import 'package:flauncher/providers/network_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -183,6 +184,9 @@ class FocusAwareAppBarState extends State<FocusAwareAppBar>
                     )
                   : const SizedBox.shrink(),
               ),
+              // Reintentar la conexión y refrescar red y clima (D-pad + OK).
+              const ReconnectNetworkButton(),
+              const SizedBox(width: 12),
               // Indicador de red: Wi-Fi/cable, ↓/↑ en tiempo real y consumo.
               // Flexible: si el clima necesita ancho, el indicador se reduce
               // (FittedBox) en lugar de solaparse o recortar el clima.
@@ -304,7 +308,7 @@ class _FocusableIconButton extends StatefulWidget {
   final FocusNode? focusNode;
   final int badgeCount;
 
-  const _FocusableIconButton({required this.icon, required this.onPressed, this.focusNode, this.badgeCount = 0});
+  const _FocusableIconButton({super.key, required this.icon, required this.onPressed, this.focusNode, this.badgeCount = 0});
 
   @override
   State<_FocusableIconButton> createState() => _FocusableIconButtonState();
@@ -363,6 +367,56 @@ class _FocusableIconButtonState extends State<_FocusableIconButton> {
                 ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Botón de la barra de estado para reintentar la conexión a internet y
+/// refrescar el estado de la red, el consumo y el clima. Mientras trabaja
+/// muestra un reloj de arena y no acepta otra pulsación; al terminar avisa
+/// del resultado con un mensaje breve.
+class ReconnectNetworkButton extends StatelessWidget {
+  const ReconnectNetworkButton({super.key});
+
+  Future<void> _reconnect(BuildContext context) async {
+    final network = context.read<NetworkService>();
+    final weather = context.read<WeatherService>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    if (network.reconnecting) return;
+
+    final online = await network.reconnect();
+    await weather.refresh();
+
+    final type = switch (network.networkType) {
+      NetworkType.Wired => isEs ? 'cable de red' : 'Ethernet',
+      NetworkType.Wifi => 'Wi-Fi',
+      NetworkType.Cellular => isEs ? 'datos móviles' : 'mobile data',
+      NetworkType.Vpn => 'VPN',
+      NetworkType.Unknown => isEs ? 'sin red' : 'no network',
+    };
+    messenger?.showSnackBar(SnackBar(
+      duration: const Duration(seconds: 3),
+      content: Text(online
+          ? (isEs ? 'Conexión verificada: $type con internet' : 'Connection checked: $type online')
+          : (isEs
+              ? 'Sin acceso a internet ($type). Revisa el cable o el Wi-Fi.'
+              : 'No internet access ($type). Check the cable or Wi-Fi.')),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reconnecting = context.select<NetworkService, bool>((s) => s.reconnecting);
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    return Semantics(
+      button: true,
+      label: isEs ? 'Reconectar red y actualizar' : 'Reconnect network and refresh',
+      child: _FocusableIconButton(
+        key: const Key('reconnect-network-button'),
+        icon: reconnecting ? Icons.hourglass_top : Icons.sync,
+        onPressed: () => _reconnect(context),
       ),
     );
   }

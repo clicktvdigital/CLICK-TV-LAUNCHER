@@ -1,6 +1,8 @@
 import 'package:flauncher/providers/weather_service.dart';
+import 'package:flauncher/providers/network_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flauncher/widgets/focus_aware_app_bar.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/tv_inputs_service.dart';
@@ -14,6 +16,7 @@ void main() {
   late MockTvInputsService mockTvInputsService;
   late MockNotificationsService mockNotificationsService;
   late MockWeatherService mockWeatherService;
+  late MockNetworkService mockNetworkService;
 
   void setupSettingsDefaults(MockSettingsService service) {
     when(service.autoHideAppBarEnabled).thenReturn(false);
@@ -36,6 +39,10 @@ void main() {
     mockTvInputsService = MockTvInputsService();
     mockNotificationsService = MockNotificationsService();
     mockWeatherService = MockWeatherService();
+    mockNetworkService = MockNetworkService();
+    when(mockNetworkService.reconnecting).thenReturn(false);
+    when(mockNetworkService.networkType).thenReturn(NetworkType.Wired);
+    when(mockNetworkService.hasInternetAccess).thenReturn(true);
 
     setupSettingsDefaults(mockSettingsService);
 
@@ -63,6 +70,7 @@ void main() {
           ChangeNotifierProvider<TvInputsService>.value(value: mockTvInputsService),
           ChangeNotifierProvider<NotificationsService>.value(value: mockNotificationsService),
           ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+          ChangeNotifierProvider<NetworkService>.value(value: mockNetworkService),
         ],
         child: createWidgetUnderTest(),
       )
@@ -83,6 +91,7 @@ void main() {
           ChangeNotifierProvider<TvInputsService>.value(value: mockTvInputsService),
           ChangeNotifierProvider<NotificationsService>.value(value: mockNotificationsService),
           ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+          ChangeNotifierProvider<NetworkService>.value(value: mockNetworkService),
         ],
         child: createWidgetUnderTest(),
       )
@@ -115,6 +124,7 @@ void main() {
           ChangeNotifierProvider<TvInputsService>.value(value: mockTvInputsService),
           ChangeNotifierProvider<NotificationsService>.value(value: mockNotificationsService),
           ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+          ChangeNotifierProvider<NetworkService>.value(value: mockNetworkService),
         ],
         child: createWidgetUnderTest(),
       )
@@ -137,6 +147,7 @@ void main() {
           ChangeNotifierProvider<TvInputsService>.value(value: mockTvInputsService),
           ChangeNotifierProvider<NotificationsService>.value(value: mockNotificationsService),
           ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+          ChangeNotifierProvider<NetworkService>.value(value: mockNetworkService),
         ],
         child: createWidgetUnderTest(),
       )
@@ -159,6 +170,7 @@ void main() {
           ChangeNotifierProvider<TvInputsService>.value(value: mockTvInputsService),
           ChangeNotifierProvider<NotificationsService>.value(value: mockNotificationsService),
           ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+          ChangeNotifierProvider<NetworkService>.value(value: mockNetworkService),
         ],
         child: createWidgetUnderTest(),
       )
@@ -188,6 +200,7 @@ void main() {
           ChangeNotifierProvider<TvInputsService>.value(value: mockTvInputsService),
           ChangeNotifierProvider<NotificationsService>.value(value: mockNotificationsService),
           ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+          ChangeNotifierProvider<NetworkService>.value(value: mockNetworkService),
         ],
         child: createWidgetUnderTest(),
       )
@@ -195,5 +208,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.notifications_active_outlined), findsOneWidget);
+  });
+
+  testWidgets('reconnect button refreshes network and weather and reports the result', (tester) async {
+    when(mockNetworkService.reconnect()).thenAnswer((_) async => true);
+    when(mockWeatherService.refresh()).thenAnswer((_) async {});
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SettingsService>.value(value: mockSettingsService),
+          ChangeNotifierProvider<TvInputsService>.value(value: mockTvInputsService),
+          ChangeNotifierProvider<NotificationsService>.value(value: mockNotificationsService),
+          ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+          ChangeNotifierProvider<NetworkService>.value(value: mockNetworkService),
+        ],
+        child: MaterialApp(
+          home: Scaffold(appBar: FocusAwareAppBar(), body: const SizedBox()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final button = find.byKey(const Key('reconnect-network-button'));
+    expect(button, findsOneWidget);
+    expect(find.byIcon(Icons.sync), findsOneWidget);
+
+    // Operable con el control remoto: foco + OK.
+    final focusNode = Focus.of(tester.element(find.descendant(of: button, matching: find.byType(InkWell))));
+    focusNode.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pump();
+
+    verify(mockNetworkService.reconnect()).called(1);
+    verify(mockWeatherService.refresh()).called(1);
+    await tester.pump();
+    expect(find.textContaining('Connection checked'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
   });
 }

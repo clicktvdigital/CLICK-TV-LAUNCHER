@@ -147,6 +147,36 @@ class NetworkService extends ChangeNotifier with WidgetsBindingObserver
      }
   }
 
+  bool _reconnecting = false;
+  bool get reconnecting => _reconnecting;
+
+  /// Reintenta la conexión y vuelve a leer el estado de la red y el consumo.
+  /// Devuelve si hay acceso a internet al terminar.
+  Future<bool> reconnect({Duration settle = const Duration(seconds: 3)}) async {
+    if (_reconnecting) return _hasInternetAccess;
+    _reconnecting = true;
+    notifyListeners();
+    try {
+      await _channel.reconnectNetwork();
+      // Android tarda unos segundos en revalidar la red.
+      await Future<void>.delayed(settle);
+      final map = await _channel.getActiveNetworkInformation();
+      if (map.isNotEmpty) {
+        _getNetworkInformation(map.cast<String, dynamic>());
+      } else {
+        _networkType = NetworkType.Unknown;
+        _hasInternetAccess = false;
+      }
+      await refreshPermissionAndUsage();
+    } catch (e) {
+      log("NetworkService: reconnect failed: $e");
+    } finally {
+      _reconnecting = false;
+      notifyListeners();
+    }
+    return _hasInternetAccess;
+  }
+
   /// [bytes recibidos, bytes enviados] totales, para calcular la velocidad.
   Future<List<int>?> getTrafficTotals() => _channel.getTrafficTotals();
 

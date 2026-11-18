@@ -127,6 +127,7 @@ public class MainActivity extends FlutterActivity {
                 case "startAmbientMode" -> result.success(startAmbientMode());
                 case "getActiveNetworkInformation" -> result.success(getActiveNetworkInformation());
                 case "getTrafficTotals" -> result.success(getTrafficTotals());
+                case "reconnectNetwork" -> result.success(reconnectNetwork());
                 case "getDailyDataUsage" -> {
                     long usage = getDailyDataUsage();
                     if (usage == -1) {
@@ -818,6 +819,39 @@ public class MainActivity extends FlutterActivity {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    // Reintenta la conexión: pide a Android revalidar el acceso a internet de la
+    // red activa (API 23+) y, hasta Android 9, reconecta el Wi-Fi. En Android 10+
+    // una app normal no puede forzar la reconexión del Wi-Fi.
+    private Map<String, Object> reconnectNetwork() {
+        Map<String, Object> out = new HashMap<>();
+        boolean revalidated = false;
+        boolean wifiReconnected = false;
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                android.net.Network active = cm.getActiveNetwork();
+                if (active != null) {
+                    cm.reportNetworkConnectivity(active, false);
+                    revalidated = true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager)
+                        getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                if (wm != null && wm.isWifiEnabled()) {
+                    wifiReconnected = wm.reconnect();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        out.put("revalidated", revalidated);
+        out.put("wifiReconnected", wifiReconnected);
+        return out;
     }
 
     // Bytes totales recibidos/enviados desde el arranque (todas las interfaces).
