@@ -87,8 +87,13 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
             final condition = (weather.currentCondition ?? "").trim();
             int displayDegrees(int celsius) =>
                 useFahrenheit ? (celsius * 9 / 5 + 32).round() : celsius;
+            // La barra superior mide kToolbarHeight (56 dp) y la caja tiene
+            // 4 dp de margen arriba y abajo: caben exactamente 3 líneas de
+            // 14 px. Se agrupan los datos en 3 líneas fijas de una sola
+            // línea cada una (con "…" si no entra el ancho):
+            //   1) ciudad  2) temperatura • lluvia/aviso  3) estado • máx/mín
+            final primaryLine = displayText;
             final details = <String>[];
-            details.add(displayText);
             if (!isWarning && condition.isNotEmpty) details.add(condition);
             if (weather.todayMaxTemp != null && weather.todayMinTemp != null) {
               final high = displayDegrees(weather.todayMaxTemp!);
@@ -102,7 +107,7 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                   ? "Datos sin actualizar"
                   : "Weather not updated");
             }
-            displayText = details.join(" • ");
+            final secondaryLine = details.join(" • ");
 
             final theme = Theme.of(context);
 
@@ -162,35 +167,21 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
                         const SizedBox(width: 8),
                         Flexible(
                           fit: FlexFit.loose,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (city.isNotEmpty)
-                                Text(
-                                  city,
-                                  maxLines: 3,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    height: 1.0,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              // Cada dato en su propia línea: nada se corta al final.
-                              for (final line in details)
-                                Text(
-                                  line,
-                                  maxLines: 2,
-                                  softWrap: true,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    height: 1.0,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                            ],
+                          // La altura de la barra es fija: con letra del
+                          // sistema ampliada las 3 líneas no cabrían.
+                          child: MediaQuery.withClampedTextScaling(
+                            maxScaleFactor: 1.0,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (city.isNotEmpty)
+                                  _WeatherLine(city, bold: true),
+                                _WeatherLine(primaryLine),
+                                if (secondaryLine.isNotEmpty)
+                                  _WeatherLine(secondaryLine),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -204,4 +195,27 @@ class _WeatherStatusBarWidgetState extends State<WeatherStatusBarWidget> {
       },
     );
   }
+}
+
+/// Una línea del clima: siempre una sola línea, con "…" si no cabe el ancho,
+/// para que el bloque nunca supere las 3 líneas que caben en la barra.
+class _WeatherLine extends StatelessWidget {
+  const _WeatherLine(this.text, {this.bold = false});
+
+  final String text;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 14,
+          height: 1.0,
+          fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+          color: Colors.white,
+        ),
+      );
 }

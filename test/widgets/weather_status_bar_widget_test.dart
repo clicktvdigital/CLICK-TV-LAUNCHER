@@ -100,4 +100,65 @@ void main() {
     expect(border.top.color, Colors.white.withOpacity(0.12));
     expect(border.top.width, 1.0);
   });
+
+  testWidgets('long weather details fit in the 56 dp top bar as 3 single lines', (tester) async {
+    tester.view.physicalSize = const Size(1280, 720);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final staleTimestamp =
+        DateTime.now().subtract(const Duration(hours: 5)).millisecondsSinceEpoch ~/ 1000;
+    final longWeather = WeatherData.fromJsonString('''
+    {
+      "timestamp": $staleTimestamp,
+      "location": "Atucucho de San Antonio de Pichincha, Quito, Ecuador",
+      "currentTemp": 9,
+      "todayMaxTemp": 18,
+      "todayMinTemp": 10,
+      "currentConditionCode": 741,
+      "currentCondition": "Niebla densa con llovizna intermitente y viento",
+      "forecasts": [
+        {"conditionCode": 500, "precipProbability": 100, "minTemp": 10, "maxTemp": 18}
+      ]
+    }
+    ''');
+    when(mockSettingsService.showWeatherWarnings).thenReturn(false);
+    when(mockWeatherService.weatherData).thenReturn(longWeather);
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Align(
+          alignment: Alignment.topRight,
+          child: SizedBox(
+            height: kToolbarHeight,
+            child: Center(
+              child: MultiProvider(
+                providers: [
+                  ChangeNotifierProvider<SettingsService>.value(value: mockSettingsService),
+                  ChangeNotifierProvider<WeatherService>.value(value: mockWeatherService),
+                ],
+                child: const WeatherStatusBarWidget(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    final lines = tester.widgetList<Text>(find.descendant(
+      of: find.byType(WeatherStatusBarWidget),
+      matching: find.byType(Text),
+    ));
+    expect(lines.length, lessThanOrEqualTo(3));
+    for (final line in lines) {
+      expect(line.maxLines, 1);
+      expect(line.overflow, TextOverflow.ellipsis);
+    }
+    final box = tester.getSize(find.byType(AnimatedContainer));
+    expect(box.height, lessThanOrEqualTo(kToolbarHeight));
+  });
 }
