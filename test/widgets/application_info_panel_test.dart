@@ -136,6 +136,62 @@ void main() {
     await tester.pumpAndSettle();
     verify(appsService.uninstallApp(app));
   });
+
+  testWidgets('OK-long-press menu lists Open, App info and Uninstall first, with Open focused', (tester) async {
+    final appsService = MockAppsService();
+    final app = fakeApp(packageName: "me.efesser.flauncher", name: "FLauncher", version: "1.0.0");
+    when(appsService.applications).thenReturn([app]);
+    await _pumpWidgetWithProviders(tester, appsService, null, app);
+
+    final open = find.byKey(const Key('app-panel-open'));
+    final info = find.byKey(const Key('app-panel-info'));
+    final uninstall = find.byKey(const Key('app-panel-uninstall'));
+    expect(tester.getTopLeft(open).dy, lessThan(tester.getTopLeft(info).dy));
+    expect(tester.getTopLeft(info).dy, lessThan(tester.getTopLeft(uninstall).dy));
+    expect(tester.getTopLeft(uninstall).dy,
+        lessThan(tester.getTopLeft(find.text("Add to...")).dy));
+
+    final focused = FocusManager.instance.primaryFocus?.context;
+    expect(focused, isNotNull);
+    var focusIsOnOpen = false;
+    focused!.visitAncestorElements((element) {
+      if (element.widget.key == const Key('app-panel-open')) {
+        focusIsOnOpen = true;
+        return false;
+      }
+      return true;
+    });
+    expect(focusIsOnOpen, isTrue);
+
+    // Flecha abajo + OK abre la información de la app.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    verify(appsService.openAppInfo(app)).called(1);
+    verifyNever(appsService.launchApp(app));
+  });
+
+  testWidgets('OK still held from the long press does not trigger Open', (tester) async {
+    final appsService = MockAppsService();
+    final app = fakeApp(packageName: "me.efesser.flauncher", name: "FLauncher", version: "1.0.0");
+    when(appsService.applications).thenReturn([app]);
+
+    // El panel aparece mientras OK sigue presionado (pulsación de 5 s).
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await _pumpWidgetWithProviders(tester, appsService, null, app);
+
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    verifyNever(appsService.launchApp(app));
+
+    // Una pulsación nueva sí abre la app.
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    verify(appsService.launchApp(app)).called(1);
+  });
 }
 
 Future<void> _pumpWidgetWithProviders(

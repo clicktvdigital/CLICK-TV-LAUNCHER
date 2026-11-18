@@ -651,14 +651,20 @@ public class MainActivity extends FlutterActivity {
 
     private boolean openAppInfo(String packageName) {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                .setData(Uri.fromParts("package", packageName, null));
+                .setData(Uri.fromParts("package", packageName, null))
+                // Tarea propia: en Android 5.1 / TV box de 1 GB la pantalla del
+                // sistema no queda apilada sobre el launcher ni lo bloquea.
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         return tryStartActivity(intent);
     }
 
     private boolean uninstallApp(String packageName) {
         Intent intent = new Intent(Intent.ACTION_DELETE)
-                .setData(Uri.fromParts("package", packageName, null));
+                .setData(Uri.fromParts("package", packageName, null))
+                // Tarea propia: en Android 5.1 / TV box de 1 GB la pantalla del
+                // sistema no queda apilada sobre el launcher ni lo bloquea.
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         return tryStartActivity(intent);
     }

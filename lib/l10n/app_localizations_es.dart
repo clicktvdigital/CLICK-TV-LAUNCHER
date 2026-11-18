@@ -22,7 +22,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appCardHighlightAnimation => 'Resaltar aplicaciones';
 
   @override
-  String get appInfo => 'Datos de la aplicación';
+  String get appInfo => 'Información y permisos';
 
   @override
   String get appKeyClick => 'Sonido al presionar una tecla';

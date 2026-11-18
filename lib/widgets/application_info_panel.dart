@@ -20,6 +20,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flauncher/widgets/app_card_keys.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/add_to_category_dialog.dart';
 import 'package:flauncher/widgets/side_panel_dialog.dart';
@@ -64,6 +66,7 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
     return SidePanelDialog(
         width: 300,
         isRightSide: false,
+        child: HeldOkGuard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -100,7 +103,42 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
               child: SingleChildScrollView(
                 child: Column(
                  children: [
-                   // Add to Category button (First as requested)
+                   // Acciones principales del menú de OK largo (5 s), en el
+                   // orden en que se usan con el D-pad. "Abrir" recibe el foco
+                   // al abrir el panel para no tener que buscarlo con flechas.
+                   _PanelAction(
+                     key: const Key('app-panel-open'),
+                     autofocus: true,
+                     icon: Icons.open_in_new,
+                     label: localizations.open,
+                     onPressed: () async {
+                       final appsService = context.read<AppsService>();
+                       Navigator.of(context).pop(ApplicationInfoPanelResult.none);
+                       await appsService.launchApp(widget.application);
+                     },
+                   ),
+                   _PanelAction(
+                     key: const Key('app-panel-info'),
+                     icon: Icons.info_outlined,
+                     label: localizations.appInfo,
+                     onPressed: () async {
+                       final appsService = context.read<AppsService>();
+                       Navigator.of(context).pop(ApplicationInfoPanelResult.none);
+                       await appsService.openAppInfo(widget.application);
+                     },
+                   ),
+                   _PanelAction(
+                     key: const Key('app-panel-uninstall'),
+                     icon: Icons.delete_outlined,
+                     label: localizations.uninstall,
+                     onPressed: () async {
+                       final appsService = context.read<AppsService>();
+                       Navigator.of(context).pop(ApplicationInfoPanelResult.none);
+                       await appsService.uninstallApp(widget.application);
+                     },
+                   ),
+                   const Divider(),
+                   // Add to Category button
                    TextButton(
                      child: Row(
                        children: [
@@ -129,19 +167,6 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                        ),
                        onPressed: () => Navigator.of(context).pop(ApplicationInfoPanelResult.reorderApp),
                      ),
-                   TextButton(
-                     child: Row(
-                       children: [
-                         const Icon(Icons.open_in_new),
-                         Container(width: 8),
-                         Text(localizations.open, style: Theme.of(context).textTheme.bodyMedium),
-                       ],
-                     ),
-                     onPressed: () async {
-                       await context.read<AppsService>().launchApp(widget.application);
-                       Navigator.of(context).pop(ApplicationInfoPanelResult.none);
-                     },
-                   ),
                    // Favorites toggle button
                    Builder(
                      builder: (context) {
@@ -288,38 +313,89 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
                        );
                      }
                    ),
-                   const Divider(),
-                   TextButton(
-                     child: Row(
-                       children: [
-                         const Icon(Icons.info_outlined),
-                         Container(width: 8),
-                         Text(localizations.appInfo, style: Theme.of(context).textTheme.bodyMedium),
-                       ],
-                     ),
-                     onPressed: () => context.read<AppsService>().openAppInfo(widget.application),
-                   ),
-                   TextButton(
-                     child: Row(
-                       children: [
-                         const Icon(Icons.delete_outlined),
-                         Container(width: 8),
-                         Text(localizations.uninstall, style: Theme.of(context).textTheme.bodyMedium),
-                       ],
-                     ),
-                     onPressed: () async {
-                       await context.read<AppsService>().uninstallApp(widget.application);
-                       Navigator.of(context).pop(ApplicationInfoPanelResult.none);
-                     },
-                   )
                  ]
                 )
               )
             )
           ]
         )
+        )
       );
   }
 }
 
 enum ApplicationInfoPanelResult { none, reorderApp }
+
+class _PanelAction extends StatelessWidget {
+  const _PanelAction({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.autofocus = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool autofocus;
+
+  @override
+  Widget build(BuildContext context) => TextButton(
+        autofocus: autofocus,
+        onPressed: onPressed,
+        child: Row(
+          children: [
+            Icon(icon),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+/// El panel se abre mientras OK sigue presionado (5 s). Sin este filtro, las
+/// repeticiones de esa misma pulsación activarían el botón con foco ("Abrir")
+/// en cuanto aparece el panel. Se ignoran las teclas de validación hasta que
+/// se suelta OK; una flecha también desactiva el filtro por si el control
+/// perdió el KeyUp. Si el panel se abrió con Menú/Info o táctil, no filtra.
+@visibleForTesting
+class HeldOkGuard extends StatefulWidget {
+  const HeldOkGuard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<HeldOkGuard> createState() => _HeldOkGuardState();
+}
+
+class _HeldOkGuardState extends State<HeldOkGuard> {
+  late bool _waitingForRelease = HardwareKeyboard.instance.logicalKeysPressed
+      .any(AppCardKeys.validationKeys.contains);
+
+  @override
+  Widget build(BuildContext context) => Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        onKeyEvent: (_, event) {
+          if (!_waitingForRelease) return KeyEventResult.ignored;
+          final key = event.logicalKey;
+          if (AppCardKeys.isArrowKey(key)) {
+            _waitingForRelease = false;
+            return KeyEventResult.ignored;
+          }
+          if (!AppCardKeys.validationKeys.contains(key)) {
+            return KeyEventResult.ignored;
+          }
+          if (event is KeyUpEvent) _waitingForRelease = false;
+          return KeyEventResult.handled;
+        },
+        child: widget.child,
+      );
+}
