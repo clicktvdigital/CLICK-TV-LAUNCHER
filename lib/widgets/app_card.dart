@@ -716,6 +716,7 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
   DateTime? _lastMoveTime;
 
   KeyEventResult _onPressed(BuildContext context, LogicalKeyboardKey? key) {
+    ctvKeyLog('AppCard ${widget.application.packageName} onPressed key=${key?.debugName} moving=$_moving');
     if (!_moving) {
       if (key == LogicalKeyboardKey.arrowLeft && widget.isFirstInRow) {
         _bumpDirection = -1.0;
@@ -786,6 +787,7 @@ class _AppCardState extends State<AppCard> with TickerProviderStateMixin {
   }
 
   KeyEventResult _onLongPress(BuildContext context, LogicalKeyboardKey? key) {
+    ctvKeyLog('AppCard ${widget.application.packageName} onLongPress key=${key?.debugName} moving=$_moving');
     if (!_moving && (key == null || AppCardKeys.longPressableKeys.contains(key))) {
       _showPanel(context);
       return KeyEventResult.handled;

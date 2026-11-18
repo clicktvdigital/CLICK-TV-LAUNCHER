@@ -22,10 +22,23 @@ import 'package:flauncher/widgets/app_card_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Registro de diagnóstico del control remoto. Se ve en el TV box con:
+///   adb logcat -s flutter | grep CTVKEY
+/// Solo escribe en eventos de teclas de validación/menú (no en cada frame).
+void ctvKeyLog(String message) {
+  final now = DateTime.now();
+  final t = '${now.second.toString().padLeft(2, '0')}.'
+      '${now.millisecond.toString().padLeft(3, '0')}';
+  debugPrint('CTVKEY $t $message');
+}
+
+String _keyName(LogicalKeyboardKey key) =>
+    key.debugName ?? '0x${key.keyId.toRadixString(16)}';
+
 class FocusKeyboardListener extends StatefulWidget {
   /// Tiempo que hay que mantener OK (D-pad center) para abrir el menú de
   /// configuración de la tarjeta. Las teclas Menú/Info lo abren al instante.
-  static const Duration defaultLongPressDelay = Duration(seconds: 2);
+  static const Duration defaultLongPressDelay = Duration(seconds: 1);
 
   final WidgetBuilder builder;
   final KeyEventResult Function(LogicalKeyboardKey)? onPressed;
@@ -107,13 +120,32 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
   Widget build(BuildContext context) => Focus(
         canRequestFocus: false,
         onFocusChange: (hasFocus) {
-          if (!hasFocus) _resetPressState();
+          if (!hasFocus) {
+            if (_keyDownAt != null || _longPressTriggered) {
+              ctvKeyLog('card#${identityHashCode(this)} perdió el foco: se descarta la pulsación');
+            }
+            _resetPressState();
+          }
         },
         onKeyEvent: (_, keyEvent) => _handleKey(context, keyEvent),
         child: Builder(builder: widget.builder),
       );
 
   KeyEventResult _handleKey(BuildContext context, KeyEvent keyEvent) {
+    final result = _handleKeyInner(context, keyEvent);
+    final key = keyEvent.logicalKey;
+    if (AppCardKeys.longPressableKeys.contains(key) ||
+        AppCardKeys.validationKeys.contains(key) ||
+        _pressedKeys.isNotEmpty) {
+      ctvKeyLog('card#${identityHashCode(this)} ${keyEvent.runtimeType} '
+          'logical=${_keyName(key)} physical=0x${keyEvent.physicalKey.usbHidUsage.toRadixString(16)} '
+          '-> ${result.name} keyDownAt=${_keyDownAt != null} '
+          'triggered=$_longPressTriggered timer=${_longPressTimer?.isActive ?? false}');
+    }
+    return result;
+  }
+
+  KeyEventResult _handleKeyInner(BuildContext context, KeyEvent keyEvent) {
     if (keyEvent is KeyDownEvent) {
       final now = DateTime.now();
       final physicalKey = keyEvent.physicalKey;
@@ -200,6 +232,8 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
 
   void _fireLongPress(LogicalKeyboardKey key) {
     _longPressTimer = null;
+    ctvKeyLog('card#${identityHashCode(this)} temporizador cumplido '
+        'mounted=$mounted keyDownAt=${_keyDownAt != null}');
     if (!mounted || _keyDownAt == null) return;
     // Se marca antes de mostrar el diálogo: el KeyUp de esta misma pulsación
     // solo cierra el ciclo y nunca abre la app (ver _keyUpEvent).
@@ -219,7 +253,9 @@ class _FocusKeyboardListenerState extends State<FocusKeyboardListener> {
       return KeyEventResult.handled;
     }
     if (_keyDownAt != null) {
+      final heldMs = DateTime.now().millisecondsSinceEpoch - _keyDownAt!;
       _keyDownAt = null;
+      ctvKeyLog('card#${identityHashCode(this)} KeyUp tras $heldMs ms: pulsación corta');
       return widget.onPressed?.call(key) ?? KeyEventResult.ignored;
     }
     return KeyEventResult.ignored;

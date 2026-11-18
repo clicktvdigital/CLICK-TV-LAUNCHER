@@ -22,6 +22,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flauncher/widgets/app_card_keys.dart';
+import 'package:flauncher/widgets/focus_keyboard_listener.dart';
 import 'package:flauncher/providers/apps_service.dart';
 import 'package:flauncher/widgets/add_to_category_dialog.dart';
 import 'package:flauncher/widgets/side_panel_dialog.dart';
@@ -103,7 +104,7 @@ class _ApplicationInfoPanelState extends State<ApplicationInfoPanel>
               child: SingleChildScrollView(
                 child: Column(
                  children: [
-                   // Acciones principales del menú de OK largo (2 s), en el
+                   // Acciones principales del menú de OK largo (1 s), en el
                    // orden en que se usan con el D-pad. "Abrir" recibe el foco
                    // al abrir el panel para no tener que buscarlo con flechas.
                    _PanelAction(
@@ -370,7 +371,7 @@ class _PanelAction extends StatelessWidget {
       );
 }
 
-/// El panel se abre mientras OK sigue presionado (2 s). Sin este filtro, las
+/// El panel se abre mientras OK sigue presionado (1 s). Sin este filtro, las
 /// repeticiones de esa misma pulsación activarían el botón con foco ("Abrir")
 /// en cuanto aparece el panel. Se ignoran las teclas de validación hasta el
 /// primer KeyUp, sea cual sea su código lógico: algunos controles de TV box
@@ -393,10 +394,21 @@ class _HeldOkGuardState extends State<HeldOkGuard> {
       .any(AppCardKeys.validationKeys.contains);
 
   @override
+  void initState() {
+    super.initState();
+    ctvKeyLog('menú abierto; OK aún presionado=$_waitingForRelease '
+        'teclas=${HardwareKeyboard.instance.logicalKeysPressed.map((k) => k.debugName).toList()}');
+  }
+
+  @override
   Widget build(BuildContext context) => Focus(
         canRequestFocus: false,
         skipTraversal: true,
         onKeyEvent: (_, event) {
+          if (AppCardKeys.validationKeys.contains(event.logicalKey)) {
+            ctvKeyLog('menú ${event.runtimeType} ${event.logicalKey.debugName} '
+                'filtro=${_waitingForRelease ? 'activo' : 'libre'}');
+          }
           if (!_waitingForRelease) return KeyEventResult.ignored;
           final key = event.logicalKey;
           final isValidation = AppCardKeys.validationKeys.contains(key);

@@ -177,7 +177,7 @@ void main() {
     final app = fakeApp(packageName: "me.efesser.flauncher", name: "FLauncher", version: "1.0.0");
     when(appsService.applications).thenReturn([app]);
 
-    // El panel aparece mientras OK sigue presionado (pulsación larga de 2 s).
+    // El panel aparece mientras OK sigue presionado (pulsación larga de 1 s).
     await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
     await _pumpWidgetWithProviders(tester, appsService, null, app);
 

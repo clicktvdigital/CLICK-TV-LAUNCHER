@@ -51,8 +51,8 @@ void main() {
 
   const hold = FocusKeyboardListener.defaultLongPressDelay;
 
-  testWidgets('long press delay for OK is 2 seconds', (tester) async {
-    expect(hold, const Duration(seconds: 2));
+  testWidgets('long press delay for OK is 1 second', (tester) async {
+    expect(hold, const Duration(seconds: 1));
   });
 
   testWidgets('short OK press launches and releases the timer', (tester) async {

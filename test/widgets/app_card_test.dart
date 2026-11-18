@@ -211,7 +211,7 @@ void main() {
     await tester.pumpWidget(createWidgetUnderTest());
     await tester.pump();
 
-    // OK sostenido el tiempo de pulsación larga (2 s), con las repeticiones
+    // OK sostenido el tiempo de pulsación larga (1 s), con las repeticiones
     // que envía el control.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
     final halfSeconds =
