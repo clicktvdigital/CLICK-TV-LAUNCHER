@@ -25,7 +25,7 @@ import 'package:flutter/services.dart';
 class FocusKeyboardListener extends StatefulWidget {
   /// Tiempo que hay que mantener OK (D-pad center) para abrir el menú de
   /// configuración de la tarjeta. Las teclas Menú/Info lo abren al instante.
-  static const Duration defaultLongPressDelay = Duration(seconds: 3);
+  static const Duration defaultLongPressDelay = Duration(seconds: 2);
 
   final WidgetBuilder builder;
   final KeyEventResult Function(LogicalKeyboardKey)? onPressed;
