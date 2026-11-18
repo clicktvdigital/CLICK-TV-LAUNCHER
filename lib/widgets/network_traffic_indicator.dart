@@ -10,7 +10,10 @@ import 'daily_data_usage_widget.dart';
 /// Indicador de la barra de estado: tipo de conexión (Wi-Fi / cable),
 /// velocidad de bajada y subida en tiempo real y consumo del periodo.
 ///
-/// Son 3 líneas de 14 px (42 px) dentro de la barra de 56 dp. Si falta ancho
+/// Velocidad en 2 líneas de 14 px y el consumo a la derecha, centrado en
+/// vertical (28 px de alto dentro de la barra de 56 dp). El botón de permiso,
+/// si aparece, queda en la misma fila que el resto de la barra: así la flecha
+/// abajo desde Ajustes vuelve a las apps y no se desvía hacia él. Si falta ancho
 /// (por ejemplo con el clima visible), el bloque se reduce proporcionalmente
 /// en vez de recortarse o empujar a los widgets de la derecha.
 class NetworkTrafficIndicator extends StatelessWidget {
@@ -52,20 +55,16 @@ class NetworkTrafficIndicator extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Semantics(
                 label: label,
                 child: Icon(icon, size: 20, color: Colors.white),
               ),
               const SizedBox(width: 8),
-              const Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LiveTrafficRates(),
-                  DailyDataUsageWidget(compact: true),
-                ],
-              ),
+              const LiveTrafficRates(),
+              const SizedBox(width: 12),
+              const DailyDataUsageWidget(compact: true),
             ],
           ),
         ),

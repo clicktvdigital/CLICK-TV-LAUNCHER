@@ -128,4 +128,18 @@ void main() {
     expect(find.textContaining('KB/s'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('permission button sits on the bar row (vertically centred), not below it', (tester) async {
+    when(networkService.hasUsageStatsPermission).thenReturn(false);
+    when(networkService.getTrafficTotals()).thenAnswer((_) async => [0, 0]);
+
+    await tester.pumpWidget(host());
+    await tester.pump();
+
+    final button = find.byType(TextButton);
+    expect(button, findsOneWidget);
+    final buttonCenter = tester.getCenter(button).dy;
+    final indicatorCenter = tester.getCenter(find.byType(NetworkTrafficIndicator)).dy;
+    expect((buttonCenter - indicatorCenter).abs(), lessThan(4));
+  });
 }
