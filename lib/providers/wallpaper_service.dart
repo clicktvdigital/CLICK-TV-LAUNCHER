@@ -56,12 +56,16 @@ String ecuadorMoodFor(DateTime now) {
 /// Cada cuánto cambia la foto de fondo de Ecuador.
 const Duration ecuadorRotationInterval = Duration(seconds: 10);
 
-/// Imagen del momento actual. Cambia cada [ecuadorRotationInterval] dentro
-/// del mismo momento del día.
+/// Todas las fotos de Ecuador (las 9 de assets/fondos/ecuador), en orden.
+final List<String> ecuadorAllWallpapers =
+    List.unmodifiable(ecuadorWallpaperSets.values.expand((list) => list));
+
+/// Foto que toca ahora: recorre todas las fotos de Ecuador, una cada
+/// [ecuadorRotationInterval], sin depender del momento del día.
 String ecuadorAssetFor(DateTime now) {
-  final list = ecuadorWallpaperSets[ecuadorMoodFor(now)]!;
-  final index = (now.millisecondsSinceEpoch ~/ ecuadorRotationInterval.inMilliseconds) % list.length;
-  return list[index];
+  final index = (now.millisecondsSinceEpoch ~/ ecuadorRotationInterval.inMilliseconds) %
+      ecuadorAllWallpapers.length;
+  return ecuadorAllWallpapers[index];
 }
 
 /// Subtítulo de cada foto de Ecuador, por nombre de archivo.
