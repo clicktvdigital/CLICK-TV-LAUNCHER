@@ -230,7 +230,7 @@ void main() {
       matching: find.byType(Text),
     ));
     expect(lines.length, 4);
-    expect(lines.map((t) => t.data), contains(matches(RegExp(r'^Lluvia desde \d{1,2}:\d{2} [ap]\. m\. \(100%\)$'))));
+    expect(lines.map((t) => t.data), contains(matches(RegExp(r'^Lluvia (mañana )?desde \d{1,2}:\d{2} [ap]\. m\. \(100%\)$'))));
     expect(tester.getSize(find.byType(AnimatedContainer)).height,
         lessThanOrEqualTo(clickTvStatusBarHeight));
   });
