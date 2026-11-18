@@ -223,8 +223,12 @@ void main() {
     expect(find.textContaining('Niebla'), findsOneWidget);
     expect(find.textContaining('Lluvia'), findsOneWidget);
     expect(find.textContaining('máx'), findsOneWidget);
+    // Solo los Text (el Icon también se dibuja con un RichText).
     final paragraphs = tester.renderObjectList<RenderParagraph>(find.descendant(
-      of: find.byType(WeatherStatusBarWidget),
+      of: find.descendant(
+        of: find.byType(WeatherStatusBarWidget),
+        matching: find.byType(Text),
+      ),
       matching: find.byType(RichText),
     ));
     expect(paragraphs.length, 4);
