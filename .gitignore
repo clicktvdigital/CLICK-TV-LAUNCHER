@@ -130,3 +130,13 @@ graphify-out/*
 !graphify-out/GRAPH_REPORT.md
 !graphify-out/graph.html
 skills-lock.json
+
+# Artefactos y bitácoras locales de pruebas en Termux (se archivan fuera del repo)
+click-tv-paso*.txt
+click-tv-analyze-*.txt
+paso*-*/
+.paso*
+.artifacts-*.tsv
+*.apk
+billing.err
+codex_auditoria.txt
